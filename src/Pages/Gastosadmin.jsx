@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
 import dayjs from "dayjs";
-import "../styles/RegistrarGastos.css";
+import "../Styles/RegistrarGastos.css";
 
 export default function Gastosadmin() {
   const navigate = useNavigate();

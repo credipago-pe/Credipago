@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
 import { ArrowLeft } from "lucide-react";
 import dayjs from "dayjs";
-import "../styles/DetalleCancelados.css";
+import "../Styles/DetalleCancelados.css";
 
 const formatearFecha = (fecha) => {
   return dayjs(fecha).format("YYYY-MM-DD HH:mm:ss");

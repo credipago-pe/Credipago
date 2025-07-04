@@ -4,7 +4,7 @@ import { supabase } from "../components/supabaseClient";
 import dayjs from "dayjs";
 import { Clock, List, ReceiptText, ArrowLeft } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
-import "../styles/EnviarMensaje.css";
+import "../Styles/EnviarMensaje.css";
 
 export default function EnviarMensaje() {
   const { clienteId } = useParams();
