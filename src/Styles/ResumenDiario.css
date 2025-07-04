@@ -1,0 +1,113 @@
+.resumen-container {
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0px;
+  left: 0px;
+  padding: 10px;
+  background: #ffffff;
+  border-radius: 0px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: fixed;
+  top: 0;
+  z-index: 500;
+}
+
+.resumen-container h2 {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+/* Filtros en una sola fila */
+.filtros {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 19px;
+}
+
+.filtros label {
+  font-weight: 500;
+}
+
+.filtros input[type="date"] {
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Botón Consultar */
+.filtros button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 5px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.filtros button:hover {
+  background-color: #2980b9;
+}
+
+/* Scroll horizontal y vertical para la tabla */
+.resumen-table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 580px; /* Altura máxima para scroll vertical */
+  max-width: 700px;
+  border: 1px solid #ddd;
+}
+
+.resumen-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 100px;
+}
+
+.resumen-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f4f6f8; /* Color de fondo para que no quede transparente */
+  z-index: 5; /* Asegura que quede por encima de las celdas */
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+
+.resumen-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.resumen-table th {
+  background-color: #e1e7ec;
+  font-weight: 600;
+  color: #0c0c0c;
+}
+
+.resumen-table tr:nth-child(even) {
+  background-color: #faf8f8;
+}
+
+.resumen-table tr:hover {
+  background-color: #faf8f8;
+}
+
+@media (max-width: 1000px) {
+  .resumen-container {
+    max-width: 100%;
+  }
+  
+  .filtros {
+    flex-wrap: wrap; /* Para que en pantallas muy pequeñas baje */
+  }
+
+  .resumen-table {
+    min-width: 600px;
+  }
+}

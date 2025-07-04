@@ -1,0 +1,97 @@
+/* Estilos generales */
+body {
+    background: linear-gradient(135deg, #224469, #3a6594);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+  }
+  
+  /* Contenedor del login */
+  .login-container {
+    width: 90%;
+    max-width: 380px;
+    padding: 25px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+  }
+  
+  /* Logo */
+  .login-logo {
+    width: 80px;
+    margin-bottom: 10px;
+  }
+  
+  /* Título */
+  h2 {
+    color: #a1452e !important;
+    margin-bottom: 15px;color: #16110d; /* Cambia el color a naranja */
+    font-size: 24px; /* Ajusta el tamaño si es necesario */
+    font-weight: bold; /* Hace que resalte más */
+    text-align: center; /* Centra el texto */
+  }
+  
+  /* Contenedor de inputs con icono */
+  .input-container {
+    position: relative;
+    margin-bottom: 15px;
+  }
+  
+  .input-container input[type="text"] {
+    padding-left: 50px; /* Aumentamos el espacio solo para el usuario */
+  }
+  
+  .input-container input {
+    width: 100%;
+    padding: 12px 50px;
+    padding-left: 50px; /* Aumentamos espacio para que el texto no se superponga con el icono */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  
+  .input-container .icon {
+    position: absolute;
+    left: 12px;
+    top: 35%;
+    transform: translateY(-50%);
+    color: #007bff;
+    font-size: 18px;
+  }
+  
+  /* Botón */
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #2970bb !important;
+    color: rgb(43, 32, 95);
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+  }
+  
+  button:hover {
+    background: #297eda;
+  }
+  
+  /* Mensaje de error */
+  .error-message {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  /* Diseño responsivo */
+  @media (max-width: 480px) {
+    .login-container {
+      padding: 20px;
+    }
+  }
+  

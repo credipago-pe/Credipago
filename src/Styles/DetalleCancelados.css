@@ -1,0 +1,121 @@
+/* DetalleCancelados.css */
+
+.detalle-cancelados-container {
+  padding: 1rem;
+  background-color: #f9fafb;
+  color: #1f2937;
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Arial', sans-serif;
+}
+
+.detalle-cancelados-container h2,
+.detalle-cancelados-container h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.detalle-cancelados-info {
+  background-color: #e4e2e2;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 0.6rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  font-size: 20px;
+}
+
+.detalle-cancelados-info p {
+  margin: 0.5rem 0;
+}
+
+.detalle-cancelados-resumen {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.detalle-cancelados-tabla {
+  background-color: #ece6e6;
+  border-radius: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.detalle-cancelados-tabla table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 400px;
+}
+
+.detalle-cancelados-tabla th,
+.detalle-cancelados-tabla td {
+  padding: 0.75rem;
+  text-align: left;
+  font-size: 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detalle-cancelados-tabla th {
+  background-color: #bfc0c2;
+  font-weight: 900;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.detalle-cancelados-tabla tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.detalle-cancelados-tabla td {
+  color: #374151;
+}
+
+.btn-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #2563eb; /* azul */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  text-decoration: none;
+  margin-top: 20px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #1e40af; /* azul más oscuro */
+}
+
+@media (max-width: 600px) {
+  .btn-volver {
+    width: 100%;
+    justify-content: center;
+    font-size: 16px;
+  }
+}
+/* Responsive */
+@media (max-width: 600px) {
+  .detalle-cancelados-info p,
+  .detalle-cancelados-resumen span,
+  .detalle-cancelados-tabla th,
+  .detalle-cancelados-tabla td {
+    font-size: 0.85rem;
+  }
+
+  .detalle-cancelados-tabla table {
+    min-width: 100%;
+  }
+
+}

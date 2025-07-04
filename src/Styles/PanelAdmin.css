@@ -1,0 +1,219 @@
+.admin-panel-container {
+  max-width: 420px;
+  max-height: 800px;
+  margin: 10px auto;
+  padding: 10px 10px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-top: -265px;
+  position: sticky;
+  
+}
+
+.admin-panel-title {
+  font-size: 35px;
+  margin-bottom: 10px;
+  text-align: center;
+  color: #222;
+}
+
+.admin-panel-btn {
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  margin: 5px 9px 8px 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.admin-panel-btn:hover {
+  background-color: #004a99;
+}
+
+.admin-panel-btn-ver,
+.admin-panel-btn-eliminar,
+.admin-panel-btn-ubicacion {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.admin-panel-btn-ver {
+  background-color: #3399ff;
+}
+
+.admin-panel-btn-ver:hover {
+  background-color: #1a73e8;
+}
+
+.admin-panel-btn-eliminar {
+  background-color: #e63946 !important;
+}
+
+.admin-panel-btn-eliminar:hover {
+  background-color: #0a0a0a;
+}
+
+.admin-panel-btn-ubicacion {
+  background-color: #6a4c93 !important;
+}
+
+.admin-panel-btn-ubicacion:hover {
+  background-color: #4b3567;
+}
+
+.admin-panel-error {
+  color: #e63946;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.admin-panel-loading,
+.admin-panel-empty {
+  text-align: center;
+  color: #555;
+  font-style: italic;
+  margin-top: 20px;
+}
+
+/* Contenedor del cuerpo de la tabla para scroll vertical */
+.admin-panel-table-container {
+  max-height: 500px; /* altura fija para scroll vertical */
+  max-width: 400px;
+  
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* Estilo tabla */
+.admin-panel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.tablaC-cobros th {
+  background: linear-gradient(to bottom, #e0e0e0, #c0c0c0);
+  color: #222;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 1px #fff;
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-bottom: 2px solid #aaa;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+
+.admin-panel-table th,
+.admin-panel-table td {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 400;
+  border-bottom: 1px solid #ddd;
+  vertical-align: middle;
+}
+
+
+
+.acciones-td {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 6px;
+  max-width: 280px; /* Ajusta según necesites */
+  padding: 4px;
+}
+
+.acciones-td button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.acciones-td button:hover {
+  background-color: #0056b3;
+}
+
+/* Puedes diferenciar botones por clase si quieres */
+.admin-panel-btn-eliminar {
+  background-color: #dc3545;
+}
+
+.admin-panel-btn-eliminar:hover {
+  background-color: #a71d2a;
+}
+
+/* Ajusta tamaños de iconos dentro del botón */
+.acciones-td button svg {
+  width: 18px;
+  height: 18px;
+}
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(231, 6, 6, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalE {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  max-width: 90%;
+}
+
+.modal-buttonsE {
+  margin-top: 10px;
+  padding: 5px;
+  gap: 15px;
+  display: flex;
+  color: white;
+  justify-content: space-between;
+}
+.modal-titulo {
+  text-align: center;
+  color: #d9534f; /* rojo tipo alerta */
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 18px;
+}
+
+.icono-alerta {
+  color: #d9534f;
+  font-size: 20px;
+}
+
+

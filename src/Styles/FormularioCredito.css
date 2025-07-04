@@ -1,0 +1,67 @@
+/* Contenedor principal */
+.contenedor-registro {
+  width: 100%;  /* 🔹 Ajusta el ancho */
+  max-width: 300px;  /* 🔹 No se expande demasiado en pantallas grandes */
+  margin: 10px auto;  /* 🔹 Centra el formulario */
+  padding: 30px;
+  background: #f9f9f9;  /* 🔹 Color de fondo suave */
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);  /* 🔹 Sombra ligera */
+}
+
+/* Título */
+h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* Texto de carga */
+p {
+  text-align: center;
+  font-size: 18px;
+  color: #030101;
+}
+
+/* Labels */
+label {
+  display: block;
+  font-weight: bold;
+  margin: 10px 0 5px;
+  color: #a71313;
+}
+
+/* Campos de entrada */
+input[type="number"],
+select {
+  width: 90%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 15px;
+}
+
+/* Estilos para el botón */
+button[type="submit"] {
+  width: 100%;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: background 0.3s, transform 0.2s;
+  margin-top: 15px;
+}
+
+button[type="submit"]:hover {
+  background: linear-gradient(135deg, #d41212, #004494);
+  transform: scale(1.05);
+}
+
+button[type="submit"]:active {
+  background: linear-gradient(135deg, #004494, #003366);
+  transform: scale(0.98);
+}

@@ -1,0 +1,188 @@
+/* Contenedor principal: ocupa toda la pantalla, con fondo claro */
+.clientes-cancelados-container {
+  background: #f8f9fa;
+  min-height: 100vh;
+  padding: 40px 19px;
+  display: flex;
+  margin-left: 0px;
+  justify-content: center;
+  align-items: absolute;
+}
+
+/* Contenedor interior con ancho limitado y centrado */
+.clientes-cancelados-content {
+  width: 100%;
+  max-width: 450px; /* más angosto para móvil */
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  padding: 20px 15px 30px 15px;
+  box-sizing: border-box;
+}
+
+/* Header: título, filtro y botón en fila */
+.clientes-cancelados-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 10px;
+}
+
+/* Título */
+.clientes-cancelados-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 30px;
+  flex: 1 1 100%;
+}
+
+/* Contenedor del filtro para que label e input estén en línea */
+.clientes-cancelados-filtro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+
+/* Estilo input fecha */
+.clientes-cancelados-filtro input[type="date"] {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.clientes-cancelados-footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.btn-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #2563eb; /* azul */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  text-decoration: none;
+  margin-top: 20px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #1e40af; /* azul más oscuro */
+}
+
+/* Contenedor scroll para la tabla */
+.clientes-cancelados-scroll {
+  max-height: 450px; /* altura para scroll */
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* Tabla con ancho completo */
+.clientes-cancelados-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+   min-width: 360px;
+  max-width: 500px; /* evita que se achique demasiado */
+}
+
+/* Encabezado con fondo y sticky */
+.clientes-cancelados-table thead tr {
+  background-color: #adb0b3;
+  color: rgb(17, 17, 17);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Celdas encabezado */
+.clientes-cancelados-table th,
+.clientes-cancelados-table td {
+  padding: 15px 3px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+/* Filas impares con fondo claro */
+.clientes-cancelados-table tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+/* Botón detalle */
+.btn-clientes-detalle {
+  background-color: #ebe855;
+  color: rgb(8, 8, 8);
+  padding: 8px 5px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.btn-clientes-detalle:hover {
+  background-color: #449d44;
+}
+
+/* Mensaje cuando no hay datos */
+.clientes-cancelados-table tbody tr td[colspan="6"] {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+  padding: 10px 0;
+}
+
+/* Ajustes para móvil muy pequeño */
+@media (max-width: 400px) {
+  .clientes-cancelados-content {
+    max-width: 100%;
+    padding: 15px 10px 20px 10px;
+  }
+  .clientes-cancelados-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .clientes-cancelados-filtro {
+    min-width: 100%;
+  }
+  .clientes-cancelados-table {
+    min-width: 400px;
+    font-size: 0.85rem;
+  }
+}
+.btn-renovar-credito {
+  display: inline-flex;
+  align-items: center;
+  background-color: #007bff;
+  color: white;
+  padding: 6px 2px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 12px;
+  margin-left: 4px;
+  gap: 2px; /* Espacio entre ícono y texto */
+  transition: background-color 0.3s ease;
+}
+
+.btn-renovar-credito:hover {
+  background-color: #0056b3;
+}
+
+.icono-renovar {
+  font-size: 1rem;
+}

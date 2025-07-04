@@ -1,0 +1,54 @@
+.registro-container {
+  max-width: 350px;
+  margin: 10px auto;
+  padding: 30px 30px;
+  background: linear-gradient(135deg, #e3f2fd, #c9cbcc); /* fondo degradado suave */
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.registro-container input,
+.registro-container select {
+  width: 100%;
+  padding: 15px 12px;
+  margin-bottom: 20px;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  background-color: #f0f7ff; /* fondo claro para inputs */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.registro-container input:focus,
+.registro-container select:focus {
+  border-color: #070707;
+  box-shadow: 0 0 8px rgba(5, 5, 5, 0.5);
+  outline: none;
+}
+
+.registro-container button {
+  width: 100%;
+  background-color: #1565c0;
+  color: white;
+  padding: 12px 0;
+  border: none;
+  border-radius: 8px;
+  font-weight: 400;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(21, 101, 192, 0.6);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.registro-container button:disabled {
+  background-color: #999999;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.registro-container button:hover:not(:disabled) {
+  background-color: #0d47a1;
+  box-shadow: 0 6px 14px rgba(13, 71, 161, 0.8);
+}

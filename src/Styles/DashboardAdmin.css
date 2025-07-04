@@ -1,0 +1,92 @@
+.dashboard-container {
+  max-width: 600px;
+  max-height: 1500px;
+  margin: -540px -220px;
+  margin-top: 0px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
+}
+
+.dashboard-title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 600;
+  font-size: 1.8rem;
+  
+}
+
+.dashboard-filtro {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  
+}
+
+.dashboard-label {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* espacio entre elementos */
+}
+
+.dashboard-label input {
+  margin-left: 8px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition: border-color 0.3s ease;
+  width: 10px; /* ajusta este valor a lo que necesites */
+  color: rgb(87, 86, 86); /* <-- cambia el color del texto */
+}
+
+.dashboard-label input:focus {
+  border-color: #0066cc;
+  outline: none;
+}
+
+.chart-wrapper {
+  margin-bottom: 40px;
+}
+
+.chart-wrapper h3 {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+  color: #121ec2;
+}
+
+/* Estilos responsive */
+@media (max-width: 768px) {
+  .dashboard-filtro {
+    flex-direction: column;
+    align-items: center;
+  }
+  .dashboard-label {
+    width: 100%;
+    text-align: center;
+    color: #0e0d0d;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-title {
+    font-size: 1.5rem;
+  }
+  .dashboard-filtro {
+    gap: 10px;
+  }
+  .dashboard-label input {
+    width: 100%;
+    max-width: 250px;
+  }
+  .chart-wrapper h3 {
+    font-size: 1rem;
+  }
+}

@@ -1,0 +1,165 @@
+.RenovarCredito {
+  max-width: 405px;
+  margin: 30px auto;
+  padding: 50px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(247, 245, 245, 0.1);
+  font-family: Arial, sans-serif;
+  
+}
+
+.back-button {
+  background: #d9534f;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+
+  cursor: pointer;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.back-button:hover {
+  background: #c9302c;
+}
+
+h1 {
+  text-align: center;
+  font-size: 30px;
+  color: #c9302c;
+}
+
+h2 {
+  text-align: center;
+  font-size: 30px;
+  color: #f30505;
+
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+button {
+  width: 100%;
+  background: #5cb85c;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:hover {
+  background: #4cae4c;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+ul li {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  background: #f9f9f9;
+}
+
+ul li:hover {
+  background: #eee;
+}
+
+.error {
+  color: #d9534f;
+  text-align: center;
+  background: #f2dede;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+
+button[type="submit"] {
+  width: 100%;
+  background: linear-gradient(135deg, #df0e0e, #a3aaa4);
+  color: rgb(245, 243, 243);
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: background 0.3s, transform 0.2s;
+}
+
+button[type="submit"]:hover {
+  background: linear-gradient(135deg, #ec1124, #f80707);
+  transform: scale(1.05);
+}
+
+button[type="submit"]:active {
+  background: linear-gradient(135deg, #1e7e34, #19692c);
+  transform: scale(0.98);
+}
+
+.toast-exito {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  color: #222;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid #38b000;
+  box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.15);
+  font-weight: 500;
+  z-index: 1000;
+  animation: fadeInOut 3s ease-in-out;
+}
+
+.toast-contenido {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+}
+
+.chulo {
+  color: #38b000;
+  font-size: 1.4rem;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+}

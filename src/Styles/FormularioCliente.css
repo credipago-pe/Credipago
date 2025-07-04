@@ -1,0 +1,164 @@
+/* Estilos generales */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin-top: 20px;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 10vh;
+}
+
+/* Contenedor del formulario */
+.formulario-cliente-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 10%;
+  max-width: 500px;
+  max-height: 800px;
+  margin: 0px auto;
+  padding: 10px;
+  background: #fdfcfc;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  
+}
+
+/* Tarjeta del formulario */
+.formulario-cliente-card {
+  background: rgba(228, 229, 233, 0.911);
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  margin: 100px auto;
+  max-width: 400px;
+ 
+}
+
+/* Título */
+h2 {
+  text-align: center;
+  color: #333;
+}
+
+/* Mensaje de error */
+.error-message {
+  color: red;
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Estilos para etiquetas */
+label {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 1px;
+  font-weight: bold;
+}
+
+/* Espacio entre íconos y texto */
+label svg {
+  margin-right: 8px;
+  color: #007bff;
+}
+
+/* Estilos para los inputs */
+input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+   
+}
+
+/* Contenedor para el input de GPS y el botón */
+.gps-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Botón de GPS */
+.gps-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.gps-button svg {
+  margin-right: 5px;
+}
+
+/* Hover en botón */
+.gps-button:hover {
+  background-color: #0056b3;
+}
+
+/* Botón de envío */
+button[type="submit"] {
+  width: 100%;
+  padding: 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button[type="submit"]:hover {
+  background-color: #218838;
+}
+
+/* Mensaje flotante */
+.mensaje-flotante {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #4CAF50;
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.mensaje-flotante button {
+  background: #ffffff;
+  color: #4CAF50;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.mensaje-flotante button:hover {
+  background: #e8f5e9;
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

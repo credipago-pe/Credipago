@@ -1,0 +1,411 @@
+/* ClienteDetalle.css */
+
+/* Estilos generales */
+.cliente-detalle {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  padding-top: 140px; /* espacio para header fijo */
+  max-width: 500px;
+  margin: 0 auto;
+  background: #f9f9f9;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* --- Cabecera fija --- */
+.fixed-header-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 10px 20px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Botón Volver */
+.botonD-regresar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #1d4ed8; /* azul */
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.botonD-regresar:hover {
+  background-color: #2563eb;
+}
+
+
+.icono:hover {
+  color: #0c46e6;
+}
+
+/* Información cliente */
+.cliente-header {
+  display: flex;
+  justify-content: space-between; /* nombre a la izquierda, estrellas a la derecha */
+  align-items: flex-start;            /* alinea verticalmente */
+  height: 15px
+}
+
+/* Nombre e icono usuario */
+.info-cliente {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+
+/* Calificación estrellas */
+.calificacion-caja .calificacion {
+  display: flex;
+  gap: 4px;
+  font-size: 22px;
+}
+
+.calificacion {
+  user-select: none;
+  font-size: 1.5rem;
+  color: #eecb07; /* gris claro */
+}
+
+.estrella {
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.estrella.seleccionada {
+  color: #fbbf24; /* amarillo */
+}
+
+.estrella.deseleccionada:hover {
+  color: #fbbf24;
+}
+
+.acciones-contacto {
+  display: flex;
+  justify-content: right; /* centra horizontalmente */
+  align-items: center;     /* centra verticalmente si es necesario */
+  gap: 10px;               /* espacio entre íconos */
+  margin-top: 40px;  
+  margin-right: 10px;      /* separación desde arriba */
+}
+.icono-ubicacion {
+  font-size: 24px; /* o usa 1.5rem */
+  margin: 0 8px;
+  padding: 1px;
+  border-radius: 50%;
+  background-color: #f2f2f2; /* opcional para dar más tactilidad */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* Crédito activo */
+.credito-activo {
+  background: #e0f2fe;
+  border-radius: 8px;
+  padding: 5px 10px;
+  display: flex;
+  gap: 5px;
+  align-items: left;
+  font-weight: 0;
+  color: #0369a1;
+  user-select: none;
+  margin-top: 0px;
+}
+
+.credito-activo.compacto {
+  flex-wrap: wrap;
+  font-size: 18px;
+}
+
+.fila-detalles {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;       /* se acomodan en columnas en pantallas pequeñas */
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.detalle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #f3f4f6;    /* gris muy claro */
+  padding: 4px 10px;
+  border-radius: 8px;
+  min-width: 100px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  flex: 1;
+  max-width: 160px;        /* evita que se estiren mucho */
+}
+
+.detalle p {
+  margin: 0;
+  font-weight: 500;
+  font-size: 16px;
+  color: #1f2937;
+}
+
+
+/* --- Contenedor scrollable para el historial --- */
+.scrollable-body {
+  overflow-y: auto;
+  max-height: calc(60vh - -100px);
+  margin-top: 230px;       /* separa del header fijo */
+  padding-top: 10px;      /* espacio interno superior */
+  padding-left: 50px;
+  padding-right: 50px;
+  padding-bottom: 500px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: inset 0 0 5px #ddd;
+}
+
+/* Historial de pagos */
+.historial-pagos h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  color: #374151;
+  font-weight: 700;
+}
+
+/* Tabla */
+.tabla-pagos {
+  overflow-x: auto;
+}
+
+.tabla-pagos table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-pagos th,
+.tabla-pagos td {
+  padding: 8px 22px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.tabla-pagos th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+}
+
+.tabla-pagos tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* ---------------------------------------------------
+   Modal de información del cliente (lectura)
+   --------------------------------------------------- */
+/* Modal info cliente */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(48, 47, 47, 0.4);
+  display: flex;
+  justify-content: center;       /* centro horizontal */
+  align-items: flex-start;        /* anclado al tope vertical */
+  padding-top: 20px;
+  z-index: 200;
+}
+
+.modal-contenido {
+  background: #f8f7f7;
+  padding: 20px 14px;
+  border-radius: 12px;
+  margin-left: 0px;
+  width: 90vw;
+  height: 500px;
+  top: 10px;
+  max-width: 500px;
+  /* -------------- Scroll interno -------------- */
+  max-height: 1000vh;      /* altura máxima 80% viewport */
+  overflow-y: auto;      /* scroll solo si es necesario */
+  /* --------------------------------------------- */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  color: #1f2937;
+  user-select: none;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+
+/* Si querés aplicar estilos extra cuando tenga clase "ampliado" */
+.modal-contenido.ampliado {
+  /* Por ejemplo, un padding diferente */
+  padding: 70px 50px;
+}
+
+/* Título centrado */
+.modal-contenido h3 {
+  margin: 0 0 20px;
+  font-weight: 700;
+  font-size: 1.6rem;
+  text-align: center;
+  color: #111827;
+}
+
+/* Párrafos alineados a la izquierda */
+.modal-contenido p {
+  margin: 6px 0;
+  display: flex;
+  align-items: left;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #525d6e;
+}
+
+/* Iconos dentro de párrafos */
+.modal-contenido .iconoM {
+  width: 20px;
+  height: 20px;
+  color: #1459cf;
+}
+
+/* Botones y campos de acción */
+.acciones {
+  margin-top: 24px;
+  display: flex;
+  gap: 10px;
+}
+
+.guardar,
+.cerrar {
+  flex: 1;
+  padding: 10px 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  color: #fff;
+}
+
+.guardar {
+  background-color: #10b981;
+}
+
+.guardar:hover {
+  background-color: #059669;
+}
+
+.cerrar {
+  background-color: #ef4444;
+}
+
+.cerrar:hover {
+  background-color: #dc2626;
+}
+
+
+/* Responsive */
+@media (max-width: 600px) {
+  .fixed-header-container {
+    padding: 10px 12px;
+  }
+
+  .cliente-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .acciones-contacto {
+    gap: 29px;
+    
+  }
+
+  .credito-activo {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 8px;
+  }
+  .icono-ubicacion {
+  margin-left: 10px;
+  display: inline-block;
+  cursor: pointer;
+}
+.icono-ubicacion:hover {
+  transform: scale(1.1);
+}
+
+
+  .nombre.cliente {
+    font-size: 24px;
+    font-weight: 700; 
+    margin: -10px;
+    text-align: left;
+  }
+  .icono.whatsapp {
+    color: #25D366 !important; /* color oficial de WhatsApp */
+  background-color: #e0f7e6;
+  border-radius: 50%;
+  padding: 2px;
+  width: 32px;
+  height: 32px;
+}
+
+.icono-cliente {
+  color: #0e0252; /* color oficial de WhatsApp */
+  background-color: #9fc7e7;
+  border-radius: 90%;
+  padding: 10px;
+  width: 70px;
+  height: 70px;
+}
+.iconoM {
+  color: #0e0252; /* color oficial de WhatsApp */
+  background-color: #9fc7e700;
+  padding: 0px;
+  width: 22px;
+  height: 22px;
+}
+
+.icono.DC {
+  color: #0e0252 !important; /* color oficial de WhatsApp */
+  background-color: #9fc7e700;
+  padding: 0px;
+  width: 22px;
+  height: 22px;
+}
+.icono.C {
+  color: #0e0252; /* color oficial de WhatsApp */
+  background-color: #9fc7e700;
+  padding: 0px;
+  width: 22px;
+  height: 22px;
+}
+
+.iconoH {
+  color: #0e0252; /* color oficial de WhatsApp */
+  background-color: #9fc7e700;
+  padding: 0px;
+  width: 22px;
+  height: 22px;
+}
+
+}

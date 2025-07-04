@@ -1,0 +1,772 @@
+/* Contenedor principal */
+.panelC-container {
+  display: flex;
+  height: 100vh;
+  padding-top: -10px;
+  max-height: 800px;
+  margin-top: -36px;
+  max-width: 750px;
+
+}
+
+/* Contenedor de la tabla con scroll vertical */
+.contenedorC-tabla {
+  position: relative;
+  max-height: 100px; /* Ajusta según necesites */
+  overflow-y: auto; /* Scroll solo en la tabla */
+  border: 1px solid #ddd;
+  
+}
+
+/* Encabezado fijo de tabla */
+.encabezado-fijo {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 100;
+  box-shadow: 0px 2px 5px rgba(194, 27, 27, 0.1);
+}
+
+/* Filtro de búsqueda sticky */
+.filtro-busqueda {
+  position: sticky;
+  margin-top: -10px;
+  margin-left: 50px;
+  width: 600px;
+  top: 10px;
+  background-color: rgba(255, 255, 255, 0.034);
+  z-index: 15;
+  padding: 10px 20px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.busqueda {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+}
+
+.icono-busqueda {
+  position: absolute;
+  top: 50%;
+  left: 270px;
+  transform: translateY(-50%);
+  color: #666;
+  pointer-events: none;
+  font-size: 16px;
+}
+
+.busqueda input {
+  width: 100%;
+  padding: 10px 12px 10px 40px; /* 👈 padding-left importante */
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 14px;
+}
+
+
+.filtro-busqueda button {
+  padding: 10px 15px;
+  background-color: #fff;
+  color: #f8f5f5;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.filtro-busqueda button:hover {
+  background-color: #c2c1c1;
+}
+
+/* Tabla pagos - encabezado sticky */
+.tabla-pagos thead tr {
+  position: sticky;
+  top: 10px; /* Altura del filtro */
+  background: white;
+  z-index: 10;
+}
+
+.logout-button:hover {
+  background-color: #e33c3c;
+}
+
+.logout-button:focus {
+  outline: none;
+}
+
+/* Botón menú */
+.btn-menu {
+  position: fixed;
+  top: 500px;
+  left: 200px;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  background: #333;
+  color: white;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  border-radius: 5px;
+}
+
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+  color: rgb(22, 37, 80);
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: #141353;
+}
+
+.icon {
+  margin-right: 10px;
+}
+
+/* Submenú lateral */
+.submenu {
+  display: none;
+  flex-direction: column;
+  background: #f7f4f4;
+  width: 100%;
+  padding: 5px 0;
+}
+
+.submenu.activo {
+  display: flex;
+}
+
+.submenu li {
+  padding: 10px;
+  white-space: nowrap;
+}
+
+.submenu li a {
+  color: rgb(14, 25, 121);
+  text-decoration: none;
+  display: block;
+  padding: 5px 15px;
+}
+
+.submenu li a:hover {
+  text-decoration: underline;
+}
+
+/* Contenido principal */
+.content {
+  flex-grow: 1;
+  padding: 1px;
+  margin-left: 600px;
+  background: #f5f6f7;
+  display: flex;
+  flex-direction: column;
+}
+
+.tablaC-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  background: rgb(253, 253, 253);
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(221, 11, 11, 0.1);
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* esto asegura que esté arriba */
+}
+
+/* Tabla cobros */
+.tablaC-cobros {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tablaC-cobros th {
+  background: linear-gradient(to bottom, #e0e0e0, #c0c0c0);
+  color: #222;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 1px #ffffff83;
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-bottom: 2px solid #aaaaaa;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+
+.tablaC-cobros td {
+  padding: 5px;
+  font-size: 14px;
+  border-bottom: 1px solid #818185;
+}
+
+.tablaC-cobros tbody tr:hover {
+  background: #f5f5f5;
+}
+
+/* Botones pagar y detalle */
+.btn-pagar {
+  border: none;
+  padding: 6px 8px;
+  margin: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(to bottom, #5bc76a, #3d944f) !important;
+  color: #f7f4f4;
+  font-size: 15px;
+  font-weight: bold;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-pagar:hover {
+  background: linear-gradient(to bottom, #68db77, #3ea955);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25);
+}
+
+
+.btn-detalle {
+  border: none;
+  padding: 6px 10px;
+  margin: 3px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(to bottom, #f7f734, #bfbf1d);
+  color: #212121;
+  font-size: 13px;
+  font-weight: bold;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-detalle:hover {
+  background: linear-gradient(to bottom, #fff94d, #999900);
+  transform: translateY(-1px);
+  color: #fff;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal de pago */
+.modal-pago {
+  position: fixed;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+}
+
+.modal-pagocontenido {
+  background: rgb(214, 214, 216);
+  padding: 50px 60px;
+  height: 35%;
+  gap: 10px;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgb(70, 3, 83) !important;
+  text-align: center;
+  position: absolute;
+  min-width: 250px;
+  top: 10%;
+  left: 10%;
+}
+.botones-pago {
+  display: flex;
+  justify-content: center; /* Centrado horizontal */
+  gap: 5px; /* Espacio entre botones */
+  flex-wrap: wrap; /* Para que se acomoden bien en pantallas pequeñas */
+  margin-top: 10px;
+}
+
+.btn-pago {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  color: rgb(248, 245, 245);
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.btn-pago:hover {
+  transform: scale(1.05);
+}
+
+/* Estilo personalizado por tipo */
+.btn-pago.efectivo {
+  background-color: #28a745 !important;
+}
+
+.btn-pago.efectivo:hover {
+  background-color: #218838;
+}
+
+.btn-pago.yape {
+  background-color: #6f42c1 !important;
+}
+
+.btn-pago.yape:hover {
+  background-color: #5a32a3;
+}
+
+/* Ícono */
+.icono {
+  font-size: 18px;
+  color: #f7f8f7 !important;
+}
+
+/* Responsive para móviles */
+@media (max-width: 480px) {
+  .botones-pago {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .btn-pago {
+    flex: 1 1 45%;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .icono {
+    font-size: 16px;
+    color: #f7f8f7;
+    
+  }
+}
+.toast-exito {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  color: #222;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid #38b000;
+  box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.15);
+  font-weight: 500;
+  z-index: 1000;
+  animation: fadeInOut 3s ease-in-out;
+}
+
+.toast-contenido {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+}
+
+.chulo {
+  color: #38b000;
+  font-size: 1.4rem;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+}
+
+
+.fila-pagada {
+  background-color: #565f5a3b !important;
+}
+
+.cerrar-modal {
+  background: rgba(240, 7, 7, 0.644) !important;
+  border: none;
+  border-radius: 20px;
+  font-size: 20px;
+  padding: 5px 20px;
+  width: 70px;
+  cursor: pointer;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+
+.btn-pago:hover {
+  background: #218838;
+}
+
+/* Menú dropdown container */
+.menu-dropdown-container {
+  position: relative;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 70px;
+  left: 20px;
+  background-color: #0e345f;
+  border-radius: 10px;
+  padding: 15px 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  width: 230px;
+}
+
+.menu-lista-dropdown {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item-dropdown {
+  background: none;
+  border: none;
+  color: rgb(209, 202, 202);
+  font-size: 16px;
+  text-align: left;
+  width: 120%;
+  padding: 10px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.menu-item-dropdown:hover {
+  background-color: #1c4883;
+  border-radius: 5px;
+}
+
+.submenu-dropdown {
+  display: none;
+  flex-direction: column;
+  margin-top: 5px;
+  background-color: #f7f4f4;
+  border-radius: 5px;
+  padding: 5px 0;
+}
+
+.submenu-dropdown.activo {
+  display: flex;
+}
+
+.submenu-dropdown li {
+  padding: 5px 15px;
+}
+
+.submenu-dropdown li a {
+  color: #0e345f;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.submenu-dropdown li a:hover {
+  text-decoration: underline;
+}
+
+
+/* Overlay menú para móviles */
+/* Contenedor del overlay, absoluto arriba, cubre ancho y parte de alto, fondo semitransparente */
+.overlay-menu {
+  position: sticky;
+  top: 60px; /* justo debajo del botón menu, ajusta según tu header */
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.788);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  z-index: 9999;
+  padding: 1px 10px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-height: 500vh; /* para que no ocupe toda la pantalla */
+  height: 970px;
+  overflow-y: auto;
+  border-bottom: 1px solid #ccc;
+}
+
+/* Menu en fila flexible */
+.menu-overlay-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 120px 20px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Links y botones dentro del menú */
+.menu-item {
+  background-color: #fcfdfd;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.menu-item:hover {
+  background-color: #9ebddd;
+}
+
+/* Iconos dentro del menú */
+.menu-item .icon {
+  margin-right: 6px;
+  font-size: 18px;
+}
+
+/* Submenu container */
+.submenu-container {
+  position: relative;
+}
+
+/* Botón toggle submenu */
+.submenu-toggle {
+  background-color: #17a2b8;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.submenu-toggle:hover {
+  background-color: #117a8b;
+}
+
+.icon-caret {
+  margin-left: 4px;
+  font-size: 14px;
+}
+
+/* Submenu flexible */
+.submenu-flex {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 15px;
+  background: #e9ecef;
+  padding: 8px 12px;
+  border-radius: 6px;
+  position: absolute;
+  top: 38px;
+  left: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  z-index: 10000;
+  min-width: 180px;
+}
+
+/* Links del submenu */
+.submenu-flex a {
+  color: #093464;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.submenu-flex a:hover {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.menu-row {
+  display: flex;
+  justify-content: space-between;
+  width: 180%;
+  max-width: 600px;
+  gap: 20px;
+}
+
+.menu-col {
+  width: 68%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.menu-footer {
+  margin-top: 30px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+
+/* Botón logout separado */
+.logout-btn {
+  background-color: #dc3545 !important;
+  color: white !important;
+  padding: 15px 5px;
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-top: -35px;
+}
+
+.logout-btn:hover {
+  background-color: #b02a37 !important;
+}
+
+/* Resaltado pagos realizados */
+.pago-realizado {
+  background-color: #28a745 !important;
+  color: white;
+}
+
+.fila-verde {
+  background-color: #d4edda !important;
+  color: #155724;
+  font-weight: bold;
+}
+
+
+/* Ajustes generales para pantallas pequeñas */
+@media (max-width: 768px) {
+  .tablaC-container {
+    padding: 5px;
+    max-width: 100%;
+  }
+
+  .tablaC-cobros th,
+  .tablaC-cobros td {
+    font-size: 14px;
+    padding: 7px;
+    color: #080808;
+  }
+
+  .btn-menu {
+    top: 8px;
+    left: 367px;
+    width: 50px;
+    height: 50px;
+    font-size: 25px;
+  }
+
+  .filtro-busqueda {
+    width: 90%;
+    margin: 0 auto;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .filtro-busqueda input {
+    width: 100%;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 8px;
+  }
+}
+
+.usuario-logueado p {
+  font-size: 12px;         /* Tamaño de letra */
+  color: #4e4d4d54;          /* Color oscuro para el texto */
+  padding: 0.5rem 0;
+  text-align: center;  
+  margin-top: -10px;
+}
+
+
+/* Z-index para evitar conflictos */
+.tablaC-container {
+  position: relative;
+  z-index: 1;
+}
+
+.modal-pago {
+  z-index: 1100;
+}
+
+.menu-lateral,
+.overlay-menu {
+  z-index: 1000;
+}
+.btn-ir-panel {
+  position: fixed;
+  top: 8px;
+  left: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 25px;  /* tamaño del ícono */
+  color: #f7f4f4;
+  padding: 10px 10px; /* menos espacio alrededor */
+  width: 50px;      /* ancho fijo */
+  height: 50px;     /* alto fijo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: color 0.2s ease;
+}
+
+.btn-ir-panel:hover {
+  color: #da1515; /* Cambia a rojo al pasar el mouse, por ejemplo */
+}
+
