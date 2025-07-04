@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import "../styles/Login.css";
+import "../Styles/Login.css";
 import { FaUser, FaLock } from "react-icons/fa";
 
 const Login = () => {
