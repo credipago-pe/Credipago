@@ -8,7 +8,8 @@ function App() {
     <>
       <RouterProvider router={router} />
 
-      {/* Contenedor de notificaciones tipo toast */}
+      {/* Contenedor de notificaciones tipo toast // trigger deploy
+ */} 
       <ToastContainer
         position="top-center"
         autoClose={3000}
