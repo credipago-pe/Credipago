@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
 import dayjs from "dayjs";
 import { FaSignOutAlt } from "react-icons/fa";
-import '../styles/ResumenDiario.css';
+import '../tyles/ResumenDiario.css';
 
 export default function ResumenDiario() {
   const { auth_id } = useParams();

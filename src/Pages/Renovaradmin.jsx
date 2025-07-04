@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from "../components/supabaseClient";
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from "react-router-dom";
-import "./../styles/RenovarCredito.css";
+import "./../Styles/RenovarCredito.css";
 
 const Renovaradmin = () => {
   const location = useLocation();

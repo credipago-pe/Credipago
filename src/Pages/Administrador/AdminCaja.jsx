@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";  // agrego useNavigate para el botón de volver
 import { supabase } from "../../components/supabaseClient";
-import "../../styles/AdminCaja.css";
+import "../../Styles/AdminCaja.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaSignOutAlt } from "react-icons/fa";

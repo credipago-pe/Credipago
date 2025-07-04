@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
 import { FaWhatsapp,FaMapMarkedAlt,} from "react-icons/fa";
 import { ArrowLeft, User, Phone, MessageCircle, Send, CreditCard, DollarSign, Clock, History, MapPin,FileText, Calendar, Star } from "lucide-react";
-import "../styles/ClienteDetalle.css";
+import "../Styles/ClienteDetalle.css";
 
 const ClienteDetalle = () => {
   const { id } = useParams();

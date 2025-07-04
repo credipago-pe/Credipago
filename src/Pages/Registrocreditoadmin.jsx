@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../components/supabaseClient"; // Asegúrate de importar Supabaseimport { useNavigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import "../styles/FormularioCredito.css";
+import "../Styles/FormularioCredito.css";
 
 const RegistroCreditoadmin = () => {
   const [ultimoCliente, setUltimoCliente] = useState(null);

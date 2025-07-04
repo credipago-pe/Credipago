@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "../components/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaPhone, FaMapMarkerAlt, FaIdCard, FaInfoCircle, FaCopy } from "react-icons/fa";
-import "../styles/FormularioCliente.css";
+import "../Styles/FormularioCliente.css";
 
 const RegistroClienteadmin = () => {
   const navigate = useNavigate();

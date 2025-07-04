@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";  // Asegúrate de que esté correctamente configurado
-import "../styles/CobradorPanel.css";
+import "../Styles/CobradorPanel.css";
 import { CheckCircle } from "lucide-react";
 import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaChevronDown, FaFilter, FaMoneyBill, FaMoneyBillWave, FaInfoCircle, FaTimes, FaCaretDown, FaSignOutAlt } from "react-icons/fa";
 

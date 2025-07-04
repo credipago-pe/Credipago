@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../components/supabaseClient";
 import { Link } from "react-router-dom";
 import { Eye } from "lucide-react";
-import "../styles/Cancelados.css";
+import "../Styles/Cancelados.css";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 

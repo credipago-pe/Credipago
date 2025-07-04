@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../components/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import "../styles/FormularioCredito.css";
+import "../Styles/FormularioCredito.css";
 
 const RegistroCredito = () => {
   const [ultimoCliente, setUltimoCliente] = useState(null);
