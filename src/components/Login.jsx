@@ -93,11 +93,10 @@ const user = data?.user;
   return (
   <div>
     <div style={{ textAlign: "center", marginTop: "40px" }}>
-      <img src="/logo.png" alt="Logo Credipago" style={{ width: 140, marginBottom: 24 }} />
+      <img src="/logo.png" alt="Logo Credipago" style={{ width: 280, marginBottom: 48 }} />
     </div>
 
     <div className="login-container">
-      <img src="/logo.png" alt="Logo Credipago" style={{ width: 120, marginBottom: 16 }} />
       <h2>Bienvenido a CrediPago</h2>
       {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleSubmit}>
