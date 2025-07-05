@@ -114,7 +114,7 @@ const user = data?.user;
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <button type="submit">Ingresar</button>
+        <button type="submit" className="login-button">Ingresar</button>
       </form>
     </div>
   );

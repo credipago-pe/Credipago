@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"; 
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import { FaWhatsapp,FaMapMarkedAlt,} from "react-icons/fa";
+import { FaWhatsapp,FaSignOutAlt,FaMapMarkedAlt,} from "react-icons/fa";
 import { ArrowLeft, User, Phone, MessageCircle, Send, CreditCard, DollarSign, Clock, History, MapPin,FileText, Calendar, Star } from "lucide-react";
 import "../Styles/ClienteDetalle.css";
 
@@ -95,47 +95,48 @@ const ClienteDetalle = () => {
   return (
   <div className="cliente-detalle ampliado">
 
-    {/* Contenedor fijo para cabecera y botones */}
-    <div className="fixed-header-container">
-      {/* Botón de regreso */}
-      <button className="botonD-regresar" onClick={() => navigate(-1)}>
-        <ArrowLeft className="icono" /> Volver
-      </button>
-
-      <div className="cliente-info">
-  {/* Cabecera del cliente y calificación en la misma fila */}
-  <div className="cliente-header">
-    {/* Nombre e ícono */}
-    <div className="info-cliente">
-      <User className="icono-cliente " onClick={() => setInfoVisible(true)} />
-      <h2 className="nombre cliente">{cliente.nombre}</h2>
+  {/* 🔹 Franja superior fija con volver y acciones */}
+  <div className="fixed-header-container">
+    
+    {/* Volver */}
+    <div className="barra-volver">
+            <button
+              onClick={() => navigate("/cobrador")}className="btn-ir-panel"title="Volver al Panel Admin">
+              <FaSignOutAlt />
+            </button>
     </div>
 
-    {/* Estrellas a la derecha */}
-    <div className="calificacion-caja">
-      <div className="calificacion">
-        {[...Array(5)].map((_, index) => (
-          <span
-            key={index}
-            className={`estrella ${index < calificacion ? 'seleccionada' : 'deseleccionada'}`}
-            onClick={() => manejarCalificacion(index + 1)}
-          >
-            ★
-          </span>
-        ))}
+    {/* Acciones de contacto */}
+    <div className="acciones-contacto">
+      <Phone
+        className="icono DC"
+        onClick={() => window.location.href = `tel:${cliente.telefono}`}
+      />
+      <MessageCircle
+        className="icono DC"
+        onClick={() => navigate(`/enviar-mensaje/${cliente.id}`)}
+      />
+      <FaWhatsapp
+        className="icono whatsapp"
+        onClick={() => window.open(`https://wa.me/${cliente.telefono}`, "_blank")}
+      />
+      <FaMapMarkedAlt
+        className="icono-ubicacion"
+        onClick={() =>
+          window.open(`https://www.google.com/maps/search/?api=1&query=${cliente.ubicacion}`, "_blank")
+        }
+      />
+    </div>
+
+  {/* 🔸 Información del cliente (nombre + estrellas) */}
+  <div className="cliente-info">
+    <div className="cliente-header">
+      <div className="info-cliente">
+        <User className="icono-cliente" onClick={() => setInfoVisible(true)} />
+        <h2 className="nombre cliente">{cliente.nombre}</h2>
       </div>
     </div>
   </div>
-
-
-        {/* Iconos de contacto */}
-<div className="acciones-contacto">
-  <Phone className="icono DC" onClick={() => window.location.href = `tel:${cliente.telefono}`} />
-  <MessageCircle className="icono DC" onClick={() => navigate(`/enviar-mensaje/${cliente.id}`)} />
-  <FaWhatsapp className="icono whatsapp" onClick={() => window.open(`https://wa.me/${cliente.telefono}`, "_blank")} />
-  <FaMapMarkedAlt className="icono-ubicacion"onClick={() => window.open (`https://www.google.com/maps/search/?api=1&query=${cliente.ubicacion}`,"_blank")}/>
-  </div>
-</div>
 
       <div className="credito-activo compacto ampliado">
   <h3>Crédito Activo</h3>
