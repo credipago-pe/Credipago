@@ -29,6 +29,7 @@ import Renovaradmin from './Pages/Renovaradmin';
 import AdminCaja from './Pages/Administrador/AdminCaja';
 import AdminMapa from "./Pages/AdminMapa";
 import ResumenDiario from "./Pages/ResumenDiario";
+import NotFound from "./Pages/NotFound"; // ← asegúrate de importar
 
 
 
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
   { path: "/admin/caja/:auth_id", element: <AdminCaja /> },
   { path: "/admin/mapa", element: <AdminMapa /> },
   { path: "/admin/resumen/:auth_id", element: <ResumenDiario /> },
+  { path: "*", element: <NotFound /> }, // ← esto captura cualquier ruta no definida
 
 
 
