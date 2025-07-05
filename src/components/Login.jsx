@@ -91,8 +91,13 @@ const user = data?.user;
   };
 
   return (
+  <div>
+    <div style={{ textAlign: "center", marginTop: "40px" }}>
+      <img src="/logo.png" alt="Logo Credipago" style={{ width: 140, marginBottom: 24 }} />
+    </div>
+
     <div className="login-container">
-      <img src="/logo.png" alt="CrediPago" className="login-logo" />
+      <img src="/logo.png" alt="Logo Credipago" style={{ width: 120, marginBottom: 16 }} />
       <h2>Bienvenido a CrediPago</h2>
       {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleSubmit}>
@@ -116,6 +121,7 @@ const user = data?.user;
         </div>
         <button type="submit">Ingresar</button>
       </form>
+    </div>
     </div>
   );
 };
