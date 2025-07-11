@@ -21,8 +21,9 @@ const Liquidacion = () => {
   }, [fechaInicio, fechaFin]);
 
   const obtenerDatos = async () => {
-    const desde = new Date(fechaInicio + 'T00:00:00');
-    const hasta = new Date(fechaFin + 'T23:59:59');
+    const inicio = new Date(fechaInicio); inicio.setHours(0, 0, 0, 0);
+    const fin = new Date(fechaFin); fin.setHours(23, 59, 59, 999);
+
 
     // PAGOS
     const { data: pagos } = await supabase
@@ -54,8 +55,8 @@ const Liquidacion = () => {
     const { data: gastosData } = await supabase
   .from('gastos')
   .select('*')
-  .gte('fecha', fechaInicio)
-  .lte('fecha', fechaFin);
+  .gte('fecha', desde.toISOString())
+  .lte('fecha', hasta.toISOString());
 
     const totalGastos = gastosData?.reduce((acc, g) => acc + Number(g.valor), 0) || 0;
     setGastos(totalGastos);

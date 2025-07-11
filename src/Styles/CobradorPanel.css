@@ -12,7 +12,7 @@
 /* Contenedor de la tabla con scroll vertical */
 .contenedorC-tabla {
   position: relative;
-  max-height: 100px; /* Ajusta según necesites */
+  max-height: 200px; /* Ajusta según necesites */
   overflow-y: auto; /* Scroll solo en la tabla */
   border: 1px solid #ddd;
   
