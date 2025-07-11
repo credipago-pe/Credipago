@@ -21,8 +21,8 @@ const Liquidacion = () => {
   }, [fechaInicio, fechaFin]);
 
   const obtenerDatos = async () => {
-    const inicio = new Date(fechaInicio); inicio.setHours(0, 0, 0, 0);
-    const fin = new Date(fechaFin); fin.setHours(23, 59, 59, 999);
+    const desde = new Date(fechaInicio); desde.setHours(0, 0, 0, 0);
+    const hasta = new Date(fechaFin); hasta.setHours(23, 59, 59, 999);
 
 
     // PAGOS
