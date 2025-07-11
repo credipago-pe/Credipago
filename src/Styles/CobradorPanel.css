@@ -2,10 +2,10 @@
 .panelC-container {
   display: flex;
   height: 100vh;
-  padding-top: -10px;
+  padding-top: 30px;
   max-height: 800px;
   margin-top: -36px;
-  max-width: 750px;
+  max-width: 450px;
 
 }
 
@@ -453,7 +453,7 @@
   padding: 15px 15px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   z-index: 999;
-  width: 230px;
+  width: 530px;
 }
 
 .menu-lista-dropdown {
@@ -518,14 +518,14 @@
   right: 0;
   background: rgba(255, 255, 255, 0.788);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  z-index: 9999;
+  z-index: 19999;
   padding: 1px 10px;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  max-height: 500vh; /* para que no ocupe toda la pantalla */
-  height: 970px;
+  max-height: 100vh; /* para que no ocupe toda la pantalla */
+  height: 19000px;
   overflow-y: auto;
   border-bottom: 1px solid #ccc;
 }
@@ -633,7 +633,7 @@
   display: flex;
   justify-content: space-between;
   width: 180%;
-  max-width: 600px;
+  max-width: 400px;
   gap: 20px;
 }
 

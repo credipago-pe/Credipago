@@ -11,8 +11,8 @@ body {
 
 /* Contenedor del login con efecto moderno */
 .login-container {
-  width: 90%;
-  max-width: 380px;
+  width: 100%;
+  max-width: 580px;
   padding: 30px;
   background: #fcfcfc;
   border-radius: 20px;
