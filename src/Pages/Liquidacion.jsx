@@ -5,8 +5,12 @@ import { FaMoneyBillWave, FaHandHoldingUsd, FaShoppingCart, FaPiggyBank, FaCashR
 import '../Styles/Liquidacion.css';
 
 const Liquidacion = () => {
-  const [fechaInicio, setFechaInicio] = useState(() => new Date().toLocaleDateString('en-CA'));
-  const [fechaFin, setFechaFin] = useState(() => new Date().toLocaleDateString('en-CA'));
+  const [fechaInicio, setFechaInicio] = useState(() =>
+    new Date().toLocaleDateString("en-CA")
+  );
+  const [fechaFin, setFechaFin] = useState(() =>
+    new Date().toLocaleDateString("en-CA")
+  );
   const [baseCaja, setBaseCaja] = useState("");
   const [totalEfectivo, setTotalEfectivo] = useState(0);
   const [totalDeposito, setTotalDeposito] = useState(0);
@@ -21,44 +25,63 @@ const Liquidacion = () => {
   }, [fechaInicio, fechaFin]);
 
   const obtenerDatos = async () => {
-    const desde = new Date(fechaInicio); desde.setHours(0, 0, 0, 0);
-    const hasta = new Date(fechaFin); hasta.setHours(23, 59, 59, 999);
-
+    const fechaInicioStr = fechaInicio; // formato YYYY-MM-DD
+    const fechaFinStr = fechaFin;
 
     // PAGOS
-    const { data: pagos } = await supabase
-      .from('pagos')
-      .select('*')
-      .gte('fecha_pago', desde.toISOString())
-      .lte('fecha_pago', hasta.toISOString());
+    const { data: pagos } = await supabase.from("pagos").select("*");
 
-    const efectivo = pagos?.filter(p => p.metodo_pago === 'efectivo').reduce((acc, p) => acc + Number(p.monto_pagado), 0) || 0;
-    const deposito = pagos?.filter(p => p.metodo_pago === 'deposito').reduce((acc, p) => acc + Number(p.monto_pagado), 0) || 0;
+    const pagosFiltrados =
+      pagos?.filter((p) => {
+        const fecha = p.fecha_pago?.split("T")[0];
+        return fecha >= fechaInicioStr && fecha <= fechaFinStr;
+      }) || [];
+
+    const efectivo = pagosFiltrados
+      .filter((p) => p.metodo_pago === "efectivo")
+      .reduce((acc, p) => acc + Number(p.monto_pagado), 0);
+
+    const deposito = pagosFiltrados
+      .filter((p) => p.metodo_pago === "deposito")
+      .reduce((acc, p) => acc + Number(p.monto_pagado), 0);
 
     setTotalEfectivo(efectivo);
     setTotalDeposito(deposito);
 
     // VENTAS
-    const { data: ventas } = await supabase
-      .from('creditos')
-      .select('*')
-      .gte('fecha_inicio', desde.toISOString())
-      .lte('fecha_inicio', hasta.toISOString());
+    const { data: ventas } = await supabase.from("creditos").select("*");
 
-    const ventasEf = ventas?.filter(c => c.metodo_pago === 'efectivo').reduce((acc, c) => acc + Number(c.monto), 0) || 0;
-    const ventasDp = ventas?.filter(c => c.metodo_pago === 'deposito').reduce((acc, c) => acc + Number(c.monto), 0) || 0;
+    const ventasFiltradas =
+      ventas?.filter((v) => {
+        const fecha = v.fecha_inicio?.split("T")[0];
+        return fecha >= fechaInicioStr && fecha <= fechaFinStr;
+      }) || [];
+
+    const ventasEf = ventasFiltradas
+      .filter((c) => c.metodo_pago === "efectivo")
+      .reduce((acc, c) => acc + Number(c.monto), 0);
+
+    const ventasDp = ventasFiltradas
+      .filter((c) => c.metodo_pago === "deposito")
+      .reduce((acc, c) => acc + Number(c.monto), 0);
 
     setVentasEfectivo(ventasEf);
     setVentasDeposito(ventasDp);
 
     // GASTOS
-    const { data: gastosData } = await supabase
-  .from('gastos')
-  .select('*')
-  .gte('fecha', desde.toISOString())
-  .lte('fecha', hasta.toISOString());
+    const { data: gastosData } = await supabase.from("gastos").select("*");
 
-    const totalGastos = gastosData?.reduce((acc, g) => acc + Number(g.valor), 0) || 0;
+    const gastosFiltrados =
+      gastosData?.filter((g) => {
+        const fecha = g.fecha?.split("T")[0];
+        return fecha >= fechaInicioStr && fecha <= fechaFinStr;
+      }) || [];
+
+    const totalGastos = gastosFiltrados.reduce(
+      (acc, g) => acc + Number(g.valor),
+      0
+    );
+
     setGastos(totalGastos);
   };
 
