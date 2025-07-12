@@ -1,32 +1,41 @@
 import { useState, useEffect } from "react"; 
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import { FaWhatsapp,FaSignOutAlt,FaMapMarkedAlt,} from "react-icons/fa";
-import { ArrowLeft, User, Phone, MessageCircle, Send, CreditCard, DollarSign, Clock, History, MapPin,FileText, Calendar, Star } from "lucide-react";
+import { FaWhatsapp, FaSignOutAlt, FaMoneyBillWave, FaMapMarkedAlt, FaTimes, FaMobileAlt } from "react-icons/fa";
+import {User, Phone, MessageCircle, Send, CreditCard, DollarSign,Clock, History, MapPin, FileText, Calendar
+} from "lucide-react";
 import "../Styles/ClienteDetalle.css";
 
 const ClienteDetalle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [usuario, setUsuario] = useState(null);
   const [cliente, setCliente] = useState(null);
   const [creditos, setCreditos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [saldo, setSaldo] = useState(null);
   const [infoVisible, setInfoVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
-  const [calificacion, setCalificacion] = useState(0); // Estado para la calificación
   const [loading, setLoading] = useState(true);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [modalPago, setModalPago] = useState(false);
+  const [montoPago, setMontoPago] = useState(0);
+  const [mensaje, setMensaje] = useState(null);
+
 
   useEffect(() => {
+    const obtenerUsuario = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (data?.user) {
+      setUsuario(data.user); // ← aquí debes tener el auth.uid()
+    }
+  };
+  obtenerUsuario();
+
     const fetchDatos = async () => {
       try {
         setLoading(true);
 
-        const manejarCalificacion = (nuevaCalificacion) => {
-          setCalificacion(nuevaCalificacion);
-        };
-
-        // Obtener cliente y créditos en paralelo
         const [clienteData, creditosData] = await Promise.all([
           supabase.from("clientes").select("*").eq("id", id).single(),
           supabase.from("creditos").select("*").eq("cliente_id", id),
@@ -38,14 +47,12 @@ const ClienteDetalle = () => {
         setCliente(clienteData.data);
         setCreditos(creditosData.data || []);
 
-        // Buscar crédito activo
-        const creditoActivo = creditosData.data.find((c) => c.estado === "Activo");
+        const creditoActivo = creditosData.data.find(c => c.estado === "Activo");
 
         if (creditoActivo) {
-          // Obtener pagos del crédito activo
           const { data: pagosData, error: pagosError } = await supabase
             .from("pagos")
-            .select("id, monto_pagado, saldo, fecha_pago, metodo_pago, credito_id")
+            .select("*")
             .eq("credito_id", creditoActivo.id)
             .order("fecha_pago", { ascending: false });
 
@@ -60,37 +67,68 @@ const ClienteDetalle = () => {
         setLoading(false);
       }
     };
+
     fetchDatos();
   }, [id]);
 
-  if (loading) return <p className="text-center text-gray-500">Cargando datos...</p>;
-  if (!cliente) return <p className="text-center text-gray-500">Cliente no encontrado.</p>;
+  const obtenerCreditoDelCliente = (clienteId) =>
+    creditos.find((c) => c.cliente_id === clienteId && c.estado === "Activo");
 
-  const creditoActivo = creditos.find((c) => c.estado === "Activo");
-  const creditosPasados = creditos.filter((c) => c.estado !== "Activo");
+  const abrirModalPago = (cliente) => {
+    const credito = obtenerCreditoDelCliente(cliente.id);
+    setMontoPago(credito?.valor_cuota || 0);
+    setClienteSeleccionado(cliente);
+    setModalPago(true);
+  };
 
-  const handleGuardarCliente = async () => {
-  const { error } = await supabase
-    .from("clientes")
-    .update({
-      nombre: cliente.nombre,
-      telefono: cliente.telefono,
-      direccion: cliente.direccion,
-      dni: cliente.dni,
-      ubicacion: cliente.ubicacion,
-      detalle: cliente.detalle,
-    })
-    .eq("id", cliente.id);
+  const cerrarModalPago = () => {
+    setModalPago(false);
+    setClienteSeleccionado(null);
+  };
 
-  if (error) {
-    alert("Error al guardar: " + error.message);
-  } else {
-    alert("Cliente actualizado con éxito.");
-    setInfoVisible(false);
-    // recargar si es necesario
-  }
+  const registrarPago = async (tipoPago) => {
+    if (!clienteSeleccionado) return;
 
-};
+    const credito = obtenerCreditoDelCliente(clienteSeleccionado.id);
+    if (!credito) {
+      alert("No se encontró un crédito para este cliente.");
+      return;
+    }
+
+    if (montoPago <= 0 || isNaN(montoPago)) {
+      alert("Ingrese un monto válido.");
+      return;
+    }
+
+    if (montoPago > credito.saldo) {
+      alert(`El monto ingresado excede el saldo pendiente (${credito.saldo}).`);
+      return;
+    }
+
+    const fechaPago = new Date(new Date().getTime() - 5 * 60 * 60 * 1000);
+    const fechaPagoFormatted = fechaPago.toISOString().slice(0, 19).replace("T", " ");
+
+    const { error } = await supabase.from("pagos").insert([{
+     credito_id: credito.id,
+      metodo_pago: tipoPago.toLowerCase(),
+      monto_pagado: Number(parseFloat(montoPago).toFixed(2)),
+      fecha_pago: fechaPagoFormatted,
+      usuario_id: usuario?.id,
+    }]);
+
+    if (error) {
+      alert("Error al registrar pago: " + error.message);
+    } else {
+      alert("Pago registrado con éxito.");
+      cerrarModalPago();
+    }
+  };
+
+  if (loading) return <p>Cargando datos...</p>;
+  if (!cliente) return <p>Cliente no encontrado.</p>;
+
+  const creditoActivo = creditos.find(c => c.estado === "Activo");
+
 
   return (
   <div className="cliente-detalle ampliado">
@@ -139,7 +177,15 @@ const ClienteDetalle = () => {
   </div>
 
       <div className="credito-activo compacto ampliado">
-  <h3>Crédito Activo</h3>
+
+  <div className="encabezado-credito">
+
+    <h3>Crédito Activo</h3>
+
+    <button className="botton-pago" onClick={() => abrirModalPago(cliente)}>
+      <FaMoneyBillWave /> Pago
+    </button>
+  </div>
 
   <div className="fila-detalles">
     <div className="detalle compacto">
@@ -299,11 +345,36 @@ const ClienteDetalle = () => {
     </div>
   </div>
 )}
+{/* Modal de Pago embebido */}
+      {modalPago && (
+        <div className="modal-pago">
+          <div className="modal-pagocontenido">
+            <button className="cerrar-modal" onClick={cerrarModalPago}><FaTimes /></button>
+            <h3>Registrar Pago</h3>
+            <p>Cliente: {clienteSeleccionado?.nombre}</p>
+            <label htmlFor="montoPago">Valor a Pagar:</label>
+            <input
+              id="montoPago"
+              type="number"
+              min="1"
+              placeholder="Ingrese monto"
+              value={montoPago || ''}
+              onChange={(e) => setMontoPago(e.target.value)}
+              className="input-pago"
+            />
+            <div className="botones-pago">
+              <button onClick={() => registrarPago("Efectivo")} className="btn-pago efectivo">
+                <FaMoneyBillWave className="icono" /> Efectivo
+              </button>
+              <button onClick={() => registrarPago("Deposito")} className="btn-pago yape">
+                <FaMobileAlt className="icono" /> Yape
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
-  </div>
-);
-
-  };
-  
-  export default ClienteDetalle;
-  
+export default ClienteDetalle;

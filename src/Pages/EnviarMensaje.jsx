@@ -74,7 +74,7 @@ export default function EnviarMensaje() {
     const nombre = cliente.nombre;
     const saldo = credito.saldo?.toFixed(2) ?? "0.00";
     const valorCuota = credito.valor_cuota?.toFixed(2) ?? "0.00";
-    const cuotasPendientes = credito.cuotas - (pagos?.length || 0);
+    const cuotasPendientes = Math.ceil(credito.saldo / credito.valor_cuota);
     const fechaVencimiento = dayjs(credito.fecha_vencimiento).format("DD/MM/YYYY");
    
     if (tipo === "recordatorio") {
