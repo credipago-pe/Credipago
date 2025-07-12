@@ -136,7 +136,7 @@ Monto del crédito:  $${montoCredito}
 Saldo anterior:     $${saldoAnterior}
 Pago realizado:     $${Number(ultimoPago.monto_pagado).toFixed(2)}
 Saldo actual:       $${saldoActual}
-Cuotas restantes:   ${cuotasRestantes}
+Cuotas restantes:   ${cuotasPendientes}
 Método de pago:     ${ultimoPago.metodo_pago.toUpperCase()}
 ----------------------------------------
 ¡Gracias por su pago puntual!`);
