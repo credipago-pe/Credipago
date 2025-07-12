@@ -21,6 +21,8 @@ const ClienteDetalle = () => {
   const [modalPago, setModalPago] = useState(false);
   const [montoPago, setMontoPago] = useState(0);
   const [mensaje, setMensaje] = useState(null);
+  const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
+
 
 
   useEffect(() => {

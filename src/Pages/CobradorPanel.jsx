@@ -24,6 +24,10 @@ const CobradorPanel = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [clientesConPagoHoy, setClientesConPagoHoy] = useState([]);
   const [soloPagadosHoy, setSoloPagadosHoy] = useState(false);
+  const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
+  const [clienteParaRecibo, setClienteParaRecibo] = useState(null);
+
+
   
   const mostrarToast = () => {
     setMensajeExito("¡Pago registrado con éxito!");
@@ -255,8 +259,14 @@ useEffect(() => {
           c.id === credito.id ? { ...c, saldo: c.saldo - montoPago } : c
         )
       );
-      setTimeout(() => setMensaje(null), 3000);
+      setTimeout(() => setMensaje(null), 1000);
+      setClienteParaRecibo(clienteSeleccionado);
       cerrarModalPago();
+      setTimeout(() => {
+        setMensaje(null);
+        // 👉 Mostrar confirmación de envío
+        setMostrarConfirmacionRecibo(true);
+      }, 2000);
     }
   } catch (err) {
     console.error("❌ Error inesperado:", err);
@@ -488,6 +498,33 @@ useEffect(() => {
             </div>
           </div>
         )}
+
+        {mostrarConfirmacionRecibo && (
+  <div className="modal">
+    <div className="modal-contenido">
+      <h3>¿Enviar recibo de pago?</h3>
+      <p>¿Deseas enviar el recibo de pago al cliente por WhatsApp?</p>
+      <div className="acciones">
+        <button
+          className="guardar"
+          onClick={() => {
+            setMostrarConfirmacionRecibo(false);
+            if (clienteSeleccionado) {
+              navigate(`/enviar-mensaje/${clienteParaRecibo.id}`);
+          }}}
+        >
+          Sí, enviar
+        </button>
+        <button
+          className="cerrar"
+          onClick={() => setMostrarConfirmacionRecibo(false)}
+        >
+          No, cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );
