@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";  // Asegúrate de que esté correctamente configurado
 import "../Styles/CobradorPanel.css";
+import { useRef } from "react";
 import { CheckCircle } from "lucide-react";
+import dayjs from "dayjs";
 import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaChevronDown, FaFilter, FaMoneyBill, FaMoneyBillWave, FaInfoCircle, FaTimes, FaCaretDown, FaSignOutAlt } from "react-icons/fa";
-
 
 
 const CobradorPanel = () => {
@@ -26,13 +27,36 @@ const CobradorPanel = () => {
   const [soloPagadosHoy, setSoloPagadosHoy] = useState(false);
   const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
   const [clienteParaRecibo, setClienteParaRecibo] = useState(null);
-
+  const mensajeRef = useRef(null);
 
   
   const mostrarToast = () => {
     setMensajeExito("¡Pago registrado con éxito!");
     setTimeout(() => setMensajeExito(""), 3000); // desaparece a los 3s
   };
+
+    const enviarReciboPorWhatsApp = () => {
+  const currentMensaje = mensajeRef.current;
+  const currentCliente = clienteParaRecibo;
+
+  console.log("📦 clienteParaRecibo:", currentCliente);
+  console.log("📨 mensaje desde ref:", currentMensaje);
+
+  const numero = currentCliente?.telefono?.replace(/\D/g, "");
+  const texto = currentMensaje?.texto;
+
+  if (!numero || !texto) {
+    alert("Falta el número o el mensaje del recibo.");
+    return;
+  }
+
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+  window.open(url, "_blank");
+
+  setMostrarConfirmacionRecibo(false);
+  setMensaje(null);
+  mensajeRef.current = null;
+};
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
     const toggleSubmenuClientes = () => {
@@ -187,6 +211,8 @@ useEffect(() => {
         return 0;
       });
 
+      
+
     setClientesFiltrados(clientesFiltrados);
   }, [busqueda, filtro, clientes, creditos]);
 
@@ -252,27 +278,61 @@ useEffect(() => {
       console.error("❌ Error al registrar pago:", error);
       setMensaje({ tipo: "error", texto: "Error al registrar el pago." });
     } else {
-      setMensaje({ tipo: "pago-exito", texto: "Pago registrado correctamente !!!." });
-      setClientesConPagoHoy((prev) => [...new Set([...prev, clienteSeleccionado.id])]);
-      setCreditos((prevCreditos) =>
-        prevCreditos.map((c) =>
-          c.id === credito.id ? { ...c, saldo: c.saldo - montoPago } : c
-        )
-      );
-      setTimeout(() => setMensaje(null), 1000);
-      setClienteParaRecibo(clienteSeleccionado);
-      cerrarModalPago();
-      setTimeout(() => {
-        setMensaje(null);
-        // 👉 Mostrar confirmación de envío
-        setMostrarConfirmacionRecibo(true);
-      }, 2000);
+      cerrarModalPago(); // 🔸 Primero, cerramos el modal
+
+setTimeout(() => {
+  setMensaje({ tipo: "pago-exito", texto: "Pago registrado correctamente." })});
+
+setClientesConPagoHoy((prev) => [...new Set([...prev, clienteSeleccionado.id])]);
+setCreditos((prevCreditos) =>
+  prevCreditos.map((c) =>
+    c.id === credito.id ? { ...c, saldo: c.saldo - montoPago } : c
+  )
+);
+
+// 👇 Generar mensaje del recibo
+const montoCredito = Number(credito.monto).toFixed(2);
+const saldoAnterior = credito.saldo.toFixed(2);
+const saldoActual = (credito.saldo - montoPago).toFixed(2);
+const cuotasPendientes = Math.ceil((credito.saldo - montoPago) / credito.valor_cuota);
+const metodo = tipoPago.toUpperCase();
+const fechaPagoRecibo = dayjs(fechaPagoFormatted).format("DD/MM/YYYY");
+
+const mensajeRecibo = `            🧾 RECIBO DE PAGO            
+----------------------------------------
+Cliente: ${clienteSeleccionado.nombre}
+Crédito #: ${credito.id}
+Fecha:   ${fechaPagoRecibo}
+Monto del crédito:  $${montoCredito}
+----------------------------------------
+Saldo anterior:     $${saldoAnterior}
+Pago realizado:     $${Number(montoPago).toFixed(2)}
+Saldo actual:       $${saldoActual}
+Cuotas restantes:   ${cuotasPendientes}
+Método de pago:     ${metodo}
+----------------------------------------
+¡Gracias por su pago puntual!`;
+
+// 🧠 Guardar mensaje y cliente en refs/estado
+mensajeRef.current = { tipo: "recibo", texto: mensajeRecibo };
+setClienteParaRecibo(clienteSeleccionado);
+
+// ⏳ Esperar 1.5s y luego cerrar modal y mostrar confirmación
+setTimeout(() => {
+  setMensaje(null); // Oculta toast
+  setMostrarConfirmacionRecibo(true); // Muestra confirmación
+}, 1500);
+
+
+
+
     }
   } catch (err) {
     console.error("❌ Error inesperado:", err);
     setMensaje({ tipo: "error", texto: "Ocurrió un error inesperado." });
   }
 };
+
 
  const logout = async () => {
   const { error } = await supabase.auth.signOut();
@@ -325,6 +385,14 @@ useEffect(() => {
     if (watchId !== undefined) navigator.geolocation.clearWatch(watchId);
   };
 }, [usuario]);
+
+useEffect(() => {
+  if (mensaje?.tipo === "recibo") {
+    console.log("✅ mensaje actualizado listo para mostrar:", mensaje);
+    setMostrarConfirmacionRecibo(true);
+  }
+}, [mensaje]);
+
 
 
   return (
@@ -500,26 +568,21 @@ useEffect(() => {
         )}
 
         {mostrarConfirmacionRecibo && (
-  <div className="modal">
-    <div className="modal-contenido">
+  <div className="modalRecibo">
+    <div className="modalRecibo-contenido">
       <h3>¿Enviar recibo de pago?</h3>
-      <p>¿Deseas enviar el recibo de pago al cliente por WhatsApp?</p>
-      <div className="acciones">
-        <button
-          className="guardar"
-          onClick={() => {
-            setMostrarConfirmacionRecibo(false);
-            if (clienteSeleccionado) {
-              navigate(`/enviar-mensaje/${clienteParaRecibo.id}`);
-          }}}
-        >
-          Sí, enviar
-        </button>
+  
+      <p>Nombre: {clienteParaRecibo?.nombre}</p>
+      <p>Telefono: {clienteParaRecibo?.telefono}</p>
+      <div className="seleccion">
+    
+        <button className="confirmar" onClick={enviarReciboPorWhatsApp}>
+  Sí, enviar
+</button>
+
         <button
           className="cerrar"
-          onClick={() => setMostrarConfirmacionRecibo(false)}
-        >
-          No, cerrar
+          onClick={() => setMostrarConfirmacionRecibo(false)}>No, cerrar
         </button>
       </div>
     </div>

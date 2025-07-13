@@ -770,3 +770,85 @@
   color: #da1515; /* Cambia a rojo al pasar el mouse, por ejemplo */
 }
 
+.modalRecibo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+}
+
+.modalRecibo-contenido {
+  background: linear-gradient(145deg, #ffffff, #e6e6e6);
+  padding: 30px 40px;
+  border-radius: 20px;
+  box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.2),
+              -5px -5px 15px rgba(255, 255, 255, 0.8);
+  text-align: center;
+  transform: scale(1);
+  animation: pop-in 0.3s ease-out;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modalRecibo-contenido h3 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #7a1d1d;
+  
+}
+
+.modalRecibo-contenido p {
+  margin: 10px 0;
+  color: #555;
+}
+
+.seleccion {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.seleccion .confirmar,
+.seleccion .cerrar {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+}
+
+.seleccion .confirmar {
+  background: #4CAF50;
+  color: white;
+}
+
+.seleccion .cerrar {
+  background: #f44336;
+  color: white;
+}
+
+.seleccion button:hover {
+  transform: scale(1.05);
+  box-shadow: 5px 5px 12px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes pop-in {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
