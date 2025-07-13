@@ -115,17 +115,33 @@ const CobradorPanel = () => {
   }, []);
 
   useEffect(() => {
-    const fetchCreditos = async () => {
-      try {
-        const { data, error } = await supabase.from("creditos").select("*");
-        if (error) throw error;
-        setCreditos(data || []);
-      } catch (error) {
-        console.error("Error al obtener créditos:", error.message);
-      }
-    };
-    fetchCreditos();
-  }, []);
+  const fetchCreditos = async () => {
+    try {
+      const { data, error } = await supabase.from("creditos").select("*");
+      if (error) throw error;
+
+      const hoy = new Date();
+
+      const creditosConAtraso = data.map((credito) => {
+        const vencimiento = new Date(credito.fecha_vencimiento);
+        const diffMs = hoy - vencimiento;
+        const diasAtraso = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+
+        return {
+          ...credito,
+          dias_atraso: diasAtraso,
+        };
+      });
+
+      setCreditos(creditosConAtraso);
+    } catch (error) {
+      console.error("Error al obtener créditos:", error.message);
+    }
+  };
+
+  fetchCreditos();
+}, []);
+
 
   useEffect(() => {
   const obtenerPagosDeHoy = async () => {
@@ -194,27 +210,33 @@ useEffect(() => {
   }, []);
 
 
-  useEffect(() => {
-    const clientesFiltrados = clientes
-      .filter(cliente => {
-        const credito = obtenerCreditoDelCliente(cliente.id);
-        return credito && credito.saldo > 0; // Solo clientes con crédito activo
-      })
-      .filter(cliente =>
-        cliente.nombre.toLowerCase().includes(busqueda.toLowerCase())
-      )
-      .sort((a, b) => {
-        if (filtro === "nombre") return a.nombre.localeCompare(b.nombre);
-        if (filtro === "fecha_pago" && a.fecha_pago && b.fecha_pago) {
-          return new Date(a.fecha_pago) - new Date(b.fecha_pago);
-        }
-        return 0;
-      });
+useEffect(() => {
+  const clientesFiltrados = clientes
+    .filter(cliente => {
+      const credito = obtenerCreditoDelCliente(cliente.id);
+      return credito && credito.saldo > 0;
+    })
+    .filter(cliente =>
+      cliente.nombre.toLowerCase().includes(busqueda.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (filtro === "nombre") return a.nombre.localeCompare(b.nombre);
+      if (filtro === "fecha_pago" && a.fecha_pago && b.fecha_pago) {
+        return new Date(a.fecha_pago) - new Date(b.fecha_pago);
+      }
+      if (filtro === "color") {
+        const creditoA = obtenerCreditoDelCliente(a.id);
+        const creditoB = obtenerCreditoDelCliente(b.id);
+        const aPagado = clientesConPagoHoy.includes(creditoA?.id);
+        const bPagado = clientesConPagoHoy.includes(creditoB?.id);
+        return aPagado === bPagado ? 0 : aPagado ? -1 : 1; // pagados arriba
+      }
+      return 0;
+    });
 
-      
+  setClientesFiltrados(clientesFiltrados);
+}, [busqueda, filtro, clientes, creditos, clientesConPagoHoy]);
 
-    setClientesFiltrados(clientesFiltrados);
-  }, [busqueda, filtro, clientes, creditos]);
 
   const obtenerCreditoDelCliente = (clienteId) => {
     return creditos.find(credito => credito.cliente_id === clienteId && credito.estado !== "cancelado");
@@ -321,10 +343,7 @@ setClienteParaRecibo(clienteSeleccionado);
 setTimeout(() => {
   setMensaje(null); // Oculta toast
   setMostrarConfirmacionRecibo(true); // Muestra confirmación
-}, 1500);
-
-
-
+}, 700);
 
     }
   } catch (err) {
@@ -480,9 +499,21 @@ useEffect(() => {
           </div>
   
           <div className="filtro">
-            <button className="filtro-btn" onClick={() => setFiltro(filtro === "nombre" ? "fecha_pago" : "nombre")}>
-              <FaFilter /> {filtro === "nombre" ? "Ordenar por ID" : "Ordenar por Nombre"}
-            </button>
+           <button
+  className="filtro-btn"
+  onClick={() =>
+    setFiltro(filtro === "nombre" ? "fecha_pago" : filtro === "fecha_pago" ? "color" : "nombre")
+  }
+>
+  <FaFilter /> {
+    filtro === "nombre"
+      ? "Ordenar por ID"
+      : filtro === "fecha_pago"
+      ? "Ordenar por Color"
+      : "Ordenar por Nombre"
+  }
+</button>
+
           </div>
         </div>
   
@@ -510,11 +541,27 @@ useEffect(() => {
                       className={clientesConPagoHoy.includes(credito.id) ? "fila-pagada" : ""}
                     >
                       <td>{cliente.id}</td>
-                      <td>{cliente.nombre}</td>
                       <td>
-                       <div>{new Date(credito.fecha_inicio).toLocaleDateString()}</div>
-                       <div>{new Date(credito.fecha_vencimiento).toLocaleDateString()}</div>
-                     </td>
+                        <div>{cliente.nombre}</div>
+                        </td>
+                    
+                     <td>
+  <div>{new Date(credito.fecha_inicio).toLocaleDateString()}</div>
+  <div>{new Date(credito.fecha_vencimiento).toLocaleDateString()}</div>
+  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+    <span style={{ fontSize: "12px" }}>{credito.dias_atraso} días</span>
+    <span
+      className={`circulo ${
+        credito.dias_atraso === 0
+          ? "verde"
+          : credito.dias_atraso <= 3
+          ? "naranja"
+          : "rojo"
+      }`}
+    />
+  </div>
+</td>
+
                       <td>${credito.valor_cuota}</td>                
                       <td>${credito.saldo}</td>
                       <td>

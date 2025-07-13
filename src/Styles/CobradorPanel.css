@@ -223,6 +223,25 @@
 .tablaC-cobros tbody tr:hover {
   background: #f5f5f5;
 }
+.circulo {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.verde {
+  background-color: #2ecc71;
+}
+
+.naranja {
+  background-color: #f39c12;
+}
+
+.rojo {
+  background-color: #e74c3c;
+}
+
 
 /* Botones pagar y detalle */
 .btn-pagar {
@@ -273,6 +292,32 @@
   transform: translateY(-1px);
   color: #fff;
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+.btnatrazo {
+  border: none;
+  padding: 4px 4px;
+  margin: 1px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;       /* Centra verticalmente */
+  justify-content: center;   /* Centra horizontalmente */
+  text-align: center;
+  gap: 6px;
+  background: linear-gradient(to bottom, #f30404, #ee0404) !important;
+  color: #f7f4f4;
+  font-size: 12px;
+  max-width: 35px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+.btnatrazo:hover {
+  background: linear-gradient(to bottom, #f50404, #fa0303);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25);
 }
 
 /* Modal de pago */
