@@ -114,22 +114,59 @@ const CobradorPanel = () => {
     fetchClientes();
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
   const fetchCreditos = async () => {
     try {
-      const { data, error } = await supabase.from("creditos").select("*");
-      if (error) throw error;
-
       const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
 
-      const creditosConAtraso = data.map((credito) => {
-        const vencimiento = new Date(credito.fecha_vencimiento);
-        const diffMs = hoy - vencimiento;
-        const diasAtraso = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+      const { data: creditos, error: errorCreditos } = await supabase
+        .from("creditos")
+        .select("*");
+
+      if (errorCreditos) throw errorCreditos;
+
+      const { data: pagos, error: errorPagos } = await supabase
+        .from("pagos")
+        .select("credito_id, fecha_pago,monto_pagado");
+
+      if (errorPagos) throw errorPagos;
+
+      const creditosConAtraso = creditos.map((credito) => {
+        if (!credito.fecha_inicio || !credito.valor_cuota) {
+          return { ...credito, dias_atraso: 0, estado_semaforo: "verde" };
+        }
+
+        const fechaInicio = new Date(credito.fecha_inicio);
+        const pagosCredito = pagos.filter(p => p.credito_id === credito.id);
+
+        // Calcular días hábiles desde fecha_inicio hasta hoy (excluye domingos)
+        let diasHabiles = 0;
+        let fechaIteracion = new Date(fechaInicio);
+
+        while (fechaIteracion <= hoy) {
+          const diaSemana = fechaIteracion.getDay(); // 0 = domingo
+          if (diaSemana !== 0) diasHabiles++;
+          fechaIteracion.setDate(fechaIteracion.getDate() + 1);
+        }
+
+        const montoEsperado = diasHabiles * credito.valor_cuota;
+
+        const montoPagado = pagosCredito.reduce((sum, p) => {
+          return sum + (p.monto_pagado || 0);
+        }, 0);
+
+        const diferencia = Math.max(0, montoEsperado - montoPagado);
+        const diasAtraso = Math.floor(diferencia / credito.valor_cuota);
+
+        
+        const estado_semaforo =
+          diasAtraso >= 24 ? "rojo" : diasAtraso > 8 ? "naranja" : "verde";
 
         return {
           ...credito,
           dias_atraso: diasAtraso,
+          estado_semaforo,
         };
       });
 
@@ -141,6 +178,7 @@ const CobradorPanel = () => {
 
   fetchCreditos();
 }, []);
+
 
 
   useEffect(() => {
@@ -550,15 +588,17 @@ useEffect(() => {
   <div>{new Date(credito.fecha_vencimiento).toLocaleDateString()}</div>
   <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
     <span style={{ fontSize: "12px" }}>{credito.dias_atraso} días</span>
-    <span
-      className={`circulo ${
-        credito.dias_atraso === 0
-          ? "verde"
-          : credito.dias_atraso <= 3
-          ? "naranja"
-          : "rojo"
-      }`}
-    />
+<span
+  className={`circulo ${
+    credito.dias_atraso === 0
+      ? "verde"
+      : credito.dias_atraso <= 8
+      ? "naranja"
+      : credito.dias_atraso < 24
+      ? "rojo"
+      : "rojo vencido"
+  }`}
+/>
   </div>
 </td>
 

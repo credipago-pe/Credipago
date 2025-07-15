@@ -24,8 +24,6 @@ const ClienteDetalle = () => {
   const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
   
 
-
-
   useEffect(() => {
     const obtenerUsuario = async () => {
     const { data, error } = await supabase.auth.getUser();
