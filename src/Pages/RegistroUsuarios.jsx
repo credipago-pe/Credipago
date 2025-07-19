@@ -14,6 +14,7 @@ export default function RegistroUsuarios() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [adminAccessToken, setAdminAccessToken] = useState(null); 
+  const [adminId, setAdminId] = useState(null); // ✅ NUEVO
   const navigate = useNavigate();
 
   // useEffect para obtener el token del admin al cargar el componente
@@ -73,7 +74,7 @@ export default function RegistroUsuarios() {
             email, // Ahora el email es el proporcionado por el usuario
             password,
             rol,
-            admin_id,
+             admin_id: adminId,
           }),
         }
       );

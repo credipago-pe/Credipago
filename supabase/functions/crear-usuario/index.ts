@@ -31,6 +31,7 @@ serve(async (req) => {
       data: user,
       error: authError,
     } = await supabaseAdmin.auth.getUser(token);
+    
 
     if (authError || !user || !user.user) {
       return new Response(
@@ -46,7 +47,7 @@ serve(async (req) => {
 
     // Datos recibidos
     const body = await req.json();
-   const { nombre, telefono, email, password, rol, admin_id } = body;
+    const { nombre, telefono, email, password, rol,} = body;
 
     if (!email || !password || !nombre) {
       return new Response(
