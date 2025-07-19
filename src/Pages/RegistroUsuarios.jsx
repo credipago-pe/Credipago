@@ -27,6 +27,7 @@ export default function RegistroUsuarios() {
         // navigate("/login"); 
       } else {
         setAdminAccessToken(session.access_token);
+         setAdminId(session.user.id);
         console.log("Admin Access Token obtenido:", session.access_token);
       }
     };
@@ -72,6 +73,7 @@ export default function RegistroUsuarios() {
             email, // Ahora el email es el proporcionado por el usuario
             password,
             rol,
+            admin_id,
           }),
         }
       );

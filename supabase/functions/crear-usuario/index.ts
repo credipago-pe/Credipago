@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // CORS headers
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // Cambiar a dominio específico en producción
+  "Access-Control-Allow-Origin": "https://credipago.vercel.app", // Cambiar a dominio específico en producción
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
   "Access-Control-Max-Age": "86400",
@@ -46,7 +46,7 @@ serve(async (req) => {
 
     // Datos recibidos
     const body = await req.json();
-    const { nombre, telefono, email, password, rol } = body;
+   const { nombre, telefono, email, password, rol, admin_id } = body;
 
     if (!email || !password || !nombre) {
       return new Response(
@@ -70,6 +70,7 @@ serve(async (req) => {
       });
     }
 
+    await supabaseAdmin.auth.admin.inviteUserByEmail(email);
     // Insertar datos en tabla usuarios
     const { error: insertError } = await supabaseAdmin.from("usuarios").insert({
       nombre,
@@ -77,6 +78,7 @@ serve(async (req) => {
       email,
       rol,
       auth_id: authData.user.id,
+      admin_id,
     });
 
     if (insertError) {
