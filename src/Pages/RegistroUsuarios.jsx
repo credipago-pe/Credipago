@@ -56,6 +56,7 @@ export default function RegistroUsuarios() {
     setError(null);
     setMensaje(null);
 
+    console.log("Token admin:", adminAccessToken);
     try {
       const response = await fetch(
         "https://bitjxwvxetvnddkjwyuw.functions.supabase.co/crear-usuario",
