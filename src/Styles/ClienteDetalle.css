@@ -31,12 +31,13 @@
 .fixed-header-container {
   position: fixed;
   top: 9px;
-  left: 3px;
+  left: 10px;
   right: 0;
   background: rgb(253, 253, 253);
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   padding: 10px 20px;
-  max-width: 415px;
+  max-width: 405px;
+  max-height: 290px;
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -156,7 +157,7 @@
 .scrollable-body {
   overflow-y: auto;
   max-height: calc(60vh - -100px);
-  margin-top: 215px;       /* separa del header fijo */
+  margin-top: 255px;       /* separa del header fijo */
   padding-top: 10px;      /* espacio interno superior */
   padding-left: 50px;
   padding-right: 50px;
@@ -326,17 +327,19 @@
 
  .acciones-contacto {
   display: flex;
+  position: center;
+  right: 50px;
+  bottom: 1;
   justify-content: center;
   align-items: center;
-  height: 45px;
+  height: 50px;
   width: 300px;
-  margin-left: 60px;
-  gap: 25px;
-  margin-top: -15px;
+  margin-left: 50px;
+  gap: 30px;
+  margin-top: -20px;
   background-color: #c1d3da;
   padding: 15px;
   border-radius: 12px;
-  
   box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.6);
   transition: transform 0.2s ease;
 }

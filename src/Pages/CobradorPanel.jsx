@@ -28,6 +28,9 @@ const CobradorPanel = () => {
   const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
   const [clienteParaRecibo, setClienteParaRecibo] = useState(null);
   const mensajeRef = useRef(null);
+  const authId = usuario?.id;
+
+
 
   
   const mostrarToast = () => {
@@ -98,6 +101,24 @@ const CobradorPanel = () => {
     authListener.subscription.unsubscribe();
   };
 }, [navigate]);
+
+useEffect(() => {
+  const obtenerResumen = async () => {
+    if (!usuario) return;
+
+    const { data, error } = await supabase.rpc("obtener_resumen_diario", {
+      uid: usuario.id, // uuid correcto del usuario logueado
+    });
+
+    if (error) {
+      console.error("Error al obtener resumen:", error);
+    } else {
+      setResumen(data);
+    }
+  };
+
+  obtenerResumen();
+}, [usuario]);
 
 
   useEffect(() => {
@@ -514,6 +535,7 @@ useEffect(() => {
             <Link to="/ventas" onClick={toggleMenu}>Ventas</Link>
             <Link to="/gastos" onClick={toggleMenu}>Gastos</Link>
             <Link to="/liquidacion" onClick={toggleMenu}>Liquidación</Link>
+            <Link to={`/admin/resumen/${authId}`} className="menu-link">Resumen</Link>
           </div>
         )}
       </div>
@@ -539,18 +561,16 @@ useEffect(() => {
           <div className="filtro">
            <button
   className="filtro-btn"
-  onClick={() =>
-    setFiltro(filtro === "nombre" ? "fecha_pago" : filtro === "fecha_pago" ? "color" : "nombre")
-  }
->
-  <FaFilter /> {
-    filtro === "nombre"
-      ? "Ordenar por ID"
-      : filtro === "fecha_pago"
-      ? "Ordenar por Color"
-      : "Ordenar por Nombre"
-  }
+  onClick={() =>setFiltro(filtro === "color" ? "nombre": filtro === "nombre"? "id": "color")}>
+
+  <FaFilter />{" "}
+  {filtro === "color"
+    ? "Ordenar por Nombre"
+    : filtro === "nombre"
+    ? "Ordenar por ID"
+    : "Ordenar por Color"}
 </button>
+
 
           </div>
         </div>
@@ -585,16 +605,25 @@ useEffect(() => {
                     
                      <td>
   <div>{new Date(credito.fecha_inicio).toLocaleDateString()}</div>
-  <div>{new Date(credito.fecha_vencimiento).toLocaleDateString()}</div>
+  <div style={{color:
+      new Date(credito.fecha_vencimiento).setHours(0, 0, 0, 0) <=
+      new Date().setHours(0, 0, 0, 0)
+        ? "red"
+        : "black",
+  }}
+>
+  {new Date(credito.fecha_vencimiento).toLocaleDateString()}
+</div>
+
   <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
     <span style={{ fontSize: "12px" }}>{credito.dias_atraso} días</span>
 <span
   className={`circulo ${
-    credito.dias_atraso === 0
+    credito.dias_atraso <= 5
       ? "verde"
-      : credito.dias_atraso <= 8
+      : credito.dias_atraso <= 15
       ? "naranja"
-      : credito.dias_atraso < 24
+      : credito.dias_atraso < 16
       ? "rojo"
       : "rojo vencido"
   }`}

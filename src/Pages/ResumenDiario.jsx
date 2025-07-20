@@ -74,10 +74,10 @@ export default function ResumenDiario() {
       <div className="header">
         <h2>Resumen Diario de Caja</h2>
       </div>
-       <button 
-              onClick={() => navigate("/admin")}className="btn-ir-panel"title="Volver al Panel Admi">
-              <FaSignOutAlt />
-            </button>
+       <button   onClick={() => navigate(-1)}  className="btn-ir-panel"         title="Volver">
+       <FaSignOutAlt />
+       </button>
+
 
       <div className="filtros">
         <div className="filtro-item">

@@ -187,7 +187,7 @@ Aún no registramos pagos en este crédito.`);
          <FaWhatsapp style={{ marginRight: "8px" }} />Enviar por WhatsApp
         </button>
 
-        <button onClick={() => navigate(-1)}>⬅ Volver</button>
+        <button onClick={() => navigate(-2)}>⬅ Volver</button>
       </div>
     </div>
   );

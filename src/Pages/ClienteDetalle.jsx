@@ -21,8 +21,60 @@ const ClienteDetalle = () => {
   const [modalPago, setModalPago] = useState(false);
   const [montoPago, setMontoPago] = useState(0);
   const [mensaje, setMensaje] = useState(null);
-  const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
-  
+  const [modalMulta, setModalMulta] = useState(false);
+  const [montoMulta, setMontoMulta] = useState("");
+  const [descripcionMulta, setDescripcionMulta] = useState("");
+  const [multas, setMultas] = useState([]);
+
+
+
+  const cargarDatos = async () => {
+  try {
+    setLoading(true);
+
+    const [clienteData, creditosData] = await Promise.all([
+      supabase.from("clientes").select("*").eq("id", id).single(),
+      supabase.from("creditos").select("*").eq("cliente_id", id),
+    ]);
+
+    if (clienteData.error) throw clienteData.error;
+    if (creditosData.error) throw creditosData.error;
+
+    setCliente(clienteData.data);
+    setCreditos(creditosData.data || []);
+
+    const creditoActivo = creditosData.data.find(c => c.estado === "Activo");
+
+    if (creditoActivo) {
+      const { data: pagosData, error: pagosError } = await supabase
+        .from("pagos")
+        .select("*")
+        .eq("credito_id", creditoActivo.id)
+        .order("fecha_pago", { ascending: false });
+
+      if (pagosError) throw pagosError;
+
+      setPagos(pagosData || []);
+      setSaldo(pagosData.length > 0 ? pagosData[0].saldo : creditoActivo.saldo);
+
+      const { data: multasData, error: multasError } = await supabase
+        .from("multas")
+        .select("*")
+        .eq("credito_id", creditoActivo.id)
+        .order("fecha", { ascending: false });
+
+      if (multasError) throw multasError;
+
+      setMultas(multasData || []);
+    }
+  } catch (error) {
+    console.error("Error al cargar datos:", error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+    
 
   useEffect(() => {
     const obtenerUsuario = async () => {
@@ -56,12 +108,23 @@ const ClienteDetalle = () => {
             .select("*")
             .eq("credito_id", creditoActivo.id)
             .order("fecha_pago", { ascending: false });
+            
 
           if (pagosError) throw pagosError;
 
           setPagos(pagosData || []);
           setSaldo(pagosData.length > 0 ? pagosData[0].saldo : creditoActivo.saldo);
         }
+    const { data: multasData, error: multasError } = await supabase
+          .from("multas")
+          .select("*")
+          .eq("credito_id", creditoActivo.id)
+          .order("fecha", { ascending: false });
+
+  if (multasError) throw multasError;
+
+  setMultas(multasData || []);
+
       } catch (error) {
         console.error("Error al obtener datos:", error.message);
       } finally {
@@ -125,6 +188,49 @@ const ClienteDetalle = () => {
     }
   };
 
+  const registrarMulta = async () => {
+  if (!montoMulta || isNaN(montoMulta)) {
+    alert("Ingresa un monto válido");
+    return;
+  }
+
+  try {
+    // 1. Insertar multa
+    const { error: multaError } = await supabase
+      .from("multas")
+      .insert([
+        {
+          cliente_id: cliente.id,
+          credito_id: creditoActivo.id,
+          monto: montoMulta,
+          descripcion: "Multa por atraso",
+          fecha: new Date(),
+          auth_id: localStorage.auth_id_cobrador_actual,
+        },
+      ]);
+
+    if (multaError) throw multaError;
+
+    // 2. Actualizar saldo del crédito
+    const nuevoSaldo = creditoActivo.saldo + montoMulta;
+
+    const { error: updateError } = await supabase
+      .from("creditos")
+      .update({ saldo: nuevoSaldo })
+      .eq("id", creditoActivo.id);
+
+    if (updateError) throw updateError;
+
+    alert("Multa registrada y saldo actualizado.");
+    setMontoMulta("");
+    setMostrarModalMulta(false);
+    cargarDatos(); // recarga pagos, multas, saldo, etc.
+  } catch (error) {
+    console.error("Error al registrar multa:", error.message);
+  }
+};
+
+
   if (loading) return <p>Cargando datos...</p>;
   if (!cliente) return <p>Cliente no encontrado.</p>;
 
@@ -183,6 +289,10 @@ const ClienteDetalle = () => {
 
     <h3>Crédito Activo</h3>
 
+    <button className="botton-pago" onClick={() => setModalMulta(true)}>
+  💸 Multa
+   </button>
+
     <button className="botton-pago" onClick={() => abrirModalPago(cliente)}>
       <FaMoneyBillWave /> Pago
     </button>
@@ -201,6 +311,10 @@ const ClienteDetalle = () => {
       <Clock className="iconoDC" />
       <p>Vence: {new Date(creditoActivo.fecha_vencimiento).toLocaleDateString()}</p>
     </div>
+    <div className="detalle compacto">
+  <DollarSign className="iconoDC" />
+  <p>Multas: ${multas.reduce((sum, m) => sum + m.monto, 0)}</p>
+</div>
   </div>
 </div>
 </div>
@@ -374,6 +488,87 @@ const ClienteDetalle = () => {
           </div>
         </div>
       )}
+      {modalMulta && (
+  <div className="modal-pago">
+    <div className="modal-pagocontenido">
+      <button className="cerrar-modal" onClick={() => setModalMulta(false)}><FaTimes /></button>
+      <h3>Registrar Multa</h3>
+      <p>Cliente: {cliente?.nombre}</p>
+
+      <label>Monto de la multa:</label>
+      <input
+        type="number"
+        min="1"
+        placeholder="Ej: 10"
+        value={montoMulta}
+        onChange={(e) => setMontoMulta(e.target.value)}
+        className="input-pago"
+      />
+
+      <label>Motivo / descripción:</label>
+      <textarea
+        placeholder="Ej: Incumplimiento, retraso, etc."
+        value={descripcionMulta}
+        onChange={(e) => setDescripcionMulta(e.target.value)}
+        className="input-pago"
+      />
+
+      <button
+  onClick={async () => {
+    if (!montoMulta || isNaN(montoMulta)) {
+      alert("Ingresa un monto válido");
+      return;
+    }
+
+    try {
+      const nuevoMonto = parseFloat(montoMulta);
+
+      // 1. Insertar la multa
+      const { data: usuarioData } = await supabase.auth.getUser();
+
+      const { error: multaError } = await supabase.from("multas").insert([
+        {
+          cliente_id: cliente.id,
+          credito_id: creditoActivo.id,
+          monto: nuevoMonto,
+          descripcion: descripcionMulta,
+          fecha: new Date(),
+          auth_id: usuarioData.user.id,
+        },
+      ]);
+
+      if (multaError) throw multaError;
+
+      // 2. Actualizar saldo del crédito
+      const nuevoSaldo = creditoActivo.saldo + nuevoMonto;
+      const { error: updateError } = await supabase
+        .from("creditos")
+        .update({ saldo: nuevoSaldo })
+        .eq("id", creditoActivo.id);
+
+      if (updateError) throw updateError;
+
+      alert("Multa registrada con éxito");
+
+      // 3. Reset UI y recarga
+      setModalMulta(false);
+      setMontoMulta("");
+      setDescripcionMulta("");
+      await cargarDatos(); // recarga toda la info
+
+    } catch (error) {
+      alert("Error al registrar la multa: " + error.message);
+    }
+  }}
+  className="btn-pago efectivo"
+>
+  Registrar Multa
+</button>
+
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
