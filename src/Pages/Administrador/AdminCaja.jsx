@@ -236,10 +236,10 @@ const AdminCaja = () => {
 };
 
 useEffect(() => {
-  if (auth_id) {
+  if (auth_id && caja) {
     obtenerTotalesExternos();
   }
-}, [auth_id]);
+}, [auth_id, caja]);
 
 
   useEffect(() => {

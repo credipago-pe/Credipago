@@ -432,7 +432,7 @@ useEffect(() => {
                         <button className="btn-pagar" onClick={() => abrirModalPago(cliente,)}>
                           <FaMoneyBillWave /> Pago
                         </button>
-                        <Link to={`/clientedetalle/${cliente.id}`} className="btn-detalle">
+                        <Link to={`/adminclientedetalle/${cliente.id}`} className="btn-detalle">
                           <FaEye size={16}/> Ver...
                         </Link>
                       </td>

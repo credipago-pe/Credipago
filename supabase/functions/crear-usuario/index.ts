@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 // CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://credipago.vercel.app", // Cambiar a dominio específico en producción
@@ -47,7 +46,8 @@ serve(async (req) => {
 
     // Datos recibidos
     const body = await req.json();
-    const { nombre, telefono, email, password, rol,} = body;
+    const { nombre, telefono, email, password, rol, admin_id } = body;
+
 
     if (!email || !password || !nombre) {
       return new Response(
@@ -71,16 +71,40 @@ serve(async (req) => {
       });
     }
 
-    await supabaseAdmin.auth.admin.inviteUserByEmail(email);
-    // Insertar datos en tabla usuarios
-    const { error: insertError } = await supabaseAdmin.from("usuarios").insert({
-      nombre,
-      telefono,
-      email,
-      rol,
-      auth_id: authData.user.id,
-      admin_id,
-    });
+  
+   let insertError = null;
+
+if (rol === "admin") {
+  // Insertar en tabla admin
+  const { error } = await supabaseAdmin.from("admin").insert({
+    nombre,
+    email,
+    auth_id: authData.user.id,
+  });
+
+  const { error: usuarioError } = await supabaseAdmin.from("usuarios").insert({
+    nombre,
+    telefono: telefono || "", // por si no hay teléfono al crear admin
+    email,
+    rol: "admin",
+    auth_id: authData.user.id,
+    admin_id: user.user.id, // quien lo creó
+  });
+  
+  insertError = error;
+} else {
+  // Insertar en tabla usuarios
+  const { error } = await supabaseAdmin.from("usuarios").insert({
+    nombre,
+    telefono,
+    email,
+    rol,
+    auth_id: authData.user.id,
+    admin_id: user.user.id,
+  });
+  insertError = error;
+}
+
 
     if (insertError) {
       return new Response(

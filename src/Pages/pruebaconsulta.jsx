@@ -5,6 +5,13 @@ const supabaseUrl = 'https://bitjxwvxetvnddkjwyuw.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpdGp4d3Z4ZXR2bmRka2p3eXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NDA4ODYsImV4cCI6MjA1NzMxNjg4Nn0.7ESXzg9pwJkl71Q2n1_6q5XLvSh7zbWAgYAqbAPq2nc';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+
+
+
+
+
+
+
 const pruebaconsulta = () => {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);

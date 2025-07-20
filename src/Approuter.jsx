@@ -29,6 +29,7 @@ import Renovaradmin from './Pages/Renovaradmin';
 import AdminCaja from './Pages/Administrador/AdminCaja';
 import AdminMapa from "./Pages/AdminMapa";
 import ResumenDiario from "./Pages/ResumenDiario";
+import Adminclientedetalle from "./Pages/Adminclientedetalle";
 import NotFound from "./Pages/NotFound"; // ← asegúrate de importar
 
 
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
   { path: "/admin", element: <AdminPanel /> },
   { path: "/cobrador", element: <CobradorPanel /> },
   { path: "/clientedetalle/:id", element: <ClienteDetalle /> },
+  { path: "/adminclientedetalle/:id", element: <Adminclientedetalle /> },
   { path: "/clientescancelados", element: <ClientesCancelados /> },
   { path: "/detallecancelados/:creditoId", element: <DetalleCancelados /> },
   { path: "/liquidacion", element: <Liquidacion /> },
