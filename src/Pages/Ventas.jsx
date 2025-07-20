@@ -27,7 +27,7 @@ const fetchVentas = async () => {
 
   const { data, error } = await supabase
     .from("creditos")
-    .select(`monto, interes, forma_pago, valor_cuota, cuotas, saldo, metodo_pago, fecha_inicio, clientes(nombre,usuario_id)`)
+    .select(`id,monto, interes, forma_pago, valor_cuota, cuotas, saldo, metodo_pago, fecha_inicio, clientes(nombre,usuario_id)`)
     .gte("fecha_inicio", desde)
     .lte("fecha_inicio", hasta)
     .order("fecha_inicio", { ascending: false });
@@ -68,6 +68,7 @@ const fetchVentas = async () => {
   <table className="tabla-ventas">
     <thead>
       <tr>
+        <th>id.</th>
         <th>Fecha</th>
         <th>Cliente</th>
         <th>Monto</th>
@@ -82,6 +83,7 @@ const fetchVentas = async () => {
     <tbody>
       {ventas.map((venta, index) => (
         <tr key={index}>
+           <td>{venta.id}</td>
           <td>{dayjs(venta.fecha_inicio).format("YYYY-MM-DD")}</td>
           <td>{venta.clientes?.nombre}</td>
           <td>${venta.monto.toFixed(2)}</td>

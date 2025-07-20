@@ -86,6 +86,7 @@ export default function Pagos() {
         <table className="tabla-pagos">
           <thead>
             <tr>
+              <th>id.</th>
               <th>Fecha</th>
               <th>Cliente</th>
               <th>Monto</th>
@@ -101,6 +102,7 @@ export default function Pagos() {
             ) : (
               pagos.map((pago) => (
                 <tr key={pago.id}>
+                  <td>{pago.id}</td>
                   <td>{dayjs(pago.fecha_pago).format("YYYY-MM-DD HH:mm")}</td>
                   <td>{pago.creditos?.clientes?.nombre || "Desconocido"}</td>
                   <td>${parseFloat(pago.monto_pagado).toFixed(2)}</td>

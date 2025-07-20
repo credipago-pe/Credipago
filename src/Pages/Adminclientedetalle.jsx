@@ -214,7 +214,7 @@ const ClienteDetalle = () => {
           <table>
             <thead>
               <tr>
-                <th>Crédito</th>
+                <th>Pago</th>
                 <th>Fecha</th>
                 <th>Monto</th>
                 <th>Método</th>
@@ -224,7 +224,7 @@ const ClienteDetalle = () => {
             <tbody>
               {pagos.map((pago) => (
                 <tr key={pago.id}>
-                  <td>{pago.credito_id}</td>
+                  <td>{pago.id}</td>
                   <td>{new Date(pago.fecha_pago).toLocaleDateString()}</td>
                   <td>${pago.monto_pagado}</td>
                   <td>{pago.metodo_pago}</td>
