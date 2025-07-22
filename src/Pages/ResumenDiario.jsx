@@ -42,6 +42,8 @@ export default function ResumenDiario() {
     acc.ventas += Number(row.ventas || 0);
     acc.gastos += Number(row.gastos || 0);
     acc.salida_efectivo += Number(row.salida_efectivo || 0);
+     acc.interes_cobrado += Number(row.interes_cobrado || 0); // 👈 agregar esto
+    acc.ganancia_neta += Number(row.ganancia_neta || 0);     // 👈 y esto también
 
     // Solo tomar el valor del último registro
     if (idx === resumen.length - 1) {
@@ -61,6 +63,8 @@ export default function ResumenDiario() {
     salida_efectivo: 0,
     caja_dia: 0,
     total_cartera: 0,
+    interes_cobrado: 0, // 👈 inicializar aquí también
+    ganancia_neta: 0,   // 👈 y aquí
   }
 );
 
@@ -116,6 +120,9 @@ export default function ResumenDiario() {
               <th>Caja Anterior</th>
               <th>Entrada Efectivo</th>
               <th>Salida Efectivo</th>
+              <th>Interés Cobrado</th>
+              <th>Ganancia Neta</th>
+
             </tr>
           </thead>
           <tbody>
@@ -130,6 +137,9 @@ export default function ResumenDiario() {
                 <td>{row.caja_dia_anterior}</td>
                 <td>{row.entrada_efectivo}</td>
                 <td>{row.salida_efectivo}</td>
+                <td>{row.interes_cobrado}</td>
+                <td>{row.ganancia_neta}</td>
+
               </tr>
             ))}
             {resumen.length > 0 && (
@@ -143,6 +153,8 @@ export default function ResumenDiario() {
                 <td>{totales.caja_dia_anterior}</td>
                 <td>{totales.entrada_efectivo}</td>
                 <td>{totales.salida_efectivo}</td>
+                <td>{totales.interes_cobrado}</td>
+                <td>{totales.ganancia_neta}</td>
               </tr>
             )}
           </tbody>
