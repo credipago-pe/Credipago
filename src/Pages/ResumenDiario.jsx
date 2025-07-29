@@ -42,7 +42,7 @@ export default function ResumenDiario() {
     acc.ventas += Number(row.ventas || 0);
     acc.gastos += Number(row.gastos || 0);
     acc.salida_efectivo += Number(row.salida_efectivo || 0);
-     acc.interes_cobrado += Number(row.interes_cobrado || 0); // 👈 agregar esto
+    acc.interes_cobrado += Number(row.interes_cobrado || 0); // 👈 agregar esto
     acc.ganancia_neta += Number(row.ganancia_neta || 0);     // 👈 y esto también
 
     // Solo tomar el valor del último registro

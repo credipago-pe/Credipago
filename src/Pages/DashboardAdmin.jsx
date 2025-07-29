@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../components/supabaseClient";
 import {BarChart, Bar, XAxis, YAxis, Tooltip, Legend,ResponsiveContainer, CartesianGrid, LineChart, Line} from "recharts";
 import "../Styles/DashboardAdmin.css";
+import { Cell } from "recharts";
+
 
 export default function Dashboard() {
   const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -12,21 +14,55 @@ export default function Dashboard() {
   const [gananciasPorDia, setGananciasPorDia] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("todos");
-  
+  const [totalesResumen, setTotalesResumen] = useState([]);
+  const [resumenMensual, setResumenMensual] = useState([]);
+
 
   const toYMD = (isoString) => {
   return isoString.split("T")[0]; // ← sin new Date, sin zona horaria
 };
 
   useEffect(() => {
-    const fetchUsuarios = async () => {
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("auth_id, nombre");
-      if (!error) setUsuarios(data);
-    };
-    fetchUsuarios();
-  }, []);
+  const fetchUsuarios = async () => {
+    // Obtener usuario logueado
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.error("No hay sesión activa");
+      return;
+    }
+
+    // Buscar al admin en la tabla usuarios
+    const { data: adminData, error: adminError } = await supabase
+      .from("usuarios")
+      .select("auth_id")
+      .eq("auth_id", user.id)
+      .eq("rol", "admin")
+      .single();
+
+    if (adminError || !adminData) {
+      console.error("No se encontró el administrador.");
+      return;
+    }
+
+    const adminAuthId = adminData.auth_id;
+    localStorage.setItem("admin_auth_id", adminAuthId);
+
+    // Buscar usuarios (cobradores) de ese admin
+    const { data: cobradores, error: usuariosError } = await supabase
+      .from("usuarios")
+      .select("auth_id, nombre")
+      .eq("rol", "cobrador")
+      .eq("admin_id", adminAuthId);
+
+    if (usuariosError) {
+      console.error("Error al traer usuarios:", usuariosError.message);
+    } else {
+      setUsuarios(cobradores);
+    }
+  };
+
+  fetchUsuarios();
+}, []);
 
  useEffect(() => {
   if (!startDate || !endDate) return;
@@ -80,6 +116,19 @@ export default function Dashboard() {
       return acc;
     }, {});
 
+    // Calcular totales sumados
+const totalRecaudos = Object.values(mapRecaudos).reduce((a, b) => a + b, 0);
+const totalVentas = Object.values(mapVentas).reduce((a, b) => a + b, 0);
+const totalGastos = Object.values(mapGastos).reduce((a, b) => a + b, 0);
+
+// Guardar como resumen general
+setTotalesResumen([
+  { name: "Recaudos", Total: totalRecaudos },
+  { name: "Ventas", Total: totalVentas },
+  { name: "Gastos", Total: totalGastos },
+]);
+
+
     const fechas = Array.from(
       new Set([
         ...Object.keys(mapRecaudos),
@@ -104,16 +153,46 @@ export default function Dashboard() {
       }))
     );
 
-    setGananciasPorDia(
-      fechas.map((fecha) => ({
-        fecha,
-        Ganancia: (mapRecaudos[fecha] || 0) - (mapGastos[fecha] || 0),
-      }))
-    );
+   setGananciasPorDia(
+  fechas.map((fecha) => {
+    const recaudo = Number(mapRecaudos[fecha] || 0);
+    const gastos = Number(mapGastos[fecha] || 0);
+    const ganancia = recaudo > 0 ? ((recaudo)-(recaudo / 1.2)) - gastos : 0;
+
+    return {
+      fecha,
+      Ganancia: Number(ganancia.toFixed(2)),
+    };
+  })
+);
   };
 
   fetchData();
 }, [startDate, endDate, usuarioSeleccionado]);
+
+
+
+const obtenerResumenMensual = async () => {
+  const auth_id_admin = localStorage.getItem('auth_id_admin');
+  const auth_id_usuario = usuarioSeleccionado === 'todos' ? null : usuarioSeleccionado;
+
+  const { data, error } = await supabase.rpc('resumen_mensual_financiero', {
+  auth_id_input: idCobrador,
+});
+
+
+  if (error) {
+    console.error('Error al obtener resumen mensual:', error.message, error.details);
+  } else {
+    console.log("Resumen mensual recibido:", data);
+    setResumenMensual(data);
+  }
+};
+
+useEffect(() => {
+  obtenerResumenMensual();
+}, [usuarioSeleccionado]);
+
 
   return (
     <div className="dashboard-container">
@@ -150,63 +229,77 @@ export default function Dashboard() {
         </label>
       </div>
 
-      <div className="chart-wrapper">
-        <h3>📊 Recaudos vs Gastos</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            data={recaudosGastos}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="fecha" />
-            <YAxis />
-            <Tooltip formatter={(value) => `$ ${value.toFixed(2)}`} />
-            <Legend />
-            <Bar dataKey="Recaudos" fill="#8884d8" />
-            <Bar dataKey="Gastos" fill="#82ca9d" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+    
 
       <div className="chart-wrapper">
-        <h3>📈 Ventas vs Recaudos</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            data={ventasRecaudos}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="fecha" />
-            <YAxis />
-            <Tooltip formatter={(value) => `$ ${value.toFixed(2)}`} />
-            <Legend />
-            <Bar dataKey="Ventas" fill="#ffc658" />
-            <Bar dataKey="Recaudos" fill="#0088fe" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+  <h3>🧾 Resumen General</h3>
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart
+      data={totalesResumen}
+      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip formatter={(value) => `$ ${Number(value).toFixed(2)}`} />
+      <Legend />
+     <Bar dataKey="Total">
+  {totalesResumen.map((entry, index) => (
+    <Cell
+      key={`cell-${index}`}
+      fill={
+        entry.name === "Recaudos"
+          ? "#4CAF50" // Verde
+          : entry.name === "Ventas"
+          ? "#2196F3" // Azul
+          : "#F44336" // Rojo
+      }
+    />
+  ))}
+</Bar>
 
-      <div className="chart-wrapper">
-        <h3>💰 Ganancias por Día (Recaudo - Gasto)</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart
-            data={gananciasPorDia}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="fecha" />
-            <YAxis />
-            <Tooltip formatter={(value) => `$ ${value.toFixed(2)}`} />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="Ganancia"
-              stroke="#00C49F"
-              strokeWidth={3}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+    </BarChart>
+  </ResponsiveContainer>
+</div>
+
+      <h2 className="subtitulo-dashboard">Resumen Financiero Últimos 6 Meses</h2>
+
+<div className="tabla-resumen-mensual">
+  <table>
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th>Recaudo</th>
+        <th>Ventas s/interés</th>
+        <th>Ventas c/interés</th>
+        <th>Gastos</th>
+        <th>Ganancia</th>
+      </tr>
+    </thead>
+    <tbody>
+      {resumenMensual.map((fila) => (
+        <tr key={fila.mes}>
+          <td>{fila.mes}</td>
+          <td>S/ {Number(fila.recaudo).toFixed(2)}</td>
+          <td>S/ {Number(fila.ventas_sin_interes).toFixed(2)}</td>
+          <td>S/ {Number(fila.ventas_con_interes).toFixed(2)}</td>
+          <td>S/ {Number(fila.gastos).toFixed(2)}</td>
+          <td>S/ {Number(fila.ganancias).toFixed(2)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+  <BarChart width={600} height={250} data={resumenMensual}>
+  <XAxis dataKey="mes" />
+  <Tooltip />
+  <Legend />
+  <Bar dataKey="ganancias" fill="#4caf50" name="Ganancia" />
+  <Bar dataKey="recaudo" fill="#2196f3" name="Recaudo" />
+  <Bar dataKey="gastos" fill="#f44336" name="Gastos" />
+</BarChart>
+
+</div>
+
     </div>
   );
 }
