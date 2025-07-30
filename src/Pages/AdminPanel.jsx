@@ -18,6 +18,8 @@ export default function AdminPanel() {
   const [modalVisible, setModalVisible] = useState(false);
   const [usuarioAEliminar, setUsuarioAEliminar] = useState(null);
   const navigate = useNavigate();
+  const [cobradorSeleccionado, setCobradorSeleccionado] = useState(null);
+
   
 
   useEffect(() => {
@@ -195,8 +197,19 @@ export default function AdminPanel() {
 </thead>
 <tbody>
   {usuarios.map((u) => (
+     console.log(u), // ← agrega esto
     <tr key={u.id}>
-      <td>{u.nombre}</td>
+    <td className="cobrador-info-cell">
+  <span>{u.nombre}</span>
+  <span
+    className={`estado-cobrador ${u.conectado ? "verde" : "rojo"}`}
+    onClick={() => setCobradorSeleccionado(u)}
+    title="Ver detalles de conexión"
+  >
+    ●
+  </span>
+</td>
+
       <td>
         <div className="acciones-td">
           <button onClick={() => entrarComoRuta(u.auth_id)} className="admin-panel-btn-ver">
@@ -232,6 +245,19 @@ export default function AdminPanel() {
         onClose={() => setModalVisible(false)}
         onConfirm={confirmarConContraseña}
       />
+       {cobradorSeleccionado && (
+  <div className="modal-backdrop" onClick={() => setCobradorSeleccionado(null)}>
+    <div className="modalE" onClick={(e) => e.stopPropagation()}>
+      <h3 className="modal-titulo">🔍 Detalles de conexión</h3>
+      <p><strong>Equipo:</strong> {cobradorSeleccionado.equipo || "No disponible"}</p>
+      <p><strong>Hora de conexión:</strong> {cobradorSeleccionado.hora_conexion || "No disponible"}</p>
+      <p><strong>Ubicación:</strong> {cobradorSeleccionado.ubicacion || "No disponible"}</p>
+      <div className="modal-buttonsE">
+        <button onClick={() => setCobradorSeleccionado(null)}>Cerrar</button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
@@ -259,6 +285,8 @@ function ModalConfirmacion({ visible, onClose, onConfirm }) {
           <button onClick={onClose}>Cancelar</button>
         </div>
       </div>
+     
     </div>
+    
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../components/supabaseClient";
-import {BarChart, Bar, XAxis, YAxis, Tooltip, Legend,ResponsiveContainer, CartesianGrid, LineChart, Line} from "recharts";
+import {BarChart, Bar, XAxis, YAxis, Tooltip, Legend,ResponsiveContainer, CartesianGrid, LabelList, Line} from "recharts";
 import "../Styles/DashboardAdmin.css";
 import { Cell } from "recharts";
 
@@ -9,13 +9,11 @@ export default function Dashboard() {
   const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0];
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
-  const [recaudosGastos, setRecaudosGastos] = useState([]);
-  const [ventasRecaudos, setVentasRecaudos] = useState([]);
-  const [gananciasPorDia, setGananciasPorDia] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("todos");
   const [totalesResumen, setTotalesResumen] = useState([]);
-  const [resumenMensual, setResumenMensual] = useState([]);
+  const [recaudosGastos, setRecaudosGastos] = useState([]);
+
 
 
   const toYMD = (isoString) => {
@@ -65,133 +63,131 @@ export default function Dashboard() {
 }, []);
 
  useEffect(() => {
-  if (!startDate || !endDate) return;
+  if (!startDate || !endDate || !usuarios || usuarios.length === 0) return;
 
   const fetchData = async () => {
-    const filtrosUsuario = (query) => {
-      return usuarioSeleccionado !== "todos"
-        ? query.eq("usuario_id", usuarioSeleccionado)
-        : query;
-    };
+    try {
+      let listaIds = [];
 
-    const [{ data: pagos }, { data: gastos }, { data: creditos }] = await Promise.all([
-      filtrosUsuario(
-        supabase.from("pagos").select("fecha_pago, monto_pagado, usuario_id")
-      ),
-      filtrosUsuario(
-        supabase.from("gastos").select("fecha, valor, usuario_id")
-      ),
-      filtrosUsuario(
-        supabase.from("creditos").select("fecha_inicio, monto, usuario_id")
-      ),
-    ]);
+      if (usuarioSeleccionado === "todos") {
+        listaIds = usuarios.map((u) => u.auth_id);
+      } else {
+        listaIds = [usuarioSeleccionado];
+      }
 
-    const limpiarFecha = (iso) => iso.split("T")[0]; // Sin zona horaria
+      const [resPagos, resGastos, resCreditos] = await Promise.all([
+        supabase
+          .from("pagos")
+          .select("fecha_pago, monto_pagado, usuario_id")
+          .in("usuario_id", listaIds),
+        supabase
+          .from("gastos")
+          .select("fecha, valor, usuario_id")
+          .in("usuario_id", listaIds),
+        supabase
+          .from("creditos")
+          .select("fecha_inicio, monto, usuario_id")
+          .in("usuario_id", listaIds),
+      ]);
 
-    const filtrarPorFecha = (arr, campoFecha) =>
-      arr.filter((item) => {
-        const fecha = limpiarFecha(item[campoFecha]);
-        return fecha >= startDate && fecha <= endDate;
+      if (resPagos.error) console.error("Error en pagos:", resPagos.error.message);
+      if (resGastos.error) console.error("Error en gastos:", resGastos.error.message);
+      if (resCreditos.error) console.error("Error en créditos:", resCreditos.error.message);
+
+      const pagos = resPagos.data || [];
+      const gastos = resGastos.data || [];
+      const creditos = resCreditos.data || [];
+
+      const limpiarFecha = (iso) => iso.split("T")[0];
+
+      const filtrarPorFecha = (arr, campoFecha) =>
+        arr.filter((item) => {
+          const fecha = limpiarFecha(item[campoFecha]);
+          return fecha >= startDate && fecha <= endDate;
+        });
+
+      const pagosFiltrados = filtrarPorFecha(pagos, "fecha_pago");
+      const gastosFiltrados = filtrarPorFecha(gastos, "fecha");
+      const creditosFiltrados = filtrarPorFecha(creditos, "fecha_inicio");
+
+      const mapRecaudos = pagosFiltrados.reduce((acc, p) => {
+        const fecha = limpiarFecha(p.fecha_pago);
+        acc[fecha] = (acc[fecha] || 0) + Number(p.monto_pagado);
+        return acc;
+      }, {});
+
+      const mapGastos = gastosFiltrados.reduce((acc, g) => {
+        const fecha = limpiarFecha(g.fecha);
+        acc[fecha] = (acc[fecha] || 0) + Number(g.valor);
+        return acc;
+      }, {});
+
+      const mapVentas = creditosFiltrados.reduce((acc, c) => {
+        const fecha = limpiarFecha(c.fecha_inicio);
+        acc[fecha] = (acc[fecha] || 0) + Number(c.monto);
+        return acc;
+      }, {});
+
+      const totalRecaudos = Object.values(mapRecaudos).reduce((a, b) => a + b, 0);
+      const totalVentas = Object.values(mapVentas).reduce((a, b) => a + b, 0);
+      const totalGastos = Object.values(mapGastos).reduce((a, b) => a + b, 0);
+
+      console.log("Totales resumen:", {
+        totalRecaudos,
+        totalVentas,
+        totalGastos,
       });
 
-    const pagosFiltrados = filtrarPorFecha(pagos || [], "fecha_pago");
-    const gastosFiltrados = filtrarPorFecha(gastos || [], "fecha");
-    const creditosFiltrados = filtrarPorFecha(creditos || [], "fecha_inicio");
+      setTotalesResumen([
+        { name: "Recaudos", Total: totalRecaudos },
+        { name: "Ventas", Total: totalVentas },
+        { name: "Gastos", Total: totalGastos },
+      ]);
 
-    const mapRecaudos = pagosFiltrados.reduce((acc, p) => {
-      const fecha = limpiarFecha(p.fecha_pago);
-      acc[fecha] = (acc[fecha] || 0) + Number(p.monto_pagado);
-      return acc;
-    }, {});
+      const fechas = Array.from(
+        new Set([
+          ...Object.keys(mapRecaudos),
+          ...Object.keys(mapGastos),
+          ...Object.keys(mapVentas),
+        ])
+      ).sort();
 
-    const mapGastos = gastosFiltrados.reduce((acc, g) => {
-      const fecha = limpiarFecha(g.fecha);
-      acc[fecha] = (acc[fecha] || 0) + Number(g.valor);
-      return acc;
-    }, {});
+      setRecaudosGastos(
+        fechas.map((fecha) => ({
+          fecha,
+          Recaudos: mapRecaudos[fecha] || 0,
+          Gastos: mapGastos[fecha] || 0,
+        }))
+      );
 
-    const mapVentas = creditosFiltrados.reduce((acc, c) => {
-      const fecha = limpiarFecha(c.fecha_inicio);
-      acc[fecha] = (acc[fecha] || 0) + Number(c.monto);
-      return acc;
-    }, {});
+      setVentasRecaudos(
+        fechas.map((fecha) => ({
+          fecha,
+          Ventas: mapVentas[fecha] || 0,
+          Recaudos: mapRecaudos[fecha] || 0,
+        }))
+      );
 
-    // Calcular totales sumados
-const totalRecaudos = Object.values(mapRecaudos).reduce((a, b) => a + b, 0);
-const totalVentas = Object.values(mapVentas).reduce((a, b) => a + b, 0);
-const totalGastos = Object.values(mapGastos).reduce((a, b) => a + b, 0);
+      setGananciasPorDia(
+        fechas.map((fecha) => {
+          const recaudo = Number(mapRecaudos[fecha] || 0);
+          const gastos = Number(mapGastos[fecha] || 0);
+          const ganancia =
+            recaudo > 0 ? recaudo - recaudo / 1.2 - gastos : 0;
 
-// Guardar como resumen general
-setTotalesResumen([
-  { name: "Recaudos", Total: totalRecaudos },
-  { name: "Ventas", Total: totalVentas },
-  { name: "Gastos", Total: totalGastos },
-]);
-
-
-    const fechas = Array.from(
-      new Set([
-        ...Object.keys(mapRecaudos),
-        ...Object.keys(mapGastos),
-        ...Object.keys(mapVentas),
-      ])
-    ).sort();
-
-    setRecaudosGastos(
-      fechas.map((fecha) => ({
-        fecha,
-        Recaudos: mapRecaudos[fecha] || 0,
-        Gastos: mapGastos[fecha] || 0,
-      }))
-    );
-
-    setVentasRecaudos(
-      fechas.map((fecha) => ({
-        fecha,
-        Ventas: mapVentas[fecha] || 0,
-        Recaudos: mapRecaudos[fecha] || 0,
-      }))
-    );
-
-   setGananciasPorDia(
-  fechas.map((fecha) => {
-    const recaudo = Number(mapRecaudos[fecha] || 0);
-    const gastos = Number(mapGastos[fecha] || 0);
-    const ganancia = recaudo > 0 ? ((recaudo)-(recaudo / 1.2)) - gastos : 0;
-
-    return {
-      fecha,
-      Ganancia: Number(ganancia.toFixed(2)),
-    };
-  })
-);
+          return {
+            fecha,
+            Ganancia: Number(ganancia.toFixed(2)),
+          };
+        })
+      );
+    } catch (e) {
+      console.error("Error inesperado en fetchData:", e);
+    }
   };
 
   fetchData();
-}, [startDate, endDate, usuarioSeleccionado]);
-
-
-
-const obtenerResumenMensual = async () => {
-  const auth_id_admin = localStorage.getItem('auth_id_admin');
-  const auth_id_usuario = usuarioSeleccionado === 'todos' ? null : usuarioSeleccionado;
-
-  const { data, error } = await supabase.rpc('resumen_mensual_financiero', {
-  auth_id_input: idCobrador,
-});
-
-
-  if (error) {
-    console.error('Error al obtener resumen mensual:', error.message, error.details);
-  } else {
-    console.log("Resumen mensual recibido:", data);
-    setResumenMensual(data);
-  }
-};
-
-useEffect(() => {
-  obtenerResumenMensual();
-}, [usuarioSeleccionado]);
+}, [startDate, endDate, usuarioSeleccionado, usuarios]);
 
 
   return (
@@ -236,70 +232,49 @@ useEffect(() => {
   <ResponsiveContainer width="100%" height={300}>
     <BarChart
       data={totalesResumen}
-      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+      margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+      className="custom-bar-chart"
     >
+      <defs>
+        <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2196F3" stopOpacity={1} />
+          <stop offset="100%" stopColor="#64B5F6" stopOpacity={1} />
+        </linearGradient>
+        <linearGradient id="colorRecaudos" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#4CAF50" stopOpacity={1} />
+          <stop offset="100%" stopColor="#81C784" stopOpacity={1} />
+        </linearGradient>
+        <linearGradient id="colorGastos" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F44336" stopOpacity={1} />
+          <stop offset="100%" stopColor="#E57373" stopOpacity={1} />
+        </linearGradient>
+      </defs>
+
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis dataKey="name" />
       <YAxis />
-      <Tooltip formatter={(value) => `$ ${Number(value).toFixed(2)}`} />
+      <Tooltip formatter={(value) => `S/ ${Number(value).toFixed(2)}`} />
       <Legend />
-     <Bar dataKey="Total">
-  {totalesResumen.map((entry, index) => (
-    <Cell
-      key={`cell-${index}`}
-      fill={
-        entry.name === "Recaudos"
-          ? "#4CAF50" // Verde
-          : entry.name === "Ventas"
-          ? "#2196F3" // Azul
-          : "#F44336" // Rojo
-      }
-    />
-  ))}
-</Bar>
 
+      <Bar dataKey="Total" radius={[6, 6, 0, 0]}>
+        {totalesResumen.map((entry, index) => (
+          <Cell
+            key={`cell-${index}`}
+            fill={
+              entry.name === "Recaudos"
+                ? "url(#colorRecaudos)"
+                : entry.name === "Ventas"
+                ? "url(#colorVentas)"
+                : "url(#colorGastos)"
+            }
+          />
+        ))}
+        <LabelList dataKey="Total" position="top" formatter={(v) => `S/ ${v}`} />
+      </Bar>
     </BarChart>
   </ResponsiveContainer>
 </div>
 
-      <h2 className="subtitulo-dashboard">Resumen Financiero Últimos 6 Meses</h2>
-
-<div className="tabla-resumen-mensual">
-  <table>
-    <thead>
-      <tr>
-        <th>Mes</th>
-        <th>Recaudo</th>
-        <th>Ventas s/interés</th>
-        <th>Ventas c/interés</th>
-        <th>Gastos</th>
-        <th>Ganancia</th>
-      </tr>
-    </thead>
-    <tbody>
-      {resumenMensual.map((fila) => (
-        <tr key={fila.mes}>
-          <td>{fila.mes}</td>
-          <td>S/ {Number(fila.recaudo).toFixed(2)}</td>
-          <td>S/ {Number(fila.ventas_sin_interes).toFixed(2)}</td>
-          <td>S/ {Number(fila.ventas_con_interes).toFixed(2)}</td>
-          <td>S/ {Number(fila.gastos).toFixed(2)}</td>
-          <td>S/ {Number(fila.ganancias).toFixed(2)}</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-  <BarChart width={600} height={250} data={resumenMensual}>
-  <XAxis dataKey="mes" />
-  <Tooltip />
-  <Legend />
-  <Bar dataKey="ganancias" fill="#4caf50" name="Ganancia" />
-  <Bar dataKey="recaudo" fill="#2196f3" name="Recaudo" />
-  <Bar dataKey="gastos" fill="#f44336" name="Gastos" />
-</BarChart>
-
 </div>
-
-    </div>
   );
 }

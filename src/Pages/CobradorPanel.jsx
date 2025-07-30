@@ -102,6 +102,8 @@ const CobradorPanel = () => {
   };
 }, [navigate]);
 
+
+
 useEffect(() => {
   const obtenerResumen = async () => {
     if (!usuario) return;
@@ -437,6 +439,8 @@ useEffect(() => {
       latitud: lat,
       longitud: lon,
       ultima_actualizacion: new Date().toISOString(),
+      equipo: navigator.userAgent
+
     })
     .eq("auth_id", usuario.id); // 👈 cláusula obligatoria
 

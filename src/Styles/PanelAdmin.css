@@ -216,4 +216,20 @@
   font-size: 20px;
 }
 
+.estado-cobrador {
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 18px;
+}
+.estado-cobrador.verde {
+  color: green;
+}
+.estado-cobrador.rojo {
+  color: red;
+}
+.cobrador-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
