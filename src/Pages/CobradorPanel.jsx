@@ -9,10 +9,12 @@ import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaChevronDown
 
 
 const CobradorPanel = () => {
+  const [usuarioId, setUsuarioId] = useState(null);
   const [clientes, setClientes] = useState([]);
+  const [ordenClientes, setOrdenClientes] = useState([]);
   const [clientesFiltrados, setClientesFiltrados] = useState([]);
   const [busqueda, setBusqueda] = useState("");
-  const [filtro, setFiltro] = useState("nombre");
+  const [filtro, setFiltro] = useState("id");
   const [modalPago, setModalPago] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [montoPago, setMontoPago] = useState(0);
@@ -29,8 +31,6 @@ const CobradorPanel = () => {
   const [clienteParaRecibo, setClienteParaRecibo] = useState(null);
   const mensajeRef = useRef(null);
   const authId = usuario?.id;
-
-
 
   
   const mostrarToast = () => {
@@ -102,40 +102,60 @@ const CobradorPanel = () => {
   };
 }, [navigate]);
 
-
-
 useEffect(() => {
-  const obtenerResumen = async () => {
-    if (!usuario) return;
+    const fetchUsuario = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("❌ Error al obtener usuario:", error.message);
+        return;
+      }
+      setUsuarioId(data.user.id); // ← auth_id
+    };
 
-    const { data, error } = await supabase.rpc("obtener_resumen_diario", {
-      uid: usuario.id, // uuid correcto del usuario logueado
-    });
-
-    if (error) {
-      console.error("Error al obtener resumen:", error);
-    } else {
-      setResumen(data);
-    }
-  };
-
-  obtenerResumen();
-}, [usuario]);
+    fetchUsuario();
+  }, []);
 
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchClientes = async () => {
       try {
-        const { data, error } = await supabase.from("clientes").select("*");
-        if (error) throw error;
-        setClientes(data || []);
-        setClientesFiltrados(data || []);
+        const { data: clientesData, error: clientesError } = await supabase
+          .from("clientes")
+          .select("*")
+          .eq("usuario_id", usuarioId);
+
+        if (clientesError) throw clientesError;
+
+        const { data: ordenData, error: ordenError } = await supabase
+          .from("cobrador_cliente_orden")
+          .select("cliente_id, orden")
+          .eq("usuario_id", usuarioId);
+
+        if (ordenError) throw ordenError;
+
+        const ordenMap = new Map(
+          ordenData.map((item) => [item.cliente_id, item.orden])
+        );
+
+        const clientesConOrden = clientesData
+          .map((cliente, index) => ({
+            ...cliente,
+            orden: ordenMap.get(cliente.id) ?? index + 1000, // default alto si no tiene orden
+          }))
+          .sort((a, b) => a.orden - b.orden);
+
+        setClientes(clientesConOrden);
+        setOrdenClientes(clientesConOrden);
+        setClientesFiltrados(clientesConOrden);
       } catch (error) {
-        console.error("Error al obtener clientes:", error.message);
+        console.error("❌ Error al obtener clientes:", error.message);
       }
     };
-    fetchClientes();
-  }, []);
+
+    if (usuarioId) fetchClientes(); // solo si ya tenemos el usuario
+  }, [usuarioId]);
+
+
 
 useEffect(() => {
   const fetchCreditos = async () => {
@@ -270,34 +290,86 @@ useEffect(() => {
   checkUser();
   }, []);
 
+  const guardarOrdenEnSupabase = async () => {
+  if (!usuarioId || ordenClientes.length === 0) return;
+
+  const ordenes = ordenClientes.map((cliente) => ({
+    cliente_id: cliente.id,
+    usuario_id: usuarioId,
+    orden: cliente.orden,
+  }));
+
+  const { error } = await supabase
+    .from("cobrador_cliente_orden")
+    .upsert(ordenes, { onConflict: ['cliente_id', 'usuario_id'] });
+
+  if (error) {
+    console.error("❌ Error al guardar orden:", error.message);
+  } else {
+    console.log("✅ Orden guardada exitosamente");
+  }
+};
 
 useEffect(() => {
-  const clientesFiltrados = clientes
+  const filtrados = ordenClientes
     .filter(cliente => {
       const credito = obtenerCreditoDelCliente(cliente.id);
       return credito && credito.saldo > 0;
     })
-    .filter(cliente =>
-      cliente.nombre.toLowerCase().includes(busqueda.toLowerCase())
-    )
-    .sort((a, b) => {
+    .filter(cliente => {
+      const nombre = cliente.nombre?.toLowerCase() || "";
+      return nombre.includes(busqueda.toLowerCase());
+    })
+        .sort((a, b) => {
       if (filtro === "nombre") return a.nombre.localeCompare(b.nombre);
-      if (filtro === "fecha_pago" && a.fecha_pago && b.fecha_pago) {
-        return new Date(a.fecha_pago) - new Date(b.fecha_pago);
+      if (filtro === "fecha_pago") {
+        const creditoA = obtenerCreditoDelCliente(a.id);
+        const creditoB = obtenerCreditoDelCliente(b.id);
+        if (creditoA?.fecha_pago && creditoB?.fecha_pago) {
+          return new Date(creditoA.fecha_pago) - new Date(creditoB.fecha_pago);
+        }
       }
       if (filtro === "color") {
         const creditoA = obtenerCreditoDelCliente(a.id);
         const creditoB = obtenerCreditoDelCliente(b.id);
         const aPagado = clientesConPagoHoy.includes(creditoA?.id);
         const bPagado = clientesConPagoHoy.includes(creditoB?.id);
-        return aPagado === bPagado ? 0 : aPagado ? -1 : 1; // pagados arriba
+        return aPagado === bPagado ? 0 : aPagado ? -1 : 1;
       }
-      return 0;
+      return a.orden - b.orden; // fallback: mantener el orden actual
     });
 
-  setClientesFiltrados(clientesFiltrados);
-}, [busqueda, filtro, clientes, creditos, clientesConPagoHoy]);
+    console.log("Resultado filtrado:", filtrados.map(c => c.nombre));
 
+  setClientesFiltrados(filtrados);
+}, [busqueda, filtro, ordenClientes, creditos, clientesConPagoHoy]);
+
+const handleOrdenChange = (clienteId, nuevoOrden) => {
+  const nuevo = parseInt(nuevoOrden);
+  if (isNaN(nuevo) || nuevo < 1 || nuevo > ordenClientes.length) return;
+
+  const clienteActual = ordenClientes.find((c) => c.id === clienteId);
+  if (!clienteActual) return;
+
+  const sinCliente = ordenClientes.filter((c) => c.id !== clienteId);
+
+  sinCliente.splice(nuevo - 1, 0, clienteActual);
+
+  const actualizados = sinCliente.map((c, i) => ({
+    ...c,
+    orden: i + 1,
+  }));
+
+  setOrdenClientes(actualizados);
+  guardarOrdenEnSupabase(); // ⬅️ guarda en Supabase
+};
+
+
+const handleKeyDown = (e, clienteId, nuevoOrden) => {
+  if (e.key === "Enter") {
+    handleOrdenChange(clienteId, nuevoOrden);
+  }
+};
 
   const obtenerCreditoDelCliente = (clienteId) => {
     return creditos.find(credito => credito.cliente_id === clienteId && credito.estado !== "cancelado");
@@ -571,8 +643,8 @@ useEffect(() => {
   {filtro === "color"
     ? "Ordenar por Nombre"
     : filtro === "nombre"
-    ? "Ordenar por ID"
-    : "Ordenar por Color"}
+    ? "Ordenar por ruta"
+    : "Ordenar por pagados"}
 </button>
 
 
@@ -583,7 +655,7 @@ useEffect(() => {
           <table className="tablaC-cobros">
             <thead>
               <tr>
-                <th>ID Cte.</th>
+                <th>Pos.</th>
                 <th>Nombre Cliente</th>
                 <th>Fecha Inic-Venc.</th>
                 <th>Valor Cuota </th>
@@ -592,68 +664,80 @@ useEffect(() => {
               </tr>
             </thead>
             <tbody>
-              {clientesFiltrados.length > 0 ? (
-                clientesFiltrados.map((cliente) => {
-                  const credito = obtenerCreditoDelCliente(cliente.id); // Obtenemos el crédito asociado al cliente
-                  if (!credito) return null; // Si no hay crédito asociado, no mostramos nada
-  
-                  return (
-                    <tr 
-                      key={cliente.id}
-                      className={clientesConPagoHoy.includes(credito.id) ? "fila-pagada" : ""}
-                    >
-                      <td>{cliente.id}</td>
-                      <td>
-                        <div>{cliente.nombre}</div>
-                        </td>
-                    
-                     <td>
-  <div>{new Date(credito.fecha_inicio).toLocaleDateString()}</div>
-  <div style={{color:
-      new Date(credito.fecha_vencimiento).setHours(0, 0, 0, 0) <=
-      new Date().setHours(0, 0, 0, 0)
-        ? "red"
-        : "black",
-  }}
->
-  {new Date(credito.fecha_vencimiento).toLocaleDateString()}
-</div>
+  {clientesFiltrados.map((cliente) => {
+    const credito = obtenerCreditoDelCliente(cliente.id);
+    if (!credito) return null;
 
-  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
-    <span style={{ fontSize: "12px" }}>{credito.dias_atraso} días</span>
-<span
-  className={`circulo ${
-    credito.dias_atraso <= 5
-      ? "verde"
-      : credito.dias_atraso <= 15
-      ? "naranja"
-      : credito.dias_atraso < 16
-      ? "rojo"
-      : "rojo vencido"
-  }`}
-/>
-  </div>
-</td>
+    return (
+      <tr key={cliente.id} className={clientesConPagoHoy.includes(credito.id) ? "fila-pagada" : ""}>
+        <td>
+          <input
+            type="number"
+            className="input-orden"
+            value={cliente.orden}
+            onChange={(e) => {
+              const nuevoValor = e.target.value;
+              const copia = ordenClientes.map((c) =>
+                c.id === cliente.id ? { ...c, orden: nuevoValor } : c
+              );
+              setOrdenClientes(copia);
+            }}
+            onKeyDown={(e) => handleKeyDown(e, cliente.id, cliente.orden)}
+            
+          />
+        </td>
+        <td>{cliente.nombre}</td>
+        <td>
+          <div>{new Date(credito.fecha_inicio).toLocaleDateString()}</div>
+          <div
+            style={{
+              color:
+                new Date(credito.fecha_vencimiento).setHours(0, 0, 0, 0) <=
+                new Date().setHours(0, 0, 0, 0)
+                  ? "red"
+                  : "black",
+            }}
+          >
+            {new Date(credito.fecha_vencimiento).toLocaleDateString()}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              marginTop: "4px",
+            }}
+          >
+            <span style={{ fontSize: "12px" }}>{credito.dias_atraso} días</span>
+            <span
+              className={`circulo ${
+                credito.dias_atraso <= 5
+                  ? "verde"
+                  : credito.dias_atraso <= 15
+                  ? "naranja"
+                  : credito.dias_atraso < 16
+                  ? "rojo"
+                  : "rojo vencido"
+              }`}
+            />
+          </div>
+        </td>
+        <td>${credito.valor_cuota}</td>
+        <td>${credito.saldo}</td>
+        <td>
+          <button className="btn-pagar" onClick={() => abrirModalPago(cliente)}>
+            <FaMoneyBillWave /> Pago
+          </button>
+          <Link to={`/clientedetalle/${cliente.id}`} className="btn-detalle">
+            <FaEye size={16} /> Ver...
+          </Link>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
 
-                      <td>${credito.valor_cuota}</td>                
-                      <td>${credito.saldo}</td>
-                      <td>
-                        <button className="btn-pagar" onClick={() => abrirModalPago(cliente,)}>
-                          <FaMoneyBillWave /> Pago
-                        </button>
-                        <Link to={`/clientedetalle/${cliente.id}`} className="btn-detalle">
-                          <FaEye size={16}/> Ver...
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="7" className="text-center">No hay clientes disponibles.</td>
-                </tr>
-              )}
-            </tbody>
+
           </table>
         </div>
   

@@ -43,7 +43,7 @@
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 0.9rem;
-  width: 120px;
+  width: 140px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -79,16 +79,19 @@
   min-width: 620px;
 }
 
+
 .resumen-table thead th {
-  position: sticky;
-  top: 0;
-  background-color: #f0f2f5;
-  z-index: 10;
-  padding: 10px;
-  border-bottom: 1px solid #ccc;
-  color: #333;
-  font-weight: 600;
-  box-shadow: inset 0 -1px 0 #e0e0e0;
+  background: linear-gradient(to bottom, #e0e0e0, #c0c0c0);
+  color: #222;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 1px #ffffff83;
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-bottom: 2px solid #aaaaaa;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
 }
 
 .resumen-table td {
@@ -104,6 +107,6 @@
 
 .totales-row {
   font-weight: bold;
-  background: #ecf0f1;
-  border-top: 2px solid #bdc3c7;
+  background: #b3b8b9;
+  border-top: 2px solid #9da3a7;
 }
