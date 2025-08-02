@@ -127,20 +127,20 @@ export default function ResumenDiario() {
           </thead>
           <tbody>
             {resumen.map((row, idx) => (
-              <tr key={idx}>
-                <td>{row.fecha}</td>
-                <td>{row.ingresos}</td>
-                <td>{row.ventas}</td>
-                <td>{row.gastos}</td> 
-                <td>{row.caja_dia}</td>
-                <td>{row.total_cartera}</td>
-                <td>{row.caja_dia_anterior}</td>
-                <td>{row.entrada_efectivo}</td>
-                <td>{row.salida_efectivo}</td>
-                <td>{row.interes_cobrado}</td>
-                <td>{row.ganancia_neta}</td>
+             <tr key={idx}>
+  <td className="col-fecha">{row.fecha}</td>
+  <td className="col-ingresos">{row.ingresos}</td>
+  <td className="col-ventas">{row.ventas}</td>
+  <td className="col-gastos">{row.gastos}</td>
+  <td className="col-caja-dia">{row.caja_dia}</td>
+  <td className="col-cartera">{row.total_cartera}</td>
+  <td className="col-caja-anterior">{row.caja_dia_anterior}</td>
+  <td className="col-entrada">{row.entrada_efectivo}</td>
+  <td className="col-salida">{row.salida_efectivo}</td>
+  <td className="col-interes">{row.interes_cobrado}</td>
+  <td className="col-ganancia">{row.ganancia_neta}</td>
+</tr>
 
-              </tr>
             ))}
             {resumen.length > 0 && (
               <tr className="totales-row">

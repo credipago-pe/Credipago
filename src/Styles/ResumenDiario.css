@@ -109,4 +109,17 @@
   font-weight: bold;
   background: #b3b8b9;
   border-top: 2px solid #9da3a7;
+  
 }
+.col-fecha { background-color: #f0f8ff; }
+.col-ingresos { background-color: #d1ffd1; }
+.col-ventas { background-color: #fafcfc; }
+.col-gastos { background-color: #fafcfc; }
+.col-caja-dia { background-color: #d1ffd1; }
+.col-cartera { background-color: #ffe0b3; }
+.col-caja-anterior { background-color: #fafcfc; }
+.col-entrada { background-color: #fafcfc; }
+.col-salida { background-color: #fafcfc; }
+.col-interes { background-color: #f9e79f; }
+.col-ganancia { background-color: #d4efdf; }
+
