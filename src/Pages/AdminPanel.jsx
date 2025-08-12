@@ -225,10 +225,10 @@ export default function AdminPanel() {
     <FaMoneyBill /> Caja / Balance
   </button>
   <button onClick={() => navigate(`/registros-admin/${u.auth_id}`)} className="admin-panel-btn-gestion">
-    <FaTools /> Gestión de Registros
+    <FaTools /> Borrar Registros
   </button>
   <button onClick={() => navigate(`/admin/resumen/${u.auth_id}`)} className="admin-panel-btn-informe">
-    <FaCalendarDay /> Info. General
+    <FaCalendarDay /> Resum. General
   </button>
   
         </div>

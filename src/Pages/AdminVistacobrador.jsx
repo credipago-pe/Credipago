@@ -5,8 +5,7 @@ import "../Styles/CobradorPanel.css";
 import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaChevronDown, FaFilter, FaMoneyBill, FaMoneyBillWave, FaInfoCircle, FaTimes, FaCaretDown, FaSignOutAlt } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 
-
-const AdminVistacobrador = () => {
+export default function AdminVistacobrador() {
   const { id } = useParams();
   const [clientes, setClientes] = useState([]);
   const [clientesFiltrados, setClientesFiltrados] = useState([]);
@@ -22,184 +21,157 @@ const AdminVistacobrador = () => {
   const [submenuOficina, setSubmenuOficina] = useState(false);
   const [usuario, setUsuario] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [clientesConPagoHoy, setClientesConPagoHoy] = useState([]);
-  
+  const [clientesConPagoHoy, setClientesConPagoHoy] = useState([]); // guarda creditos IDs pagados hoy
+  const [pagosHoy, setPagosHoy] = useState([]); // guarda objetos de pago con monto_pagado
+
   const authIdRuta = localStorage.getItem("auth_id_cobrador_actual");
   const esVistaAdminRuta = !!localStorage.getItem("auth_id_cobrador_actual");
 
-
-
-  const mostrarToast = () => {
-    setMensajeExito("¡Pago registrado con éxito!");
-    setTimeout(() => setMensajeExito(""), 3000); // desaparece a los 3s
-  };
-
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-    const toggleSubmenuClientes = () => {
-  setSubmenuClientes((prev) => !prev);
-  setSubmenuOficina(false); // cerrar Oficina si abres Clientes
-};
-    const toggleSubmenuOficina = () => {
-  setSubmenuOficina((prev) => !prev);
-  setSubmenuClientes(false); // cerrar Clientes si abres Oficina
-};
-    const navigate = useNavigate();
-    const handleMenuToggle = () => setMenuOpen(!menuOpen);
+  const toggleSubmenuClientes = () => { setSubmenuClientes((prev) => !prev); setSubmenuOficina(false); };
+  const toggleSubmenuOficina = () => { setSubmenuOficina((prev) => !prev); setSubmenuClientes(false); };
+  const navigate = useNavigate();
+  const handleMenuToggle = () => setMenuOpen(!menuOpen);
 
   useEffect(() => {
-  const verificarSesion = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      setUsuario(session.user);
-    } else {
-      setUsuario(null);
-      navigate("/");
-    }
-  };
-
-
-  verificarSesion(); // Verifica al montar
-
-  const { data: authListener } = supabase.auth.onAuthStateChange(
-    (_event, session) => {
+    const verificarSesion = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUsuario(session.user);
       } else {
         setUsuario(null);
-        navigate("/admin");
+        navigate("/");
       }
-    }
-  );
+    };
 
-  return () => {
-    authListener.subscription.unsubscribe();
-  };
-}, [navigate]);
+    verificarSesion();
 
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          setUsuario(session.user);
+        } else {
+          setUsuario(null);
+          navigate("/admin");
+        }
+      }
+    );
+
+    return () => {
+      try { authListener.subscription.unsubscribe(); } catch (err) { /* noop */ }
+    };
+  }, [navigate]);
 
   useEffect(() => {
-  const fetchClientes = async () => {
-    try {
-      // Obtenemos authId tomando en cuenta la simulación del admin
-      const authId = authIdRuta;
+    const fetchClientes = async () => {
+      try {
+        const authId = authIdRuta;
+        const { data, error } = await supabase
+          .from("clientes")
+          .select("*")
+          .eq("usuario_id", authId);
 
-
-      // Traemos solo clientes de la ruta del usuario actual
-      const { data, error } = await supabase
-        .from("clientes")
-        .select("*")
-        .eq("usuario_id", authId);
-
-
-      if (error) throw error;
-      setClientes(data || []);
-      setClientesFiltrados(data || []);
-    } catch (error) {
-      console.error("Error al obtener clientes:", error.message);
-    }
-  };
-
-  if (authIdRuta) fetchClientes();
-}, [usuario]);
-
-useEffect(() => {
-  const fetchCreditos = async () => {
-    try {
-      const authId = localStorage.getItem("auth_id_cobrador_actual");
-      if (!authId) return;
-
-
-      // Traemos créditos solo de la ruta del usuario actual
-      // Suponiendo que en "creditos" también está "usuario_id" para filtrar
-      const { data, error } = await supabase
-        .from("creditos")
-        .select("*")
-        .eq("usuario_id", authId);
-
-      if (error) throw error;
-      setCreditos(data || []);
-    } catch (error) {
-      console.error("Error al obtener créditos:", error.message);
-    }
-  };
-
-  if (authIdRuta) fetchCreditos();
-}, [usuario]);
-
-useEffect(() => {
-  const obtenerPagosDeHoy = async () => {
-    try {
-      const authId = localStorage.getItem("auth_id_cobrador_actual");
-      if (!authId) return;
-
-
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const hoyUTC5 = new Date(hoy.getTime() - 5 * 60 * 60 * 1000);
-      const isoInicio = hoyUTC5.toISOString().slice(0, 10);
-
-      // Traemos solo pagos de créditos de la ruta actual
-      // Para eso, asumimos que en "pagos" no hay usuario_id, 
-      // entonces buscamos pagos cuyos créditos pertenecen a la ruta
-      // Lo más directo: traer pagos de créditos cuyo usuario_id es authId
-
-      // Traemos créditos para obtener IDs de créditos de la ruta:
-      const { data: creditosRuta, error: errorCreditos } = await supabase
-        .from("creditos")
-        .select("id")
-        .eq("usuario_id", authId);
-
-      if (errorCreditos) throw errorCreditos;
-
-      const creditosIds = creditosRuta.map(c => c.id);
-
-      if (creditosIds.length === 0) {
-        setClientesConPagoHoy([]);
-        return;
+        if (error) throw error;
+        setClientes(data || []);
+        setClientesFiltrados(data || []);
+      } catch (error) {
+        console.error("Error al obtener clientes:", error?.message || error);
       }
+    };
 
-      const { data, error } = await supabase
-        .from("pagos")
-        .select("credito_id, fecha_pago")
-        .in("credito_id", creditosIds)
-        .gte("fecha_pago", `${isoInicio} 00:00:00`)
-        .lte("fecha_pago", `${isoInicio} 23:59:59`);
+    if (authIdRuta) fetchClientes();
+  }, [usuario, authIdRuta]);
 
-      if (error) throw error;
+  useEffect(() => {
+    const fetchCreditos = async () => {
+      try {
+        const authId = localStorage.getItem("auth_id_cobrador_actual");
+        if (!authId) return;
 
-      const idsPagadosHoy = data.map(pago => pago.credito_id);
-      setClientesConPagoHoy(idsPagadosHoy);
-    } catch (error) {
-      console.error("Error al obtener pagos del día:", error.message);
-    }
-  };
+        const { data, error } = await supabase
+          .from("creditos")
+          .select("*")
+          .eq("usuario_id", authId);
 
-  if (authIdRuta) obtenerPagosDeHoy();
-}, [usuario]);
+        if (error) throw error;
+        setCreditos(data || []);
+      } catch (error) {
+        console.error("Error al obtener créditos:", error?.message || error);
+      }
+    };
 
-useEffect(() => {
-  const checkUser = async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) {
-      console.error("Error al obtener usuario:", error.message);
-    } else {
-      console.log("Usuario obtenido con getUser():", data?.user);
-      setUsuario(data?.user || null);
-    }
-  };
+    if (authIdRuta) fetchCreditos();
+  }, [usuario, authIdRuta]);
 
-  checkUser();
+  // ---> fetch pagos hoy (incluye monto_pagado)
+  useEffect(() => {
+    const obtenerPagosDeHoy = async () => {
+      try {
+        const authId = localStorage.getItem("auth_id_cobrador_actual");
+        if (!authId) return;
+
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const hoyUTC5 = new Date(hoy.getTime() - 5 * 60 * 60 * 1000);
+        const isoInicio = hoyUTC5.toISOString().slice(0, 10);
+
+        const { data: creditosRuta, error: errorCreditos } = await supabase
+          .from("creditos")
+          .select("id")
+          .eq("usuario_id", authId);
+
+        if (errorCreditos) throw errorCreditos;
+
+        const creditosIds = (creditosRuta || []).map(c => c.id);
+        if (creditosIds.length === 0) {
+          setPagosHoy([]);
+          setClientesConPagoHoy([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("pagos")
+          .select("id, credito_id, monto_pagado, fecha_pago")
+          .in("credito_id", creditosIds)
+          .gte("fecha_pago", `${isoInicio} 00:00:00`)
+          .lte("fecha_pago", `${isoInicio} 23:59:59`);
+
+        if (error) throw error;
+
+        setPagosHoy(data || []);
+        setClientesConPagoHoy((data || []).map(p => p.credito_id));
+
+        console.log("[AdminVistacobrador] pagosHoy loaded:", data || []);
+      } catch (error) {
+        console.error("Error al obtener pagos del día:", error?.message || error);
+      }
+    };
+
+    if (authIdRuta) obtenerPagosDeHoy();
+  }, [usuario, authIdRuta]);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Error al obtener usuario:", error?.message || error);
+      } else {
+        console.log("Usuario obtenido con getUser():", data?.user);
+        setUsuario(data?.user || null);
+      }
+    };
+
+    checkUser();
   }, []);
 
-
   useEffect(() => {
-    const clientesFiltrados = clientes
+    const clientesFiltradosLoc = clientes
       .filter(cliente => {
         const credito = obtenerCreditoDelCliente(cliente.id);
         return credito && credito.saldo > 0; // Solo clientes con crédito activo
       })
       .filter(cliente =>
-        cliente.nombre.toLowerCase().includes(busqueda.toLowerCase())
+        (cliente.nombre || "").toLowerCase().includes(busqueda.toLowerCase())
       )
       .sort((a, b) => {
         if (filtro === "nombre") return a.nombre.localeCompare(b.nombre);
@@ -209,7 +181,7 @@ useEffect(() => {
         return 0;
       });
 
-    setClientesFiltrados(clientesFiltrados);
+    setClientesFiltrados(clientesFiltradosLoc);
   }, [busqueda, filtro, clientes, creditos]);
 
   const obtenerCreditoDelCliente = (clienteId) => {
@@ -217,23 +189,26 @@ useEffect(() => {
   };
 
   const abrirModalPago = (cliente) => {
-  const credito = obtenerCreditoDelCliente(cliente.id);
-  if (credito) {
-    setMontoPago(credito.valor_cuota || 0); // Usamos el valor de la cuota del crédito activo
-  } else {
-    setMontoPago(0);
-  }
-  setClienteSeleccionado(cliente);
-  setModalPago(true);
-};
-
+    const credito = obtenerCreditoDelCliente(cliente.id);
+    if (credito) {
+      setMontoPago(credito.valor_cuota || 0);
+    } else {
+      setMontoPago(0);
+    }
+    setClienteSeleccionado(cliente);
+    setModalPago(true);
+  };
 
   const cerrarModalPago = () => {
     setModalPago(false);
     setClienteSeleccionado(null);
   };
 
+  // registrarPago ahora captura la fila insertada y actualiza pagosHoy correctamente
   const registrarPago = async (tipoPago) => {
+    alert("⚠️ Ingrese como cobrador para registrar pagos.");
+   return;
+
     if (!clienteSeleccionado) return;
 
     const credito = obtenerCreditoDelCliente(clienteSeleccionado.id);
@@ -242,8 +217,8 @@ useEffect(() => {
       return;
     }
 
-    if (clienteSeleccionado.saldo <= 0) {
-      alert("El saldo del cliente ya ha sido saldado. No se pueden registrar más pagos.");
+    if (credito.saldo <= 0) {
+      alert("El saldo del cliente ya fue saldado. No se pueden registrar más pagos.");
       return;
     }
 
@@ -251,54 +226,73 @@ useEffect(() => {
       alert("Ingrese un monto válido.");
       return;
     }
+
     const fechaPago = new Date();
     const fechaPagoUTC5 = new Date(fechaPago.getTime() - (5 * 60 * 60 * 1000));
     const fechaPagoFormatted = fechaPagoUTC5.toISOString().slice(0, 19).replace("T", " ");
-    
-    try {
-      const { error } = await supabase.from("pagos").insert([{
-        credito_id: credito.id,
-        metodo_pago: tipoPago.toLowerCase(),
-        monto_pagado: Number(parseFloat(montoPago).toFixed(2)),
-        fecha_pago: fechaPagoFormatted,
-        usuario_id: authIdRuta,
-      }]);
 
+    try {
+      const { data: insertedPago, error } = await supabase.from("pagos")
+        .insert([{
+          credito_id: credito.id,
+          metodo_pago: tipoPago.toLowerCase(),
+          monto_pagado: Number(parseFloat(montoPago).toFixed(2)),
+          fecha_pago: fechaPagoFormatted,
+          usuario_id: authIdRuta,
+        }])
+        .select()
+        .single();
 
       if (error) {
         console.error("❌ Error al registrar pago:", error);
         setMensaje({ tipo: "error", texto: "Error al registrar el pago." });
-        
-      } else {
-        setMensaje({ tipo: "pago-exito", texto: "Pago registrado correctamente !!!." });
-        setClientesConPagoHoy((prev) => [...new Set([...prev,clienteSeleccionado.id])]);
-        setCreditos((prevCreditos) => prevCreditos.map((c) =>c.id === credito.id ? 
-        { ...c, saldo: c.saldo - montoPago } : c
-
-      )
-    
-      );
-        
-        setTimeout(() => setMensaje(null), 3000);
-        cerrarModalPago();
-        // ⏳ Espera 1.5 segundos antes de recargar
-        
+        return;
       }
+
+      setMensaje({ tipo: "pago-exito", texto: "Pago registrado correctamente." });
+
+      // añadimos el pago retornado a pagosHoy
+      setPagosHoy(prev => [...prev, insertedPago]);
+
+      // marcamos el credito como pagado hoy
+      setClientesConPagoHoy(prev => [...new Set([...(prev || []), insertedPago.credito_id])]);
+
+      // actualizamos saldo localmente
+      setCreditos(prevCreditos => prevCreditos.map(c => c.id === credito.id ? { ...c, saldo: Number(c.saldo) - Number(montoPago) } : c));
+
+      setTimeout(() => setMensaje(null), 3000);
+      cerrarModalPago();
+
     } catch (err) {
-      console.error("❌ Error inesperado:", err);
+      console.error("❌ Error inesperado en registrarPago:", err);
       setMensaje({ tipo: "error", texto: "Ocurrió un error inesperado." });
     }
   };
 
- const logout = async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error("Error al cerrar sesión:", error.message);
-  } else {
-    navigate("/"); // Redirige al login después del logout
-  }
-};
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error al cerrar sesión:", error.message);
+    } else {
+      navigate("/");
+    }
+  };
 
+  // ==== Totales para las cards (calculados en front)
+  const clientesActivos = creditos.filter(c => c.estado !== "cancelado" && Number(c.saldo) > 0).length;
+  const totalRecaudarHoy = creditos
+    .filter(c => c.estado !== "cancelado" && Number(c.saldo) > 0)
+    .reduce((sum, c) => sum + Number(c.valor_cuota || 0), 0);
+  const totalPagadoHoy = pagosHoy.reduce((sum, p) => sum + Number(p.monto_pagado || 0), 0);
+  const pendienteRecaudar = totalRecaudarHoy - totalPagadoHoy;
+
+  // Logs útiles para debugging
+  useEffect(() => {
+    console.log("[AdminVistacobrador] creditos:", creditos.length, creditos);
+    console.log("[AdminVistacobrador] pagosHoy:", pagosHoy.length, pagosHoy);
+    console.log("[AdminVistacobrador] clientesConPagoHoy:", clientesConPagoHoy);
+    console.log("totales -> clientesActivos:", clientesActivos, " totalRecaudarHoy:", totalRecaudarHoy, " totalPagadoHoy:", totalPagadoHoy);
+  }, [creditos, pagosHoy, clientesConPagoHoy, totalRecaudarHoy, totalPagadoHoy]);
 
   return (
     <div className="panelC-container">
@@ -379,24 +373,39 @@ useEffect(() => {
 
   </div>
 )}
+
+        {/* ======= RESUMEN EN TARJETAS ======= */}
+        <div className="resumen-dashboard">
+        <div className="card-resumen clientes">
+            <h4>Clientes Activos</h4>
+            <p>{clientesActivos}</p>
+          </div>
+          <div className="card-resumen total">
+            <h4>Total a Recaudar</h4>
+            <p>${totalRecaudarHoy.toFixed(2)}</p>
+          </div>
+          
+          <div className="card-resumen recaudado">
+            <h4>Recaudado Hoy</h4>
+            <p>${totalPagadoHoy.toFixed(2)}</p>
+          </div>
+        </div>
+        
+
         <div className="filtro-busqueda">
           <div className="busqueda">
             <FaSearch className="icono-busqueda" />
-            <input
-              type="text"
-              placeholder="Buscar cliente..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
+            <input type="text" placeholder="Buscar cliente..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
           </div>
-  
+
           <div className="filtro">
             <button className="filtro-btn" onClick={() => setFiltro(filtro === "nombre" ? "fecha_pago" : "nombre")}>
               <FaFilter /> {filtro === "nombre" ? "Ordenar por ID" : "Ordenar por Nombre"}
             </button>
           </div>
         </div>
-  
+        
+               
         <div className="tablaC-container">
           <table className="tablaC-cobros">
             <thead>
@@ -412,24 +421,21 @@ useEffect(() => {
             <tbody>
               {clientesFiltrados.length > 0 ? (
                 clientesFiltrados.map((cliente) => {
-                  const credito = obtenerCreditoDelCliente(cliente.id); // Obtenemos el crédito asociado al cliente
-                  if (!credito) return null; // Si no hay crédito asociado, no mostramos nada
-  
+                  const credito = obtenerCreditoDelCliente(cliente.id);
+                  if (!credito) return null;
+
                   return (
-                    <tr 
-                      key={cliente.id}
-                      className={clientesConPagoHoy.includes(credito.id) ? "fila-pagada" : ""}
-                    >
+                    <tr key={cliente.id} className={clientesConPagoHoy.includes(credito.id) ? "fila-pagada" : ""}>
                       <td>{cliente.id}</td>
                       <td>{cliente.nombre}</td>
                       <td>
-                       <div>{new Date(credito.fecha_inicio).toLocaleDateString()}</div>
-                       <div>{new Date(credito.fecha_vencimiento).toLocaleDateString()}</div>
-                     </td>
-                      <td>${credito.valor_cuota}</td>                
+                        <div>{new Date(credito.fecha_inicio).toLocaleDateString()}</div>
+                        <div>{new Date(credito.fecha_vencimiento).toLocaleDateString()}</div>
+                      </td>
+                      <td>${credito.valor_cuota}</td>
                       <td>${credito.saldo}</td>
                       <td>
-                        <button className="btn-pagar" onClick={() => abrirModalPago(cliente,)}>
+                        <button className="btn-pagar" onClick={() => abrirModalPago(cliente)}>
                           <FaMoneyBillWave /> Pago
                         </button>
                         <Link to={`/adminclientedetalle/${cliente.id}`} className="btn-detalle">
@@ -447,39 +453,26 @@ useEffect(() => {
             </tbody>
           </table>
         </div>
-  
-       {modalPago && (
-  <div className="modal-pago">
-    <div className="modal-pagocontenido">
-      <button className="cerrar-modal" onClick={cerrarModalPago}>
-        <FaTimes />
-      </button>
-      <h3>Registrar Pago</h3>
-      <p>Cliente: {clienteSeleccionado?.nombre}</p>
 
-      <label htmlFor="montoPago">Valor a Pagar:</label>
-      <input
-        id="montoPago"
-        type="number"
-        min="1"
-        placeholder="Ingrese monto"
-        value={montoPago || ''}
-        onChange={(e) => setMontoPago(e.target.value)}
-        className="input-pago"
-      />
+        {modalPago && (
+          <div className="modal-pago">
+            <div className="modal-pagocontenido">
+              <button className="cerrar-modal" onClick={cerrarModalPago}><FaTimes /></button>
+              <h3>Registrar Pago</h3>
+              <p>Cliente: {clienteSeleccionado?.nombre}</p>
+
+              <label htmlFor="montoPago">Valor a Pagar:</label>
+              <input id="montoPago" type="number" min="1" placeholder="Ingrese monto" value={montoPago || ''} onChange={(e) => setMontoPago(e.target.value)} className="input-pago" />
+
               <div className="botones-pago">
-              <button onClick={() => registrarPago("Efectivo")} className="btn-pago efectivo">
-              <FaMoneyBillWave className="icono" /> Efectivo</button>
-              <button onClick={() => registrarPago("Deposito")} className="btn-pago yape">
-              <FaMobileAlt className="icono" /> Yape
-              </button>
+                <button onClick={() => registrarPago("Efectivo")} className="btn-pago efectivo"><FaMoneyBillWave className="icono" /> Efectivo</button>
+                <button onClick={() => registrarPago("Deposito")} className="btn-pago yape"><FaMobileAlt className="icono" /> Yape</button>
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
 };
-
-  export default AdminVistacobrador;

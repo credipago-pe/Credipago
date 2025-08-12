@@ -29,6 +29,7 @@ const CobradorPanel = () => {
   const [soloPagadosHoy, setSoloPagadosHoy] = useState(false);
   const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
   const [clienteParaRecibo, setClienteParaRecibo] = useState(null);
+  const [pagando, setPagando] = useState(false);
   const mensajeRef = useRef(null);
   const authId = usuario?.id;
 
@@ -179,41 +180,61 @@ useEffect(() => {
         if (!credito.fecha_inicio || !credito.valor_cuota) {
           return { ...credito, dias_atraso: 0, estado_semaforo: "verde" };
         }
-
+      
         const fechaInicio = new Date(credito.fecha_inicio);
         const pagosCredito = pagos.filter(p => p.credito_id === credito.id);
-
-        // Calcular días hábiles desde fecha_inicio hasta hoy (excluye domingos)
-        let diasHabiles = 0;
-        let fechaIteracion = new Date(fechaInicio);
-
-        while (fechaIteracion <= hoy) {
-          const diaSemana = fechaIteracion.getDay(); // 0 = domingo
-          if (diaSemana !== 0) diasHabiles++;
-          fechaIteracion.setDate(fechaIteracion.getDate() + 1);
+        const montoPagado = pagosCredito.reduce((sum, p) => sum + (p.monto_pagado || 0), 0);
+      
+        const hoy = new Date();
+        let cuotasEsperadas = 0;
+        let valorCuota = credito.valor_cuota;
+      
+        if (credito.tipo_credito === "semanal") {
+          // Calcular semanas transcurridas desde el inicio
+          const msPorSemana = 7 * 24 * 60 * 60 * 1000;
+          const semanasTranscurridas = Math.ceil((hoy - fechaInicio) / msPorSemana);
+      
+          cuotasEsperadas = semanasTranscurridas;
+          // Si el crédito es de 4 semanas, cada cuota es saldo_total / 4
+          valorCuota = credito.saldo_total / 4;
+        } else {
+          // Crédito diario → contar días hábiles (sin domingos)
+          let diasHabiles = 0;
+          let fechaIteracion = new Date(fechaInicio);
+          while (fechaIteracion <= hoy) {
+            if (fechaIteracion.getDay() !== 0) diasHabiles++;
+            fechaIteracion.setDate(fechaIteracion.getDate() + 1);
+          }
+          cuotasEsperadas = diasHabiles;
         }
-
-        const montoEsperado = diasHabiles * credito.valor_cuota;
-
-        const montoPagado = pagosCredito.reduce((sum, p) => {
-          return sum + (p.monto_pagado || 0);
-        }, 0);
-
+      
+        const montoEsperado = cuotasEsperadas * valorCuota;
         const diferencia = Math.max(0, montoEsperado - montoPagado);
-        const diasAtraso = Math.floor(diferencia / credito.valor_cuota);
-
-        
+        const atraso = Math.floor(diferencia / valorCuota);
+      
         const estado_semaforo =
-          diasAtraso >= 24 ? "rojo" : diasAtraso > 8 ? "naranja" : "verde";
-
+          credito.tipo_credito === "semanal"
+            ? atraso >= 4
+              ? "rojo"
+              : atraso > 1
+              ? "naranja"
+              : "verde"
+            : atraso >= 24
+              ? "rojo"
+              : atraso > 8
+              ? "naranja"
+              : "verde";
+      
         return {
           ...credito,
-          dias_atraso: diasAtraso,
+          dias_atraso: atraso,
           estado_semaforo,
         };
       });
-
+      
       setCreditos(creditosConAtraso);
+      
+            
     } catch (error) {
       console.error("Error al obtener créditos:", error.message);
     }
@@ -393,26 +414,36 @@ const handleKeyDown = (e, clienteId, nuevoOrden) => {
   };
 
   const registrarPago = async (tipoPago) => {
-  if (!clienteSeleccionado) return;
+    if (pagando) return; // 🚫 Si ya está procesando, no hace nada
+    setPagando(true);    // ⏳ Bloquea el botón
+  
+    if (!clienteSeleccionado) {
+      setPagando(false);
+      return;
+    }
 
   const credito = obtenerCreditoDelCliente(clienteSeleccionado.id);
   if (!credito) {
     alert("No se encontró un crédito para este cliente.");
+    setPagando(false);
     return;
   }
 
   if (clienteSeleccionado.saldo <= 0) {
     alert("El saldo del cliente ya ha sido saldado. No se pueden registrar más pagos.");
+    setPagando(false);
     return;
   }
 
   if (montoPago <= 0 || isNaN(montoPago)) {
     alert("Ingrese un monto válido.");
+    setPagando(false);
     return;
   }
 
   if (montoPago > credito.saldo) {
     alert(`El monto ingresado (${montoPago}) excede el saldo pendiente (${credito.saldo}).`);
+    setPagando(false);
     return;
   }
 
@@ -432,6 +463,7 @@ const handleKeyDown = (e, clienteId, nuevoOrden) => {
     if (error) {
       console.error("❌ Error al registrar pago:", error);
       setMensaje({ tipo: "error", texto: "Error al registrar el pago." });
+      setPagando(false); // 🔓 Desbloquea si falla
     } else {
       cerrarModalPago(); // 🔸 Primero, cerramos el modal
 
@@ -482,6 +514,7 @@ setTimeout(() => {
   } catch (err) {
     console.error("❌ Error inesperado:", err);
     setMensaje({ tipo: "error", texto: "Ocurrió un error inesperado." });
+    setPagando(false);
   }
 };
 
@@ -623,6 +656,7 @@ useEffect(() => {
 </nav>
   </div>
 )}
+
         <div className="filtro-busqueda">
           <div className="busqueda">
             <FaSearch className="icono-busqueda" />
@@ -761,9 +795,12 @@ useEffect(() => {
         className="input-pago"
       />
               <div className="botones-pago">
-              <button onClick={() => registrarPago("Efectivo")} className="btn-pago efectivo">
+              <button onClick={() => registrarPago("Efectivo")} className="btn-pago efectivo"
+              disabled={pagando}>
+             
               <FaMoneyBillWave className="icono" /> Efectivo</button>
-              <button onClick={() => registrarPago("Deposito")} className="btn-pago yape">
+              <button onClick={() => registrarPago("Deposito")} className="btn-pago yape"
+              disabled={pagando}>
               <FaMobileAlt className="icono" /> Yape
               </button>
               </div>
