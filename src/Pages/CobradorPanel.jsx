@@ -176,63 +176,89 @@ useEffect(() => {
 
       if (errorPagos) throw errorPagos;
 
-      const creditosConAtraso = creditos.map((credito) => {
-        if (!credito.fecha_inicio || !credito.valor_cuota) {
-          return { ...credito, dias_atraso: 0, estado_semaforo: "verde" };
-        }
-      
-        const fechaInicio = new Date(credito.fecha_inicio);
-        const pagosCredito = pagos.filter(p => p.credito_id === credito.id);
-        const montoPagado = pagosCredito.reduce((sum, p) => sum + (p.monto_pagado || 0), 0);
-      
-        const hoy = new Date();
-        let cuotasEsperadas = 0;
-        let valorCuota = credito.valor_cuota;
-      
-        if (credito.tipo_credito === "semanal") {
-          // Calcular semanas transcurridas desde el inicio
-          const msPorSemana = 7 * 24 * 60 * 60 * 1000;
-          const semanasTranscurridas = Math.ceil((hoy - fechaInicio) / msPorSemana);
-      
-          cuotasEsperadas = semanasTranscurridas;
-          // Si el crédito es de 4 semanas, cada cuota es saldo_total / 4
-          valorCuota = credito.saldo_total / 4;
-        } else {
-          // Crédito diario → contar días hábiles (sin domingos)
-          let diasHabiles = 0;
-          let fechaIteracion = new Date(fechaInicio);
-          while (fechaIteracion <= hoy) {
-            if (fechaIteracion.getDay() !== 0) diasHabiles++;
-            fechaIteracion.setDate(fechaIteracion.getDate() + 1);
-          }
-          cuotasEsperadas = diasHabiles;
-        }
-      
-        const montoEsperado = cuotasEsperadas * valorCuota;
-        const diferencia = Math.max(0, montoEsperado - montoPagado);
-        const atraso = Math.floor(diferencia / valorCuota);
-      
-        const estado_semaforo =
-          credito.tipo_credito === "semanal"
-            ? atraso >= 4
-              ? "rojo"
-              : atraso > 1
-              ? "naranja"
-              : "verde"
-            : atraso >= 24
-              ? "rojo"
-              : atraso > 8
-              ? "naranja"
-              : "verde";
-      
-        return {
-          ...credito,
-          dias_atraso: atraso,
-          estado_semaforo,
-        };
-      });
-      
-      setCreditos(creditosConAtraso);
+      const obtenerAyer = () => {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const ayer = new Date(hoy);
+  ayer.setDate(hoy.getDate() - 1);
+  return ayer;
+};
+
+const contarDiasHabiles = (inicio, fin) => {
+  let contador = 0;
+  const fecha = new Date(inicio);
+  fecha.setHours(0, 0, 0, 0);
+  while (fecha <= fin) {
+    const diaSemana = fecha.getDay();
+    if (diaSemana !== 0) contador++; // excluye domingo
+    fecha.setDate(fecha.getDate() + 1);
+  }
+  return contador;
+};
+
+const contarSemanas = (inicio, fin) => {
+  let contador = 0;
+  const fecha = new Date(inicio);
+  fecha.setHours(0, 0, 0, 0);
+  while (fecha <= fin) {
+    contador++;
+    fecha.setDate(fecha.getDate() + 7);
+  }
+  return contador;
+};
+
+const creditosConAtraso = creditos.map((credito) => {
+  if (!credito.fecha_inicio || !credito.valor_cuota) {
+    return { ...credito, dias_atraso: 0, estado_semaforo: "verde" };
+  }
+
+  const fechaInicio = new Date(credito.fecha_inicio);
+  fechaInicio.setHours(0, 0, 0, 0);
+  const ayer = obtenerAyer();
+
+  // Si el crédito empezó hoy, no hay atraso
+  if (fechaInicio > ayer) {
+    return { ...credito, dias_atraso: 0, estado_semaforo: "verde" };
+  }
+
+  let cuotasEsperadas = 0;
+
+  if (credito.tipo_credito === "semanal") {
+    cuotasEsperadas = contarSemanas(fechaInicio, ayer);
+  } else {
+    cuotasEsperadas = contarDiasHabiles(fechaInicio, ayer);
+  }
+
+  // Cuotas pagadas derivadas del saldo
+  const totalCuotas = credito.tipo_credito === "semanal" ? 4 : 24;
+  const saldoPagado = (credito.saldo_total || (credito.valor_cuota * totalCuotas)) - credito.saldo;
+  const cuotasPagadas = Math.floor((saldoPagado / credito.valor_cuota) + 0.0001);
+
+  const atraso = Math.max(0, cuotasEsperadas - cuotasPagadas);
+
+  const estado_semaforo =
+    credito.tipo_credito === "semanal"
+      ? atraso >= 4
+        ? "rojo"
+        : atraso > 1
+        ? "naranja"
+        : "verde"
+      : atraso >= 24
+        ? "rojo"
+        : atraso > 8
+        ? "naranja"
+        : "verde";
+
+  return {
+    ...credito,
+    dias_atraso: atraso,
+    estado_semaforo,
+  };
+});
+
+setCreditos(creditosConAtraso);
+
+
       
             
     } catch (error) {
@@ -414,13 +440,13 @@ const handleKeyDown = (e, clienteId, nuevoOrden) => {
   };
 
   const registrarPago = async (tipoPago) => {
-    if (pagando) return; // 🚫 Si ya está procesando, no hace nada
-    setPagando(true);    // ⏳ Bloquea el botón
-  
-    if (!clienteSeleccionado) {
-      setPagando(false);
-      return;
-    }
+  if (pagando) return; // 🚫 Evita doble clic
+  setPagando(true);    // ⏳ Bloquea el botón
+
+  if (!clienteSeleccionado) {
+    setPagando(false);
+    return;
+  }
 
   const credito = obtenerCreditoDelCliente(clienteSeleccionado.id);
   if (!credito) {
@@ -464,28 +490,39 @@ const handleKeyDown = (e, clienteId, nuevoOrden) => {
       console.error("❌ Error al registrar pago:", error);
       setMensaje({ tipo: "error", texto: "Error al registrar el pago." });
       setPagando(false); // 🔓 Desbloquea si falla
-    } else {
-      cerrarModalPago(); // 🔸 Primero, cerramos el modal
+      return;            // 👈 Importante, salimos
+    }
 
-setTimeout(() => {
-  setMensaje({ tipo: "pago-exito", texto: "Pago registrado correctamente." })});
+    // ✅ Éxito: muestra mensaje y desbloquea inmediatamente
+    setMensaje({ tipo: "pago-exito", texto: "Pago registrado correctamente." });
+    setPagando(false); // 🔓 Ya puedes registrar otro pago (mismo u otro cliente)
 
-setClientesConPagoHoy((prev) => [...new Set([...prev, clienteSeleccionado.id])]);
-setCreditos((prevCreditos) =>
-  prevCreditos.map((c) =>
-    c.id === credito.id ? { ...c, saldo: c.saldo - montoPago } : c
-  )
-);
+    // (opcional) Cierra el modal después de mostrar el mensaje
+    cerrarModalPago();
 
-// 👇 Generar mensaje del recibo
-const montoCredito = Number(credito.monto).toFixed(2);
-const saldoAnterior = credito.saldo.toFixed(2);
-const saldoActual = (credito.saldo - montoPago).toFixed(2);
-const cuotasPendientes = Math.ceil((credito.saldo - montoPago) / credito.valor_cuota);
-const metodo = tipoPago.toUpperCase();
-const fechaPagoRecibo = dayjs(fechaPagoFormatted).format("DD/MM/YYYY");
+    // ✅ Marcar cliente con pago hoy
+    setClientesConPagoHoy((prev) => [...new Set([...prev, credito.id])]);
 
-const mensajeRecibo = `            🧾 RECIBO DE PAGO            
+
+    // ✅ Actualizar saldo en memoria (redondeo y tope en 0)
+    const nuevoSaldo = Math.max(0, Number((credito.saldo - Number(montoPago)).toFixed(2)));
+    setCreditos((prevCreditos) =>
+      prevCreditos.map((c) => (c.id === credito.id ? { ...c, saldo: nuevoSaldo } : c))
+    );
+
+    // 👇 Generar mensaje del recibo
+    const montoCredito = Number(credito.monto).toFixed(2);
+    const saldoAnterior = Number(credito.saldo).toFixed(2);
+    const saldoActual = nuevoSaldo.toFixed(2);
+    const cuotasPendientes = Math.max(
+      0,
+      Math.ceil(nuevoSaldo / Number(credito.valor_cuota || 1))
+    );
+    const metodo = tipoPago.toUpperCase();
+    // Asegúrate de tener importado dayjs. Si no, cambia esta línea por tu formateo preferido.
+    const fechaPagoRecibo = dayjs ? dayjs(fechaPagoFormatted).format("DD/MM/YYYY") : fechaPagoFormatted;
+
+    const mensajeRecibo = `            🧾 RECIBO DE PAGO            
 ----------------------------------------
 Cliente: ${clienteSeleccionado.nombre}
 Crédito #: ${credito.id}
@@ -500,24 +537,22 @@ Método de pago:     ${metodo}
 ----------------------------------------
 ¡Gracias por su pago puntual!`;
 
-// 🧠 Guardar mensaje y cliente en refs/estado
-mensajeRef.current = { tipo: "recibo", texto: mensajeRecibo };
-setClienteParaRecibo(clienteSeleccionado);
+    // 🧠 Guardar mensaje y cliente en refs/estado
+    mensajeRef.current = { tipo: "recibo", texto: mensajeRecibo };
+    setClienteParaRecibo(clienteSeleccionado);
 
-// ⏳ Esperar 1.5s y luego cerrar modal y mostrar confirmación
-setTimeout(() => {
-  setMensaje(null); // Oculta toast
-  setMostrarConfirmacionRecibo(true); // Muestra confirmación
-}, 700);
+    // ⏳ Breve confirmación de recibo
+    setTimeout(() => {
+      setMensaje(null); // Oculta toast
+      setMostrarConfirmacionRecibo(true); // Muestra confirmación
+    }, 700);
 
-    }
   } catch (err) {
     console.error("❌ Error inesperado:", err);
     setMensaje({ tipo: "error", texto: "Ocurrió un error inesperado." });
     setPagando(false);
   }
 };
-
 
  const logout = async () => {
   const { error } = await supabase.auth.signOut();
