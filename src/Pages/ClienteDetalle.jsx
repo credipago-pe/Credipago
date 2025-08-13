@@ -410,11 +410,54 @@ const ClienteDetalle = () => {
       />
 
       <label>Ubicación:</label>
-      <input
-        type="text"
-        value={cliente.ubicacion || ""}
-        onChange={(e) => setCliente({ ...cliente, ubicacion: e.target.value })}
-      />
+<div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+  <input
+    type="text"
+    value={cliente.ubicacion || ""}
+    onChange={(e) => setCliente({ ...cliente, ubicacion: e.target.value })}
+    style={{
+      width: "60%", // 🔹 Ajusta el ancho que quieras
+      padding: "6px",
+    }}
+  />
+  <button
+    type="button"
+    style={{
+      width: "100px", // 🔹 Ancho fijo pequeño
+      height: "32px",
+      fontSize: "14px",
+      borderRadius: "6px",
+      backgroundColor: "#4CAF50",
+      color: "white",
+      border: "none",
+      cursor: "pointer",
+    }}
+    onClick={() => {
+      if (!navigator.geolocation) {
+        alert("La geolocalización no está soportada en este navegador.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+          setCliente({ ...cliente, ubicacion: coords });
+          window.open(
+            `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`,
+            "_blank"
+          );
+        },
+        (err) => {
+          alert("No se pudo obtener la ubicación.");
+          console.error(err);
+        }
+      );
+    }}
+  >
+   Ubicacion📍
+  </button>
+</div>
+
+
 
       <label>Detalle:</label>
       <textarea
