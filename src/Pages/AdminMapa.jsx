@@ -43,6 +43,13 @@ console.log("🧭 Estado final de cobradores:", data);
     return () => clearInterval(interval);
   }, []);
 
+  const motoIcon = L.divIcon({
+  html: "🏍️",
+  className: "emoji-icon",
+  iconSize: [30, 30],
+  iconAnchor: [15, 15]
+});
+
   return (
     <div className="mapa-container">
       <h2>Ubicación de Cobradores</h2>
@@ -56,10 +63,11 @@ console.log("🧭 Estado final de cobradores:", data);
           attribution="&copy; OpenStreetMap contributors"
         />
         {cobradores.map((cobrador) => (
-          <Marker
-            key={cobrador.id}
-            position={[cobrador.latitud, cobrador.longitud]}
-          >
+           <Marker
+          key={cobrador.id}
+          position={[cobrador.latitud, cobrador.longitud]}
+          icon={motoIcon} // usamos el icono de moto
+        >
             <Popup>
               <strong>{cobrador.nombre}</strong>
               <br />

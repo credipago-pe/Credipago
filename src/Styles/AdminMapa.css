@@ -6,3 +6,9 @@
   border-radius: 12px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
+
+.emoji-icon {
+  font-size: 25px; /* tamaño del emoji */
+  text-align: center;
+  line-height: 25px; /* para centrar verticalmente */
+}

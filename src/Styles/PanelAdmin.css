@@ -1,15 +1,20 @@
 .admin-panel-container {
-  max-width: 420px;
+  width: 420px;
   max-height: 800px;
-  margin: 10px auto;
-  padding: 10px 10px;
+  padding: 10px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-top: -265px;
-  position: sticky;
-  
+
+  /* Fijo en la pantalla */
+  position: fixed;
+  top: 20px;      /* distancia desde la parte superior */
+  left: 50%;      /* centrado horizontal */
+  transform: translateX(-50%);
+
+  /* Evita que se estire */
+  overflow-y: auto;
 }
 
 .admin-panel-title {
@@ -91,7 +96,7 @@
 
 /* Contenedor del cuerpo de la tabla para scroll vertical */
 .admin-panel-table-container {
-  max-height: 500px; /* altura fija para scroll vertical */
+  max-height: 800px; /* altura fija para scroll vertical */
   max-width: 400px;
   
   overflow-y: auto;
@@ -101,7 +106,7 @@
 
 /* Estilo tabla */
 .admin-panel-table {
-  width: 100%;
+  width: 90%;
   border-collapse: collapse;
   font-size: 0.9rem;
   color: #333;
@@ -138,7 +143,7 @@
   grid-template-columns: repeat(3, 1fr);
   grid-gap: 6px;
   max-width: 280px; /* Ajusta según necesites */
-  padding: 4px;
+  padding: 3px;
 }
 
 .acciones-td button {
@@ -146,7 +151,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   padding: 6px 8px;
   border-radius: 6px;
   border: none;
