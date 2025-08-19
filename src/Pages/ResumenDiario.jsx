@@ -13,6 +13,15 @@ export default function ResumenDiario() {
   const [resumen, setResumen] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [detalle, setDetalle] = useState([]);
+  const [tituloModal, setTituloModal] = useState("");
+  const [detalleRegistros, setDetalleRegistros] = useState([]);
+  const [detalleTipo, setDetalleTipo] = useState("");
+  const [detalleFecha, setDetalleFecha] = useState("");
+  const toYMD = (f) => dayjs(f).format("YYYY-MM-DD");
+
+
 
   const obtenerResumen = async () => {
     setLoading(true);
@@ -67,6 +76,82 @@ export default function ResumenDiario() {
     ganancia_neta: 0,   // 👈 y aquí
   }
 );
+
+  // 👇 Nueva función que trae el detalle real desde Supabase
+const handleCellClick = async (tipo, fechaRaw) => {
+  const fecha = toYMD(fechaRaw);
+  console.log("🔎 Click:", tipo, fecha);
+
+  const desde = `${fecha} 00:00:00`;
+  const hasta = `${fecha} 23:59:59`;
+  let query = null;
+
+  if (tipo === "ingresos") {
+    // 🔹 Pagos realizados (ingresos)
+    query = supabase
+      .from("pagos")
+      .select(`
+        id,
+        fecha_pago,
+        monto_pagado,
+        metodo_pago,
+        saldo,
+        creditos:credito_id (
+          id,
+          saldo,
+          clientes:cliente_id (
+            nombre
+          )
+        )
+      `)
+      .eq("usuario_id", auth_id)
+      .gte("fecha_pago", desde)
+      .lte("fecha_pago", hasta);
+
+  } else if (tipo === "gastos") {
+    // 🔹 Gastos (usa "concepto" y "valor")
+    query = supabase
+      .from("gastos")
+      .select("id, fecha, concepto, valor")
+      .eq("usuario_id", auth_id)
+      .gte("fecha", desde)
+      .lte("fecha", hasta);
+
+  } else if (tipo === "ventas") {
+    // 🔹 Créditos creados (ventas)
+    query = supabase
+      .from("creditos")
+      .select(`
+        id,
+        fecha_inicio,
+        monto,
+        saldo,
+        clientes:cliente_id (
+          nombre
+        )
+      `)
+      .eq("usuario_id", auth_id)
+      .gte("fecha_inicio", desde)
+      .lte("fecha_inicio", hasta);
+
+  } else {
+    return;
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("❌ Error cargando detalles:", error);
+    setDetalleRegistros([]);
+  } else {
+    console.log("✅ Datos cargados:", data);
+    setDetalleRegistros(data || []);
+  }
+
+  setDetalleTipo(tipo);
+  setDetalleFecha(fecha);
+  setMostrarModal(true);
+};
+
 
 
   const handleLogout = () => {
@@ -129,9 +214,15 @@ export default function ResumenDiario() {
             {resumen.map((row, idx) => (
              <tr key={idx}>
   <td className="col-fecha">{row.fecha}</td>
-  <td className="col-ingresos">{row.ingresos}</td>
-  <td className="col-ventas">{row.ventas}</td>
-  <td className="col-gastos">{row.gastos}</td>
+ <td className="col-ingresos" onClick={() => handleCellClick("ingresos", row.fecha)}>
+    {row.ingresos}
+  </td>
+  <td className="col-ventas" onClick={() => handleCellClick("ventas", row.fecha)}>
+    {row.ventas}
+  </td>
+  <td className="col-gastos" onClick={() => handleCellClick("gastos", row.fecha)}>
+    {row.gastos}
+  </td>
   <td className="col-caja-dia">{row.caja_dia}</td>
   <td className="col-cartera">{row.total_cartera}</td>
   <td className="col-caja-anterior">{row.caja_dia_anterior}</td>
@@ -160,6 +251,94 @@ export default function ResumenDiario() {
           </tbody>
         </table>
       </div>
+            {mostrarModal && (
+  <div className="modal-overlay" onClick={() => setMostrarModal(false)}>
+    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <h3 className="modal-title">
+        {detalleTipo === "ingresos" && `Recaudo del ${detalleFecha}`}
+        {detalleTipo === "gastos" && `Gastos del ${detalleFecha}`}
+        {detalleTipo === "ventas" && `Ventas del ${detalleFecha}`}
+      </h3>
+
+      {detalleRegistros.length > 0 ? (
+        <table className="detalle-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              {detalleTipo !== "gastos" && <th>Cliente</th>}
+              <th>Monto</th>
+              {detalleTipo === "ingresos" && <th>Método / Saldo</th>}
+              {detalleTipo === "gastos" && <th>Descripción</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {detalleRegistros.map((row, i) => (
+              <tr key={i}>
+                {/* Fecha */}
+                <td>
+                  {new Date(
+                    row.fecha_pago || row.fecha_inicio || row.fecha
+                  ).toLocaleString("es-PE", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </td>
+
+                {/* Cliente (solo en ingresos y ventas) */}
+                {detalleTipo !== "gastos" && (
+                  <td>{row.clientes?.nombre || row.creditos?.clientes?.nombre || "—"}</td>
+                )}
+
+                {/* Monto */}
+                <td>{row.monto_pagado || row.monto}</td>
+
+                {/* Método + Saldo (solo ingresos) */}
+                {detalleTipo === "ingresos" && (
+                  <td>
+                    {row.metodo_pago
+                      ? `${row.metodo_pago} / Saldo: ${row.creditos?.saldo ?? row.saldo ?? 0}`
+                      : `Saldo: ${row.saldo ?? 0}`}
+                  </td>
+                )}
+
+                {/* Descripción (solo gastos) */}
+                {detalleTipo === "gastos" && <td>{row.descripcion}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="no-registros">No hay registros</p>
+      )}
+
+      {/* Total del día */}
+      <div className="modal-total">
+        Total:{" "}
+        {detalleRegistros
+          .reduce((sum, r) => {
+            if (detalleTipo === "ingresos") return sum + Number(r.monto_pagado || 0);
+            if (detalleTipo === "gastos") return sum + Number(r.monto || 0);
+            if (detalleTipo === "ventas") return sum + Number(r.monto || 0);
+            return sum;
+          }, 0)
+          .toFixed(2)}
+      </div>
+
+      <div className="modal-footer">
+        <button type="button" onClick={() => setMostrarModal(false)}>
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
     </div>
   );
 }

@@ -969,3 +969,50 @@
 .card-resumen.clientes { border-top: 3px solid #007bff; }
 .card-resumen.total { border-top: 3px solid #28a745; }
 .card-resumen.recaudado { border-top: 3px solid #ffc107; }
+
+.acciones-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Botón estilo 3D */
+.btn-msj {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background: linear-gradient(145deg, #d3d61c, #cddf2d93); /* degradado dorado */
+  color: #050505;
+  border: none;
+  border-radius: 10px;
+
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  cursor: pointer;
+  box-shadow: 3px 3px 6px rgba(0,0,0,0.3),
+              -2px -2px 5px rgba(255,255,255,0.2); /* efecto relieve */
+  transition: all 0.2s ease-in-out;
+}
+
+/* Hover: más “elevado” */
+.btn-msj:hover {
+  background: linear-gradient(145deg, #fc0404, #b10505);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 4px 4px 8px rgba(0,0,0,0.35),
+              -3px -3px 6px rgba(255,255,255,0.25);
+}
+
+/* Click: efecto de presión */
+.btn-msj:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.4),
+              inset -2px -2px 4px rgba(255,255,255,0.2);
+}

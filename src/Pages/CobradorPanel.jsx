@@ -5,7 +5,7 @@ import "../Styles/CobradorPanel.css";
 import { useRef } from "react";
 import { CheckCircle } from "lucide-react";
 import dayjs from "dayjs";
-import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaChevronDown, FaFilter, FaMoneyBill, FaMoneyBillWave, FaInfoCircle, FaTimes, FaCaretDown, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaBullhorn, FaFilter, FaMoneyBill, FaMoneyBillWave, FaInfoCircle, FaTimes, FaCaretDown, FaSignOutAlt } from "react-icons/fa";
 import { calcularTotalRecaudarHoy } from "../components/utils";
 
 const CobradorPanel = () => {
@@ -514,6 +514,8 @@ const handleKeyDown = (e, clienteId, nuevoOrden) => {
       prevCreditos.map((c) => (c.id === credito.id ? { ...c, saldo: nuevoSaldo } : c))
     );
 
+    
+
     // 👇 Generar mensaje del recibo
     const montoCredito = Number(credito.monto).toFixed(2);
     const saldoAnterior = Number(credito.saldo).toFixed(2);
@@ -633,6 +635,29 @@ useEffect(() => {
     console.log("totales -> clientesActivos:", clientesActivos, " totalRecaudarHoy:", totalRecaudarHoy, " totalPagadoHoy:", totalPagadoHoy);
   }, [creditos, pagosHoy, clientesConPagoHoy, totalRecaudarHoy, totalPagadoHoy]);
 
+const generarMensaje = (cliente, credito, tipo) => {
+  if (!cliente || !credito) return "";
+
+  const nombre = cliente.nombre;
+  const saldo = credito.saldo?.toFixed(2) ?? "0.00";
+  const valorCuota = credito.valor_cuota?.toFixed(2) ?? "0.00";
+  const cuotasPendientes = Math.ceil(credito.saldo / credito.valor_cuota);
+  const fechaVencimiento = dayjs(credito.fecha_vencimiento).format("DD/MM/YYYY");
+
+  if (tipo === "recordatorio") {
+    return `Hola, ${nombre},!!! 📢
+    
+Le recordamos pagar su cuota: $${valorCuota},
+Saldo pendiente: $${saldo}.
+Cuotas restantes: ${cuotasPendientes} de ${credito.cuotas}
+Crédito vence el: ${fechaVencimiento}
+ 
+Por favor, no olvide realizar su pago hoy. ¡Gracias! 🙌`;
+  }
+
+  return "";
+};
+  
 
   return (
     <div className="panelC-container">
@@ -786,8 +811,20 @@ useEffect(() => {
               setOrdenClientes(copia);
             }}
             onKeyDown={(e) => handleKeyDown(e, cliente.id, cliente.orden)}
-            
-          />
+            />
+
+       <a
+      className="btn-msj"
+      onClick={() => {
+        const mensaje = generarMensaje(cliente, credito, "recordatorio");
+        const url = `https://wa.me/${cliente.telefono}?text=${encodeURIComponent(
+          mensaje
+        )}`;
+        window.open(url, "_blank");
+      }}
+    >
+      <FaBullhorn size={14} />
+    </a>
         </td>
         <td>{cliente.nombre}</td>
         <td>
@@ -831,9 +868,12 @@ useEffect(() => {
           <button className="btn-pagar" onClick={() => abrirModalPago(cliente)}>
             <FaMoneyBillWave /> Pago
           </button>
-          <Link to={`/clientedetalle/${cliente.id}`} className="btn-detalle">
-            <FaEye size={16} /> Ver...
-          </Link>
+           {/* Contenedor para agrupar Ver + Notificar */}
+  <div className="detalle-actions">
+    <Link to={`/clientedetalle/${cliente.id}`} className="btn-detalle">
+      <FaEye size={16} /> Ver...
+    </Link>
+  </div>
         </td>
       </tr>
     );
