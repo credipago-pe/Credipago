@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { CheckCircle } from "lucide-react";
 import dayjs from "dayjs";
 import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaChevronDown, FaFilter, FaMoneyBill, FaMoneyBillWave, FaInfoCircle, FaTimes, FaCaretDown, FaSignOutAlt } from "react-icons/fa";
-
+import { calcularTotalRecaudarHoy } from "../components/utils";
 
 const CobradorPanel = () => {
   const [usuarioId, setUsuarioId] = useState(null);
@@ -30,6 +30,7 @@ const CobradorPanel = () => {
   const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
   const [clienteParaRecibo, setClienteParaRecibo] = useState(null);
   const [pagando, setPagando] = useState(false);
+  const [pagosHoy, setPagosHoy] = useState([]); // guarda objetos de pago con monto_pagado
   const mensajeRef = useRef(null);
   const authId = usuario?.id;
 
@@ -276,11 +277,11 @@ setCreditos(creditosConAtraso);
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const hoyUTC5 = new Date(hoy.getTime() - 5 * 60 * 60 * 1000); // ajuste por UTC-5
-    const isoInicio = hoyUTC5.toISOString().slice(0, 10); // formato YYYY-MM-DD
+    const isoInicio = hoyUTC5.toISOString().slice(0, 10); // YYYY-MM-DD
 
     const { data, error } = await supabase
       .from("pagos")
-      .select("credito_id, fecha_pago")
+      .select("credito_id, fecha_pago, monto_pagado") // 👈 incluye monto
       .gte("fecha_pago", `${isoInicio} 00:00:00`)
       .lte("fecha_pago", `${isoInicio} 23:59:59`);
 
@@ -289,11 +290,14 @@ setCreditos(creditosConAtraso);
     } else {
       const idsPagadosHoy = data.map(pago => pago.credito_id);
       setClientesConPagoHoy(idsPagadosHoy);
+
+      setPagosHoy(data); // 👈 ahora sí guardamos los pagos del día
     }
   };
 
   obtenerPagosDeHoy();
 }, []);
+
 
 
   useEffect(() => {
@@ -615,6 +619,19 @@ useEffect(() => {
   }
 }, [mensaje]);
 
+  // ==== Totales para las cards (calculados en front)
+  const clientesActivos = creditos.filter(c => c.estado !== "cancelado" && Number(c.saldo) > 0).length;
+  const totalRecaudarHoy = calcularTotalRecaudarHoy(creditos);
+  const totalPagadoHoy = pagosHoy.reduce((sum, p) => sum + Number(p.monto_pagado || 0), 0);
+  const pendienteRecaudar = totalRecaudarHoy - totalPagadoHoy;
+
+  // Logs útiles para debugging
+  useEffect(() => {
+    console.log("[CobradorPanel] creditos:", creditos.length, creditos);
+    console.log("[CobradorPanel] pagosHoy:", pagosHoy.length, pagosHoy);
+    console.log("[CobradorPanel] clientesConPagoHoy:", clientesConPagoHoy);
+    console.log("totales -> clientesActivos:", clientesActivos, " totalRecaudarHoy:", totalRecaudarHoy, " totalPagadoHoy:", totalPagadoHoy);
+  }, [creditos, pagosHoy, clientesConPagoHoy, totalRecaudarHoy, totalPagadoHoy]);
 
 
   return (
@@ -691,6 +708,23 @@ useEffect(() => {
 </nav>
   </div>
 )}
+
+{/* ======= RESUMEN EN TARJETAS ======= */}
+        <div className="resumen-dashboard">
+        <div className="card-resumen clientes">
+            <h4>Clientes Activos</h4>
+            <p>{clientesActivos}</p>
+          </div>
+          <div className="card-resumen total">
+            <h4>Total a Recaudar</h4>
+            <p>${totalRecaudarHoy.toFixed(2)}</p>
+          </div>
+          
+          <div className="card-resumen recaudado">
+            <h4>Recaudado Hoy</h4>
+            <p>${totalPagadoHoy.toFixed(2)}</p>
+          </div>
+        </div>
 
         <div className="filtro-busqueda">
           <div className="busqueda">

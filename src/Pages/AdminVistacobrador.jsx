@@ -4,6 +4,7 @@ import { supabase } from "../components/supabaseClient";  // Asegúrate de que e
 import "../Styles/CobradorPanel.css";
 import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaChevronDown, FaFilter, FaMoneyBill, FaMoneyBillWave, FaInfoCircle, FaTimes, FaCaretDown, FaSignOutAlt } from "react-icons/fa";
 import { useParams } from "react-router-dom";
+import { calcularTotalRecaudarHoy } from "../components/utils";
 
 export default function AdminVistacobrador() {
   const { id } = useParams();
@@ -280,9 +281,7 @@ export default function AdminVistacobrador() {
 
   // ==== Totales para las cards (calculados en front)
   const clientesActivos = creditos.filter(c => c.estado !== "cancelado" && Number(c.saldo) > 0).length;
-  const totalRecaudarHoy = creditos
-    .filter(c => c.estado !== "cancelado" && Number(c.saldo) > 0)
-    .reduce((sum, c) => sum + Number(c.valor_cuota || 0), 0);
+ const totalRecaudarHoy = calcularTotalRecaudarHoy(creditos);
   const totalPagadoHoy = pagosHoy.reduce((sum, p) => sum + Number(p.monto_pagado || 0), 0);
   const pendienteRecaudar = totalRecaudarHoy - totalPagadoHoy;
 

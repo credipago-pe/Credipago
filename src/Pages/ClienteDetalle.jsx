@@ -456,9 +456,6 @@ const ClienteDetalle = () => {
    Ubicacion📍
   </button>
 </div>
-
-
-
       <label>Detalle:</label>
       <textarea
         value={cliente.detalle || ""}
