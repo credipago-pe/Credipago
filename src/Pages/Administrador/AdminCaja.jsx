@@ -23,7 +23,7 @@ const AdminCaja = () => {
   const [totalGastos, setTotalGastos] = useState(0);
   const [totalVentas, setTotalVentas] = useState(0);
   const totalIngresosReales = totalIngresos + totalPagos;
-  const saldoCalculado = caja? totalIngresosReales - totalSalidas - totalGastos: 0;
+ 
 
 
 
@@ -279,22 +279,13 @@ useEffect(() => {
   <thead>
     <tr>
       <th>Ingreso Base</th>
-      <th>Pagos (Recaudos)</th>
-      <th>Total Egresos</th> 
-      <th>Ventas</th>
-      <th>Gastos</th>
-      <th>Saldo Actual</th>
 
     </tr>
   </thead>
   <tbody>
     <tr>
       <td style={{ color: "green" }}>${totalIngresos.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</td>
-      <td style={{ color: "green" }}>${totalPagos.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</td>
-      <td style={{ color: "red" }}>${(totalSalidas + totalGastos).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</td>
-      <td style={{ color: "red" }}>${totalVentas.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</td>
-      <td style={{ color: "red" }}>${totalGastos.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</td>
-      <td style={{ color: "green" }}>${saldoCalculado.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</td>
+
     </tr>
   </tbody>
 </table>

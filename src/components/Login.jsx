@@ -5,7 +5,7 @@ import "../Styles/Login.css";
 import { FaUser, FaLock } from "react-icons/fa";
 
 const Login = () => {
-  const [username, setUsername] = useState(""); // Aquí usarás el email para Auth
+  const [username, setUsername] = useState(""); // Email
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -19,14 +19,13 @@ const Login = () => {
     }
 
     try {
-      // 1. Login con Supabase Auth usando email y password
-     const { data, error: loginError } = await supabase.auth.signInWithPassword({
-  email: username,
-  password,
-});
+      // 1️⃣ Login con Supabase Auth
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email: username,
+        password,
+      });
 
-const user = data?.user;
-
+      const user = data?.user;
 
       if (loginError) {
         setError("Usuario o contraseña incorrectos.");
@@ -38,7 +37,47 @@ const user = data?.user;
         return;
       }
 
-      // 2. Buscar si es admin por auth_id
+      // 2️⃣ Verificar si el usuario existe en la tabla usuarios
+      const { data: existingUser, error: fetchError } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("auth_id", user.id)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("Error al buscar usuario:", fetchError.message);
+      }
+
+      if (existingUser) {
+        // 🔄 Si ya existe, actualizamos el pin
+        const { error: updateError } = await supabase
+          .from("usuarios")
+          .update({ pin: password })
+          .eq("auth_id", user.id);
+
+        if (updateError) {
+          console.error("Error actualizando pin:", updateError.message);
+        } else {
+          console.log("✅ Pin actualizado correctamente");
+        }
+      } else {
+        // 🆕 Si no existe, insertamos uno nuevo
+        const { error: insertError } = await supabase.from("usuarios").insert([
+          {
+            auth_id: user.id,
+            email: username,
+            pin: password,
+          },
+        ]);
+
+        if (insertError) {
+          console.error("Error insertando usuario:", insertError.message);
+        } else {
+          console.log("✅ Nuevo usuario insertado con pin");
+        }
+      }
+
+      // 3️⃣ Buscar si es admin
       let { data: adminData, error: adminError } = await supabase
         .from("admin")
         .select("*")
@@ -54,13 +93,17 @@ const user = data?.user;
       if (adminData) {
         localStorage.setItem(
           "usuario",
-          JSON.stringify({ role: "admin", username: adminData.nombre, auth_id: user.id })
+          JSON.stringify({
+            role: "admin",
+            username: adminData.nombre,
+            auth_id: user.id,
+          })
         );
         navigate("/admin");
         return;
       }
 
-      // 3. Si no es admin, buscar en usuarios (cobrador)
+      // 4️⃣ Si no es admin, buscar si es cobrador
       let { data: userData, error: userError } = await supabase
         .from("usuarios")
         .select("*")
@@ -74,10 +117,14 @@ const user = data?.user;
         return;
       }
 
-      if (userData) {localStorage.setItem(
-        "usuario",
-        JSON.stringify({ role: "cobrador",username: userData.email,auth_id: user.id,
-         })
+      if (userData) {
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({
+            role: "cobrador",
+            username: userData.email,
+            auth_id: user.id,
+          })
         );
         navigate("/cobrador");
         return;
@@ -91,7 +138,6 @@ const user = data?.user;
   };
 
   return (
-
     <div className="login-container">
       <img src="/logo.png" alt="Logo Credipago" style={{ width: 220, marginBottom: 8 }} />
       {error && <p className="error-message">{error}</p>}
@@ -114,7 +160,9 @@ const user = data?.user;
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <button type="submit" className="login-button">Ingresar</button>
+        <button type="submit" className="login-button">
+          Ingresar
+        </button>
       </form>
     </div>
   );
