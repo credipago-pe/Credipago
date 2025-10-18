@@ -143,19 +143,35 @@ const RenovarCredito = () => {
   };
 
   const calcularFechaVencimiento = (fecha, formaPago) => {
-    const d = new Date(fecha);
-    if (formaPago === "diario") {
-      d.setDate(d.getDate() + 1);
-      if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-    } else if (formaPago === "semanal") {
+  const d = new Date(fecha);
+
+  switch (formaPago) {
+    case "diario_24":
+      d.setDate(d.getDate() + 24);
+      break;
+    case "diario_20":
+      d.setDate(d.getDate() + 20);
+      break;
+    case "diario_11":
+      d.setDate(d.getDate() + 11);
+      break;
+    case "semanal":
       d.setDate(d.getDate() + 7);
-    } else if (formaPago === "mensual") {
-      d.setMonth(d.getMonth() + 1);
-    } else if (formaPago === "quincenal") {
+      break;
+    case "quincenal":
       d.setDate(d.getDate() + 15);
-    }
-    return d;
-  };
+      break;
+    case "mensual":
+      d.setMonth(d.getMonth() + 1);
+      break;
+    default:
+      d.setDate(d.getDate() + 1);
+      break;
+  }
+
+  return d;
+};
+
 
   return (
     <div className="contenedor-registro">
@@ -228,11 +244,13 @@ const RenovarCredito = () => {
               }))
             }
           >
-            <option value="diario">Diario</option>
-            <option value="semanal">Semanal</option>
-            <option value="quincenal">Quincenal</option>
-            <option value="mensual">Mensual</option>
-          </select>
+            <option value="diario_24">Diario (24 días)</option>
+            <option value="diario_20">Diario (20 días)</option>
+            <option value="diario_11">Diario (11 días)</option>
+            <option value="semanal">Semanal (4 semanas)</option>
+            <option value="quincenal">Quincenal (2 semanas)</option>
+            <option value="mensual">Mensual (30 días 1 pago)</option>
+     </select>
 
           <button type="submit">Renovar Crédito</button>
         </form>

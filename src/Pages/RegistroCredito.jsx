@@ -1,17 +1,25 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../components/supabaseClient";
 import { useNavigate } from "react-router-dom";
-import dayjs from "dayjs";
 import "../Styles/FormularioCredito.css";
 
 const RegistroCredito = () => {
   const [ultimoCliente, setUltimoCliente] = useState(null);
   const [monto, setMonto] = useState("");
-  const [formaPago, setFormaPago] = useState("diario");
+  const [interes, setInteres] = useState(20); // 💰 interés por defecto 20%
+  const [formaPago, setFormaPago] = useState("diario_24");
+  const [mensaje, setMensaje] = useState("");
   const navigate = useNavigate();
-  const fechaLocal = dayjs().format("YYYY-MM-DD HH:mm:ss"); // sin zona horaria
 
-  // 🔹 Cargar el último cliente registrado
+  // 🔹 Función para obtener fecha local sin zona horaria
+  const getFechaLocalSinZona = () => {
+    const fecha = new Date();
+    const offsetMs = fecha.getTimezoneOffset() * 60000;
+    const localTime = new Date(fecha.getTime() - offsetMs);
+    return localTime.toISOString().slice(0, 19).replace("T", " ");
+  };
+
+  // 🔹 Cargar el último cliente registrado automáticamente
   useEffect(() => {
     const fetchUltimoCliente = async () => {
       const { data, error } = await supabase
@@ -22,11 +30,11 @@ const RegistroCredito = () => {
 
       if (error) {
         console.error("Error al obtener el último cliente:", error);
+        setMensaje("Error al cargar el último cliente.");
       } else if (data.length === 0) {
-        console.warn("No hay clientes registrados aún.");
+        setMensaje("No hay clientes registrados aún.");
         setUltimoCliente(null);
       } else {
-        console.log("Último cliente obtenido:", data[0]);
         setUltimoCliente(data[0]);
       }
     };
@@ -34,101 +42,122 @@ const RegistroCredito = () => {
     fetchUltimoCliente();
   }, []);
 
-  // 🔹 Registrar crédito con caja_id validado
+  // 🔹 Registrar el crédito en Supabase
   const registrarCredito = async (e) => {
     e.preventDefault();
+    setMensaje("");
 
     if (!ultimoCliente) {
       alert("No hay clientes registrados.");
       return;
     }
 
-    const session = await supabase.auth.getSession();
-    const auth_id = session.data.session.user.id;
+    if (!monto || parseFloat(monto) <= 0) {
+      alert("El monto debe ser mayor que 0.");
+      return;
+    }
 
-    // Buscar caja activa
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const usuarioId = session?.user?.id;
+
+    // Buscar caja activa del cobrador
     const { data: cajaActiva, error: errorCaja } = await supabase
       .from("cajas")
       .select("id")
-      .eq("usuario_auth_id", auth_id)
+      .eq("usuario_auth_id", usuarioId)
       .eq("estado", "abierta")
       .order("fecha_apertura", { ascending: false })
       .limit(1)
       .single();
 
-    console.log("Caja activa encontrada:", cajaActiva);
-
-    if (errorCaja || !cajaActiva || !cajaActiva.id) {
-      alert("No se encontró una caja activa válida para este usuario.");
+    if (errorCaja || !cajaActiva?.id) {
+      alert("No se encontró una caja activa para este usuario.");
       console.error("Error buscando caja:", errorCaja);
       return;
     }
 
-    // Confirmación de valores
-    console.log("Valores a insertar:", {
-      cliente_id: ultimoCliente?.id,
-      monto: parseFloat(monto),
-      forma_pago: formaPago,
-      fecha_vencimiento: new Date().toISOString().split("T")[0],
-      usuario_id: auth_id,
-      caja_id: cajaActiva?.id,
-    });
+    const fechaInicio = getFechaLocalSinZona();
 
+    // Insertar el crédito (las funciones SQL calcularán saldo, cuotas, valor_cuota, y fecha_vencimiento)
     const { data, error } = await supabase.from("creditos").insert([
       {
         cliente_id: ultimoCliente.id,
         monto: parseFloat(monto),
+        interes: parseFloat(interes),
         forma_pago: formaPago,
-        fecha_inicio: fechaLocal,
-        fecha_vencimiento: fechaLocal,
-        usuario_id: auth_id,
-        caja_id: cajaActiva.id, // ✅ asegurado
-        estado: "Activo", // si tu tabla exige un estado inicial
+        fecha_inicio: fechaInicio,
+        usuario_id: usuarioId,
+        caja_id: cajaActiva.id,
+        estado: "Activo",
       },
     ]);
 
     if (error) {
-      console.error("Error al registrar crédito:", JSON.stringify(error, null, 2));
-      alert(`Error al registrar crédito: ${error.message}`);
+      console.error("Error al registrar crédito:", error);
+      alert("Error al registrar crédito: " + error.message);
     } else {
-      console.log("Crédito registrado con éxito:", data);
-      alert("Crédito registrado correctamente");
+      alert("Crédito registrado correctamente ✅");
       setMonto("");
-      navigate(-2);
+      setInteres(20);
+      setFormaPago("diario_24");
+      navigate("/cobrador");
     }
   };
 
   return (
     <div className="contenedor-registro">
-    {/* Botón de volver */}
-    <button className="back-button" onClick={() => navigate(-1)}>
-      Volver
-    </button>
+      <button className="back-button" onClick={() => navigate(-1)}>
+        Volver
+      </button>
 
-      <h2>Registro de Crédito</h2>
+      <h2>Registrar Crédito</h2>
+
       {ultimoCliente ? (
-        <p><strong>ID Cliente:</strong> {ultimoCliente.id} - {ultimoCliente.nombre}</p>
+        <p>
+          <strong>Cliente:</strong> {ultimoCliente.nombre} (ID: {ultimoCliente.id})
+        </p>
       ) : (
         <p>Cargando último cliente...</p>
       )}
 
       <form onSubmit={registrarCredito}>
-        <label>Monto: $</label>
+        <label>Monto (S/):</label>
         <input
           type="number"
+          step="0.01"
           value={monto}
           onChange={(e) => setMonto(e.target.value)}
           required
         />
 
+        <label>Interés (%):</label>
+        <input
+          type="number"
+          step="0.01"
+          value={interes}
+          onChange={(e) => setInteres(e.target.value)}
+          required
+        />
+
         <label>Forma de Pago:</label>
-        <select value={formaPago} onChange={(e) => setFormaPago(e.target.value)}>
-          <option value="diario">Diario</option>
-          <option value="semanal">Semanal</option>
+        <select
+          value={formaPago}
+          onChange={(e) => setFormaPago(e.target.value)}
+        >
+          <option value="diario_24">Diario (24 días)</option>
+          <option value="diario_20">Diario (20 días)</option>
+          <option value="diario_11">Diario (11 días)</option>
+          <option value="semanal">Semanal (4 semanas)</option>
+          <option value="quincenal">Quincenal (2 semanas)</option>
+          <option value="mensual">Mensual (1 mes)</option>
         </select>
 
         <button type="submit">Registrar Crédito</button>
       </form>
+
+      {mensaje && <p className="info">{mensaje}</p>}
     </div>
   );
 };
