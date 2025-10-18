@@ -51,10 +51,12 @@ const RenovarCredito = () => {
   };
 
   const seleccionarCliente = async (cliente) => {
-    setClienteSeleccionado(cliente);
-    setMensajeError("");
-    setMensajeExito("");
-    setBloquearFormulario(false);
+  setClienteSeleccionado(cliente);
+  setBusqueda(cliente.nombre); // 👈 muestra el nombre seleccionado en el input
+  setClientes([]); // 👈 limpia la lista para ocultarla
+  setMensajeError("");
+  setMensajeExito("");
+  setBloquearFormulario(false);
 
     const tieneActivo = await verificarCreditoActivo(cliente.id);
     if (tieneActivo) {
@@ -161,15 +163,19 @@ const RenovarCredito = () => {
       {mensajeError && <p className="error">{mensajeError}</p>}
       {mensajeExito && <p className="exito">{mensajeExito}</p>}
 
-      <input
-        type="text"
-        placeholder="Buscar cliente..."
-        value={busqueda}
-        onChange={(e) => {
-          setBusqueda(e.target.value);
-          buscarClientes(e.target.value);
-        }}
-      />
+     <input
+  type="text"
+  placeholder="Buscar cliente..."
+  value={busqueda}
+  onChange={(e) => {
+    const value = e.target.value;
+    setBusqueda(value);
+    if (value.trim() === "") setClientes([]); // 👈 borra lista si se limpia el input
+    else buscarClientes(value);
+  }}
+  onBlur={() => setTimeout(() => setClientes([]), 150)} // 👈 oculta lista al perder foco
+/>
+
 
       <ul className="resultados">
         {clientes.map((c) => (

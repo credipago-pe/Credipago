@@ -31,6 +31,9 @@ const CobradorPanel = () => {
   const [clienteParaRecibo, setClienteParaRecibo] = useState(null);
   const [pagando, setPagando] = useState(false);
   const [pagosHoy, setPagosHoy] = useState([]); // guarda objetos de pago con monto_pagado
+  const clientesPagadosHoy = clientesConPagoHoy.length;
+
+  
   const mensajeRef = useRef(null);
   const authId = usuario?.id;
 
@@ -504,6 +507,18 @@ const handleKeyDown = (e, clienteId, nuevoOrden) => {
     // (opcional) Cierra el modal después de mostrar el mensaje
     cerrarModalPago();
 
+    // ✅ Actualiza la lista de pagos (esto recalcula automáticamente totalPagadoHoy)
+  setPagosHoy((prev) => [
+    ...prev,
+    {
+      monto_pagado: Number(montoPago),
+      fecha_pago: fechaPagoFormatted,
+      credito_id: credito.id,
+      usuario_id: usuario?.id,
+    },
+  ]);
+
+
     // ✅ Marcar cliente con pago hoy
     setClientesConPagoHoy((prev) => [...new Set([...prev, credito.id])]);
 
@@ -737,8 +752,8 @@ Por favor, no olvide realizar su pago hoy. ¡Gracias! 🙌`;
 {/* ======= RESUMEN EN TARJETAS ======= */}
         <div className="resumen-dashboard">
         <div className="card-resumen clientes">
-            <h4>Clientes Activos</h4>
-            <p>{clientesActivos}</p>
+            <h4>Activos / Pagados</h4>
+            <p>{clientesActivos} / {clientesPagadosHoy}</p>
           </div>
           <div className="card-resumen total">
             <h4>Total a Recaudar</h4>
