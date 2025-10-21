@@ -28,25 +28,60 @@ const Liquidacion = () => {
     const fechaInicioStr = fechaInicio; // formato YYYY-MM-DD
     const fechaFinStr = fechaFin;
 
-    // PAGOS
-    const { data: pagos } = await supabase.from("pagos").select("*");
+  // === PAGOS ===
+const { data: pagos, error: errorPagos } = await supabase
+  .from("pagos")
+  .select("id, fecha_pago, metodo_pago, monto_pagado")
+  .order("fecha_pago", { ascending: false });
 
-    const pagosFiltrados =
-      pagos?.filter((p) => {
-        const fecha = p.fecha_pago?.split("T")[0];
-        return fecha >= fechaInicioStr && fecha <= fechaFinStr;
-      }) || [];
+if (errorPagos) {
+  console.error("❌ Error cargando pagos:", errorPagos);
+  return;
+}
 
-    const efectivo = pagosFiltrados
-      .filter((p) => p.metodo_pago === "efectivo")
-      .reduce((acc, p) => acc + Number(p.monto_pagado), 0);
+console.log("📅 Pagos brutos:", pagos?.length || 0, pagos);
 
-    const deposito = pagosFiltrados
-      .filter((p) => p.metodo_pago === "deposito")
-      .reduce((acc, p) => acc + Number(p.monto_pagado), 0);
+// 🕒 Convertimos las fechas del filtro a UTC para evitar desfases de zona
+const fechaInicioObj = new Date(`${fechaInicioStr}T00:00:00Z`);
+const fechaFinObj = new Date(`${fechaFinStr}T23:59:59Z`);
 
-    setTotalEfectivo(efectivo);
-    setTotalDeposito(deposito);
+console.log("🕒 Rango de filtro UTC:", fechaInicioObj, "→", fechaFinObj);
+
+const pagosFiltrados =
+  pagos?.filter((p) => {
+    if (!p.fecha_pago) return false;
+
+    // Convertir el pago a objeto Date (interpreta UTC)
+    const fechaPagoObj = new Date(p.fecha_pago);
+
+    const dentro =
+      fechaPagoObj >= fechaInicioObj && fechaPagoObj <= fechaFinObj;
+
+    if (!dentro) {
+      console.log("🚫 Fuera de rango:", {
+        fechaPago: p.fecha_pago,
+        fechaPagoObj,
+      });
+    }
+
+    return dentro;
+  }) || [];
+
+console.log("✅ Pagos filtrados:", pagosFiltrados?.length || 0, pagosFiltrados);
+
+// 💰 Totales por método
+const efectivo = pagosFiltrados
+  .filter((p) => p.metodo_pago?.trim().toLowerCase() === "efectivo")
+  .reduce((acc, p) => acc + Number(p.monto_pagado || 0), 0);
+
+const deposito = pagosFiltrados
+  .filter((p) => p.metodo_pago?.trim().toLowerCase() === "deposito")
+  .reduce((acc, p) => acc + Number(p.monto_pagado || 0), 0);
+
+setTotalEfectivo(efectivo);
+setTotalDeposito(deposito);
+
+
 
     // VENTAS
     const { data: ventas } = await supabase.from("creditos").select("*");
