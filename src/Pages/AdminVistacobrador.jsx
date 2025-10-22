@@ -375,7 +375,7 @@ export default function AdminVistacobrador() {
 
         {/* ======= RESUMEN EN TARJETAS ======= */}
         <div className="info-dashboard">
-        <div className="card-resumen clientes">
+        <div className="card-info clientes">
             <h4>Clientes Activos</h4>
             <p>{clientesActivos}</p>
           </div>
