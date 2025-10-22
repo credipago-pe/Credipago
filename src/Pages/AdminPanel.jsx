@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "../components/supabaseClient";
 import "../Styles/PanelAdmin.css";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 import { FaSignOutAlt,// logout
   FaUsers,        // Ver Clientes
   FaMapMarkerAlt, // Ubicar Cobrador
@@ -11,6 +12,7 @@ import { FaSignOutAlt,// logout
   FaCalendarDay, FaExclamationTriangle  // Informe del día
 } from "react-icons/fa";
 
+
 export default function AdminPanel() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,27 @@ export default function AdminPanel() {
   const [usuarioAEliminar, setUsuarioAEliminar] = useState(null);
   const navigate = useNavigate();
   const [cobradorSeleccionado, setCobradorSeleccionado] = useState(null);
+  const handleDragEnd = (result) => {
+    if (!result.destination) return; // si no suelta en un lugar válido
+    const items = Array.from(usuarios);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setUsuarios(items);
+    const hoy = dayjs().format("YYYY-MM-DD");
+  };
 
+const hoy = dayjs().format("YYYY-MM-DD");
+
+const totalizarHoy = (arr, campo, fechaCampo) => {
+  return arr
+    .filter(item => {
+      const fechaItem = item[fechaCampo];
+      if (!fechaItem) return false;
+      // Convertimos a dayjs y comparamos solo fecha sin hora
+      return dayjs(fechaItem).format("YYYY-MM-DD") === dayjs().format("YYYY-MM-DD");
+    })
+    .reduce((acc, curr) => acc + Number(curr[campo] || 0), 0);
+};
   
 
   useEffect(() => {
@@ -113,16 +135,12 @@ export default function AdminPanel() {
         return acc;
       }, {});
 
-    const ventasPorUsuario = totalizar(creditosData, "monto");
-    const recaudoPorUsuario = totalizar(pagosData, "monto_pagado");
-    const gastosPorUsuario = totalizar(gastosData, "valor");
-
-    const usuariosConTotales = users.map((u) => ({
-      ...u,
-      totalVentas: ventasPorUsuario[u.auth_id] || 0,
-      totalRecaudo: recaudoPorUsuario[u.auth_id] || 0,
-      totalGastos: gastosPorUsuario[u.auth_id] || 0,
-    }));
+    const usuariosConTotales = users.map(u => ({
+  ...u,
+  totalRecaudoDia: totalizarHoy(pagosData.filter(p => p.usuario_id === u.auth_id), "monto_pagado", "fecha_pago"),
+  totalVentasDia: totalizarHoy(creditosData.filter(c => c.usuario_id === u.auth_id), "monto", "fecha_creacion"),
+  totalGastosDia: totalizarHoy(gastosData.filter(g => g.usuario_id === u.auth_id), "valor", "fecha"),
+}));
 
     setUsuarios(usuariosConTotales);
     setLoading(false);
@@ -165,128 +183,63 @@ export default function AdminPanel() {
 
   return (
     <div className="admin-panel-container">
-      <h2 className="admin-panel-title">📊 Panel de Administrador</h2>
-      <button onClick={() => navigate("/")}className="btn-ir-panel"title="Volver al Panel Admi">
-      <FaSignOutAlt />
-      </button>
-
-      <button onClick={() => navigate("/registro-usuarios")} className="admin-panel-btn">
-        ➕ Crear nueva ruta
-      </button>
-      <button
-        onClick={() => navigate("/dashboard-admin")}
-        className="admin-panel-btn"
-      >
-        📈 Ver resumen global
-      </button>
-
-      {errorMsg && <p className="admin-panel-error">{errorMsg}</p>}
-
-      {loading ? (
-        <p className="admin-panel-loading">Cargando datos...</p>
-      ) : usuarios.length === 0 ? (
-        <p className="admin-panel-empty">No hay rutas (usuarios cobradores) registradas.</p>
-      ) : (
-        <div className="admin-panel-table-container">
-        <table className="admin-panel-table">
-          <thead>
-  <tr>
-    <th>Cobrador</th>
-    <th>Acciones</th>
-  </tr>
-</thead>
-<tbody>
-  {usuarios.map((u) => (
-     console.log(u), // ← agrega esto
-    <tr key={u.id}>
-    <td className="cobrador-info-cell">
-  <span>{u.nombre}</span>
-  <span
-    className={`estado-cobrador ${u.conectado ? "verde" : "rojo"}`}
-    onClick={() => setCobradorSeleccionado(u)}
-    title="Ver detalles de conexión"
-  >
-    ●
-  </span>
-</td>
-
-      <td>
-        <div className="acciones-td">
-          <button onClick={() => entrarComoRuta(u.auth_id)} className="admin-panel-btn-ver">
-    <FaUsers /> Ver Clientes
+  <h2 className="admin-panel-title">📊 Panel de Administrador</h2>
+  <div className="admin-panel-top-buttons">
+  <button onClick={() => navigate("/")} className="btn-ir-panel" title="Volver al Panel Admin">
+    <FaSignOutAlt />
   </button>
-  <button onClick={() => navigate("/admin/mapa")} className="admin-panel-btn-ubicacion">
+  <button onClick={() => navigate("/registro-usuarios")} className="admin-panel-btn">
+    ➕ Crear nueva ruta
+  </button>
+  <button onClick={() => navigate("/dashboard-admin")} className="admin-panel-btn">
+    📈 Ver resumen global
+  </button>
+  <button onClick={() => navigate("/admin/mapa")} className="admin-panel-btn">
     <FaMapMarkerAlt /> Ubicar Cobrador
   </button>
-  <button onClick={() => eliminarUsuario(u.id)} className="admin-panel-btn-eliminar">
-    <FaTrash /> Eliminar
+  <button onClick={() => navigate("/admin/pagar-suscripcion")} className="admin-panel-btn">
+    <FaMoneyBill /> Pagar Suscripción
   </button>
-  <button onClick={() => navigate(`/admin/caja/${u.auth_id}`)} className="admin-panel-btn-caja">
-    <FaMoneyBill /> Caja / Balance
-  </button>
-  <button onClick={() => navigate(`/registros-admin/${u.auth_id}`)} className="admin-panel-btn-gestion">
-    <FaTools /> Borrar Registros
-  </button>
-  <button onClick={() => navigate(`/admin/resumen/${u.auth_id}`)} className="admin-panel-btn-informe">
-    <FaCalendarDay /> Resum. General
-  </button>
-  
+</div>
+
+  {errorMsg && <p className="admin-panel-error">{errorMsg}</p>}
+  {loading ? (
+    <p className="admin-panel-loading">Cargando datos...</p>
+  ) : usuarios.length === 0 ? (
+    <p className="admin-panel-empty">No hay rutas (usuarios cobradores) registradas.</p>
+  ) : (
+    <div className="admin-panel-cards-container">
+      {usuarios.map((u) => (
+        <div key={u.id} className="cobrador-card">
+          <div className="cobrador-card-header">
+  <span className="cobrador-nombre">{u.nombre}</span>
+  <FaTrash
+    onClick={() => eliminarUsuario(u.id)}
+    style={{ cursor: "pointer", color: "#f44336", fontSize: "18px" }}
+    title="Eliminar cobrador"
+  />
+</div>
+
+          <div className="cobrador-card-totales">
+  <p>💰 Total Recaudo Hoy: S/ {u.totalRecaudoDia}</p>
+  <p>📈 Total Ventas Hoy: S/ {u.totalVentasDia}</p>
+  <p>💸 Total Gastos Hoy: S/ {u.totalGastosDia}</p>
+</div>
+
+          <div className="cobrador-card-buttons">
+            <button onClick={() => entrarComoRuta(u.auth_id)}><FaUsers /> Ver Clientes</button>
+            
+            <button onClick={() => navigate(`/admin/caja/${u.auth_id}`)}><FaMoneyBill /> Caja / Balance</button>
+            <button onClick={() => navigate(`/registros-admin/${u.auth_id}`)}><FaTools /> Borrar Registros</button>
+            <button onClick={() => navigate(`/admin/resumen/${u.auth_id}`)}><FaCalendarDay /> Resum. General</button>
+          </div>
         </div>
-      </td>
-    </tr>
-  ))}
-</tbody>
-
-        </table>
-        </div>
-      )}
-    <ModalConfirmacion
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onConfirm={confirmarConContraseña}
-      />
-       {cobradorSeleccionado && (
-  <div className="modal-backdrop" onClick={() => setCobradorSeleccionado(null)}>
-    <div className="modalE" onClick={(e) => e.stopPropagation()}>
-      <h3 className="modal-titulo">🔍 Detalles de conexión</h3>
-      <p><strong>Equipo:</strong> {cobradorSeleccionado.equipo || "No disponible"}</p>
-      <p><strong>Hora de conexión:</strong> {cobradorSeleccionado.hora_conexion || "No disponible"}</p>
-      <p><strong>Ubicación:</strong> {cobradorSeleccionado.ubicacion || "No disponible"}</p>
-      <div className="modal-buttonsE">
-        <button onClick={() => setCobradorSeleccionado(null)}>Cerrar</button>
-      </div>
+      ))}
     </div>
-  </div>
-)}
-    </div>
-  );
-}
+    
+  )}
+</div>
 
-function ModalConfirmacion({ visible, onClose, onConfirm }) {
-  const inputRef = useRef();
-
-  const handleConfirm = () => {
-    const password = inputRef.current.value;
-    onConfirm(password);
-  };
-
-  if (!visible) return null;
-
-  return (
-    <div className="modal-backdrop">
-      <div className="modalE">
-        <h3 className="modal-titulo">
-          <FaExclamationTriangle className="icono-alerta" /> Confirmar Eliminación
-        </h3>
-        <p>Ingresa la contraseña del administrador:</p>
-        <input type="password" ref={inputRef} placeholder="Contraseña" />
-        <div className="modal-buttonsE">
-          <button onClick={handleConfirm}>Confirmar</button>
-          <button onClick={onClose}>Cancelar</button>
-        </div>
-      </div>
-     
-    </div>
     
   );
 }

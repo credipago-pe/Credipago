@@ -238,3 +238,74 @@
   gap: 8px;
 }
 
+.admin-panel-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.cobrador-card {
+  background: linear-gradient(145deg, #ffffff, #c3c3c9);
+  border-radius: 16px;
+  padding: 20px;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1), 0 6px 10px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cobrador-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.cobrador-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.estado-cobrador.verde {
+  color: #4ade80;
+}
+
+.estado-cobrador.rojo {
+  color: #f87171;
+}
+
+.cobrador-card-totales p {
+  margin: 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cobrador-card-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cobrador-card-buttons button {
+  flex: 1 1 48%;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.cobrador-card-buttons button:hover {
+  background: linear-gradient(135deg, #2563eb, #3b5fd1);
+  transform: translateY(-2px);
+}
