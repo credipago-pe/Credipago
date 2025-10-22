@@ -1,265 +1,172 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../components/supabaseClient";
+import dayjs from "dayjs";
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   CartesianGrid,
-  Cell,
-  LabelList,
 } from "recharts";
+import { motion } from "framer-motion";
 import "../Styles/DashboardAdmin.css";
 
-export default function Dashboard() {
-  // FECHAS
-  const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
-    .toISOString()
-    .split("T")[0];
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState(today);
+// estilos internos
+const cardStyle = (bgColor) => ({
+  flex: "1 1 220px",
+  padding: 16,
+  borderRadius: 12,
+  background: bgColor,
+  color: "#fff",
+  boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+});
 
-  // USUARIOS
-  const [usuarios, setUsuarios] = useState([]);
-  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("todos");
+const cardTitleStyle = { fontSize: 14, marginBottom: 8 };
+const cardValueStyle = { fontSize: 22, fontWeight: 700 };
 
-  // ESTADOS
-  const [totalesResumen, setTotalesResumen] = useState([]);
+export default function DashboardAdmin() {
+  const [fechaInicio, setFechaInicio] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
+  const [fechaFin, setFechaFin] = useState(dayjs().endOf("month").format("YYYY-MM-DD"));
+  const [cobradores, setCobradores] = useState([]);
+  const [cobradorSeleccionado, setCobradorSeleccionado] = useState("");
+  const [dataResumen, setDataResumen] = useState([]);
+  const [totales, setTotales] = useState({
+    total_monto: 0,
+    total_efectivo: 0,
+    total_deposito: 0,
+    total_pagos: 0,
+  });
 
-  // Convierte cualquier fecha a formato YYYY-MM-DD
-  const toYMDDate = (date) => {
-    const d = new Date(date);
-    return (
-      d.getFullYear() +
-      "-" +
-      String(d.getMonth() + 1).padStart(2, "0") +
-      "-" +
-      String(d.getDate()).padStart(2, "0")
-    );
-  };
-
-  // TRAER USUARIOS
+  // Obtener cobradores del admin logueado
   useEffect(() => {
-    const fetchUsuarios = async () => {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) return console.error("No hay sesión activa");
+    const obtenerCobradores = async () => {
+      const session = await supabase.auth.getSession();
+      const adminId = session.data.session.user.id;
 
-      const { data: adminData, error: adminError } = await supabase
+      const { data, error } = await supabase
         .from("usuarios")
-        .select("auth_id")
-        .eq("auth_id", user.id)
-        .eq("rol", "admin")
-        .single();
+        .select("nombre, auth_id")
+        .eq("admin_id", adminId)
+        .eq("rol", "cobrador");
 
-      if (adminError || !adminData)
-        return console.error("No se encontró el administrador.");
+      if (error) {
+        console.error("Error obteniendo cobradores:", error);
+        return;
+      }
 
-      const adminAuthId = adminData.auth_id;
-
-      const { data: cobradores, error: usuariosError } = await supabase
-        .from("usuarios")
-        .select("auth_id, nombre")
-        .eq("rol", "cobrador")
-        .eq("admin_id", adminAuthId);
-
-      if (usuariosError) return console.error("Error al traer usuarios:", usuariosError.message);
-
-      setUsuarios(cobradores);
+      setCobradores(data);
     };
 
-    fetchUsuarios();
+    obtenerCobradores();
   }, []);
 
-  // TRAER DATOS FILTRADOS
-useEffect(() => {
-  if (!startDate || !endDate || !usuarios || usuarios.length === 0) return;
+  // Consultar resumen usando función RPC SQL
+  useEffect(() => {
+    const obtenerResumen = async () => {
+      const session = await supabase.auth.getSession();
+      const adminId = session.data.session.user.id;
 
-  const fetchData = async () => {
-    try {
-      // Lista de IDs a filtrar
-      const listaIds = usuarioSeleccionado === "todos"
-        ? usuarios.map(u => u.auth_id)
-        : [usuarioSeleccionado];
+      const { data, error } = await supabase.rpc("obtener_resumen_pagos", {
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+        admin: adminId,
+        cobrador: cobradorSeleccionado || null,
+      });
 
-      console.log("IDs filtrados:", listaIds);
+      if (error) {
+        console.error("Error en RPC obtener_resumen_pagos:", error);
+        setDataResumen([]);
+        return;
+      }
 
-      // Traer datos de Supabase
-      const [resPagos, resGastos, resCreditos] = await Promise.all([
-        supabase
-          .from("pagos")
-          .select("fecha_pago, monto_pagado, usuario_id")
-          .in("usuario_id", listaIds),
-        supabase
-          .from("gastos")
-          .select("fecha, valor, usuario_id")
-          .in("usuario_id", listaIds),
-        supabase
-          .from("creditos")
-          .select("fecha_inicio, monto, usuario_id")
-          .in("usuario_id", listaIds),
-      ]);
+      setDataResumen(data);
 
-      const pagos = resPagos.data || [];
-      const gastos = resGastos.data || [];
-      const creditos = resCreditos.data || [];
+      // Calcular totales generales
+      const total_monto = data.reduce((sum, d) => sum + Number(d.total_monto || 0), 0);
+      const total_efectivo = data.reduce((sum, d) => sum + Number(d.total_efectivo || 0), 0);
+      const total_deposito = data.reduce((sum, d) => sum + Number(d.total_deposito || 0), 0);
+      const total_pagos = data.reduce((sum, d) => sum + Number(d.total_pagos || 0), 0);
 
-      // Convertir fechas de filtro a objetos Date
-      const fechaInicioObj = new Date(`${startDate}T00:00:00`);
-      const fechaFinObj = new Date(`${endDate}T23:59:59`);
+      setTotales({
+        total_monto,
+        total_efectivo,
+        total_deposito,
+        total_pagos,
+      });
+    };
 
-      // Función para filtrar por fecha (ignora la hora)
-      const filtrarPorFecha = (arr, campoFecha) =>
-        arr.filter(item => {
-          if (!item[campoFecha]) return false;
-          const fechaItem = new Date(item[campoFecha]);
-          const dentro = fechaItem >= fechaInicioObj && fechaItem <= fechaFinObj;
-          if (!dentro) {
-            console.log("🚫 Fuera de rango:", {
-              campoFecha: item[campoFecha],
-              fechaItem,
-            });
-          }
-          return dentro;
-        });
-
-      const pagosFiltrados = filtrarPorFecha(pagos, "fecha_pago");
-      const gastosFiltrados = filtrarPorFecha(gastos, "fecha");
-      const creditosFiltrados = filtrarPorFecha(creditos, "fecha_inicio");
-
-      console.log("✅ Pagos filtrados:", pagosFiltrados.length, pagosFiltrados);
-
-      // Agrupar y sumar por día
-      const agruparPorDia = (arr, campoFecha, campoMonto) =>
-        arr.reduce((acc, item) => {
-          const fecha = new Date(item[campoFecha]).toISOString().split("T")[0];
-          acc[fecha] = (acc[fecha] || 0) + Number(item[campoMonto] || 0);
-          return acc;
-        }, {});
-
-      const mapRecaudos = agruparPorDia(pagosFiltrados, "fecha_pago", "monto_pagado");
-      const mapGastos = agruparPorDia(gastosFiltrados, "fecha", "valor");
-      const mapVentas = agruparPorDia(creditosFiltrados, "fecha_inicio", "monto");
-
-      // Totales
-      const totalRecaudos = Object.values(mapRecaudos).reduce((a, b) => a + b, 0);
-      const totalGastos = Object.values(mapGastos).reduce((a, b) => a + b, 0);
-      const totalVentas = Object.values(mapVentas).reduce((a, b) => a + b, 0);
-
-      console.log("📊 Totales resumen:", { totalRecaudos, totalVentas, totalGastos });
-
-      // Actualizar estados
-      setTotalesResumen([
-        { name: "Recaudos", Total: totalRecaudos },
-        { name: "Ventas", Total: totalVentas },
-        { name: "Gastos", Total: totalGastos },
-      ]);
-
-      // Generar array de fechas para gráfico por día
-      const fechas = Array.from(new Set([
-        ...Object.keys(mapRecaudos),
-        ...Object.keys(mapGastos),
-        ...Object.keys(mapVentas),
-      ])).sort();
-
-      // Aquí estaba el error: asegurar que setRecaudosGastos existe
-      setRecaudosGastos(
-        fechas.map(fecha => ({
-          fecha,
-          Recaudos: mapRecaudos[fecha] || 0,
-          Gastos: mapGastos[fecha] || 0,
-          Ventas: mapVentas[fecha] || 0,
-        }))
-      );
-
-    } catch (e) {
-      console.error("Error inesperado en fetchData:", e);
-    }
-  };
-
-  fetchData();
-}, [startDate, endDate, usuarioSeleccionado, usuarios]);
-
-
-   
+    obtenerResumen();
+  }, [fechaInicio, fechaFin, cobradorSeleccionado]);
 
   return (
-    <div className="dashboard-container">
-      <h2 className="dashboard-title">📊 Dashboard Financiero</h2>
+    <div className="dashboard-container" style={{ padding: 20, fontFamily: "Arial, sans-serif" }}>
+      <h2 style={{ marginBottom: 20 }}>📊 Dashboard Financiero — Admin</h2>
 
-      {/* FILTROS */}
-      <div className="dashboard-filtro">
-        <label className="dashboard-label">
-          Desde:
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          Hasta:
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-        </label>
-
-        <label className="dashboard-label">
-          Ruta/Cobrador:
-          <select
-            value={usuarioSeleccionado}
-            onChange={(e) => setUsuarioSeleccionado(e.target.value)}
-          >
-            <option value="todos">Todos</option>
-            {usuarios.map((u) => (
-              <option key={u.auth_id} value={u.auth_id}>
-                {u.nombre}
-              </option>
+      {/* Filtros */}
+      <div className="filtros" style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
+        <div>
+          <label>Desde:</label>
+          <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} style={{ marginLeft: 6 }} />
+        </div>
+        <div>
+          <label>Hasta:</label>
+          <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} style={{ marginLeft: 6 }} />
+        </div>
+        <div>
+          <label>Cobrador:</label>
+          <select value={cobradorSeleccionado} onChange={(e) => setCobradorSeleccionado(e.target.value)} style={{ marginLeft: 6 }}>
+            <option value="">Todos</option>
+            {cobradores.map((c) => (
+              <option key={c.auth_id} value={c.auth_id}>{c.nombre}</option>
             ))}
           </select>
-        </label>
+        </div>
       </div>
 
-      {/* GRAFICA */}
-      <div className="chart-wrapper">
-        <h3>🧾 Resumen General</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={totalesResumen} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
-            <defs>
-              <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2196F3" stopOpacity={1} />
-                <stop offset="100%" stopColor="#64B5F6" stopOpacity={1} />
-              </linearGradient>
-              <linearGradient id="colorRecaudos" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4CAF50" stopOpacity={1} />
-                <stop offset="100%" stopColor="#81C784" stopOpacity={1} />
-              </linearGradient>
-              <linearGradient id="colorGastos" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#F44336" stopOpacity={1} />
-                <stop offset="100%" stopColor="#E57373" stopOpacity={1} />
-              </linearGradient>
-            </defs>
+      {/* Resumen tarjetas */}
+      <div className="resumen-cards" style={{ display: "flex", gap: 16, marginBottom: 30, flexWrap: "wrap" }}>
+        <motion.div className="card verde" style={cardStyle("#4ade80")} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <div style={cardTitleStyle}>💰 Total Recaudado</div>
+          <div style={cardValueStyle}>S/ {totales.total_monto.toFixed(2)}</div>
+        </motion.div>
 
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip formatter={(value) => `S/ ${Number(value).toFixed(2)}`} />
-            <Legend />
+        <motion.div className="card amarillo" style={cardStyle("#facc15")} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
+          <div style={cardTitleStyle}>💵 Efectivo</div>
+          <div style={cardValueStyle}>S/ {totales.total_efectivo.toFixed(2)}</div>
+        </motion.div>
 
-            <Bar dataKey="Total" radius={[6, 6, 0, 0]}>
-              {totalesResumen.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={
-                    entry.name === "Recaudos"
-                      ? "url(#colorRecaudos)"
-                      : entry.name === "Ventas"
-                      ? "url(#colorVentas)"
-                      : "url(#colorGastos)"
-                  }
-                />
-              ))}
-              <LabelList dataKey="Total" position="top" formatter={(v) => `S/ ${v}`} />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <motion.div className="card azul" style={cardStyle("#3b82f6")} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+          <div style={cardTitleStyle}>🏦 Depósito</div>
+          <div style={cardValueStyle}>S/ {totales.total_deposito.toFixed(2)}</div>
+        </motion.div>
+
+        <motion.div className="card morado" style={cardStyle("#8b5cf6")} initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}>
+          <div style={cardTitleStyle}>🧾 Pagos</div>
+          <div style={cardValueStyle}>{totales.total_pagos}</div>
+        </motion.div>
+      </div>
+
+      {/* Gráfico barras */}
+      <div className="grafico-barra" style={{ background: "#fff", borderRadius: 12, padding: 16, boxShadow: "0 6px 20px rgba(0,0,0,0.04)" }}>
+        <h3 style={{ marginBottom: 12 }}>Recaudación diaria</h3>
+        {dataResumen.length === 0 ? (
+          <div style={{ padding: 24 }}>No hay datos en el rango seleccionado.</div>
+        ) : (
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={dataResumen}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="fecha" tickFormatter={(v) => dayjs(v).format("DD/MM")} />
+              <YAxis />
+              <Tooltip formatter={(value) => `S/ ${parseFloat(value).toFixed(2)}`} />
+              <Bar dataKey="total_monto" fill="#4ade80" radius={[6,6,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
