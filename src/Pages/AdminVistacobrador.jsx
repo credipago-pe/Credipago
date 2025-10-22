@@ -374,17 +374,17 @@ export default function AdminVistacobrador() {
 )}
 
         {/* ======= RESUMEN EN TARJETAS ======= */}
-        <div className="resumen-dashboard">
+        <div className="info-dashboard">
         <div className="card-resumen clientes">
             <h4>Clientes Activos</h4>
             <p>{clientesActivos}</p>
           </div>
-          <div className="card-resumen total">
+          <div className="card-info total">
             <h4>Total a Recaudar</h4>
             <p>${totalRecaudarHoy.toFixed(2)}</p>
           </div>
           
-          <div className="card-resumen recaudado">
+          <div className="card-info recaudado">
             <h4>Recaudado Hoy</h4>
             <p>${totalPagadoHoy.toFixed(2)}</p>
           </div>
