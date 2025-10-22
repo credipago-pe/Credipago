@@ -920,19 +920,35 @@
   box-shadow: 0 0 2px #007bff, inset 1px 1px 2px rgba(255, 255, 255, 0.9);
 }
 
+
 .resumen-dashboard {
   display: flex;
-  gap: 0.8rem; /* un poco menos espacio */
-  margin-bottom: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: row;  
+  max-width: 30px;          /* evita que flex crezca/desaparezca */
+  max-height: 50px;      /* fila */
+  justify-content: space-between; /* separa uniformemente */
+  gap: 10px;                /* espacio entre tarjetas */
+  flex-wrap: nowrap;        /* evita que se vayan a la siguiente fila */
+  margin: 20px 0;
 }
 
-.card-resumen {
-  flex: 1 1 110px; /* un ancho mínimo más pequeño */
-  max-width: 130px; /* evita que crezcan demasiado */
+.info-dashboard {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: nowrap;
+  margin: 20px 0;
+  width: -50px;      /* que use todo el ancho disponible */
+  max-width: 100%;  /* evita limitarlo */
+}
+
+.card-info {
+  flex: 1 1 0;        /* flexible */    /* ancho mínimo */
+  width: 10px;   /* ancho máximo permitido */
+  height: 45px;      /* altura fija (puedes ajustar) */
   background: linear-gradient(145deg, #ffffff, #f5f5f5);
-  padding: 0.3rem;
+  padding: 0.5rem;
   border-radius: 10px;
   text-align: center;
   box-shadow: 3px 3px 8px rgba(0,0,0,0.12),
@@ -940,35 +956,25 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.card-resumen:hover {
-  transform: translateY(-3px);
-  box-shadow: 4px 4px 10px rgba(0,0,0,0.15),
-              -4px -4px 10px rgba(255,255,255,0.7);
-}
-
-.card-resumen h4 {
-  font-size: 0.8rem;
+.card-info h4 {
+  font-size: 0.75rem;
   color: #555;
   margin-bottom: 0.3rem;
+  margin-top: -5px;
 }
 
-.card-resumen p {
-  font-size: 0.95rem; /* texto más pequeño pero legible */
-  font-weight: bold;
-}
-
-
-.card-resumen p {
-  font-size: 1.2rem; /* más pequeño */
+.card-info p {
+  font-size: 0.95rem;  /* ajustado para que quepa en la tarjeta */
   font-weight: bold;
   color: #222;
   margin: 0;
 }
 
 /* Colores personalizados */
-.card-resumen.clientes { border-top: 3px solid #007bff; }
-.card-resumen.total { border-top: 3px solid #28a745; }
-.card-resumen.recaudado { border-top: 3px solid #ffc107; }
+.card-info.clientes { border-top: 3px solid #007bff; }
+.card-info.total { border-top: 3px solid #28a745; }
+.card-info.recaudado { border-top: 3px solid #ffc107; }
+
 
 .acciones-cell {
   display: flex;
