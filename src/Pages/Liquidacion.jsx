@@ -41,31 +41,34 @@ if (errorPagos) {
 
 console.log("📅 Pagos brutos:", pagos?.length || 0, pagos);
 
-// 🕒 Convertimos las fechas del filtro a UTC para evitar desfases de zona
-const fechaInicioObj = new Date(`${fechaInicioStr}T00:00:00Z`);
-const fechaFinObj = new Date(`${fechaFinStr}T23:59:59Z`);
+// Convertir los strings a fechas simples (sin hora)
+const fechaInicioStrPlano = fechaInicioStr.split("T")[0];
+const fechaFinStrPlano = fechaFinStr.split("T")[0];
 
-console.log("🕒 Rango de filtro UTC:", fechaInicioObj, "→", fechaFinObj);
+const pagosFiltrados = pagos?.filter((p) => {
+  if (!p.fecha_pago) return false;
 
-const pagosFiltrados =
-  pagos?.filter((p) => {
-    if (!p.fecha_pago) return false;
+  // Extraer solo la parte de fecha (sin hora)
+  const fechaPagoStr = p.fecha_pago.split("T")[0];
 
-    // Convertir el pago a objeto Date (interpreta UTC)
-    const fechaPagoObj = new Date(p.fecha_pago);
+  // Comparar como strings YYYY-MM-DD (válido porque son lexicográficamente ordenables)
+  const dentro =
+    fechaPagoStr >= fechaInicioStrPlano && fechaPagoStr <= fechaFinStrPlano;
 
-    const dentro =
-      fechaPagoObj >= fechaInicioObj && fechaPagoObj <= fechaFinObj;
+  if (!dentro) {
+    console.log("🚫 Fuera de rango:", {
+      fechaPago: p.fecha_pago,
+      fechaPagoStr,
+    });
+  }
 
-    if (!dentro) {
-      console.log("🚫 Fuera de rango:", {
-        fechaPago: p.fecha_pago,
-        fechaPagoObj,
-      });
-    }
+  return dentro;
+});
 
-    return dentro;
-  }) || [];
+console.log("✅ Filtrado por fecha plana:", fechaInicioStrPlano, "→", fechaFinStrPlano);
+
+
+
 
 console.log("✅ Pagos filtrados:", pagosFiltrados?.length || 0, pagosFiltrados);
 
