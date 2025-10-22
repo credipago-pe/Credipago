@@ -14,19 +14,20 @@ import { motion } from "framer-motion";
 import "../Styles/DashboardAdmin.css";
 
 // estilos internos
-const cardStyle = (bgColor) => ({
-  flex: "1 1 220px",
+const cardStyle = (bgColor, width = "170px", height = "80px") => ({
+  flex: `0 0 ${width}`,   // flex-basis fijo
   padding: 16,
+  minHeight: height,
   borderRadius: 12,
   background: bgColor,
-  color: "#fff",
+  color: "#050505ff",
   boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
 });
 
-const cardTitleStyle = { fontSize: 14, marginBottom: 8 };
+const cardTitleStyle = { fontSize: 15, marginBottom: 8 };
 const cardValueStyle = { fontSize: 22, fontWeight: 700 };
 
 export default function DashboardAdmin() {

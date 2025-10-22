@@ -4,6 +4,8 @@
   font-family: 'Inter', sans-serif;
   background-color: #f5f6fa;
   min-height: 100vh;
+  margin-top:120px;
+
 }
 
 /* títulos */
@@ -90,7 +92,7 @@
 /* gráficos */
 .chart-container {
   flex: 1 1 720px;
-  min-width: 300px;
+  min-width: 600px;
   background: #fff;
   border-radius: 12px;
   padding: 16px;
