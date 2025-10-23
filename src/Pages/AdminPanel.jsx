@@ -58,12 +58,12 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
   
 
   useEffect(() => {
-    // Limpia el auth_id del cobrador si regresas al panel de admin
-    localStorage.removeItem("auth_id_cobrador_actual");
-    cargarDatos();
-  }, []);
+  // Limpia el auth_id del cobrador si regresas al panel de admin
+  localStorage.removeItem("auth_id_cobrador_actual");
+  cargarDatos();
+}, []);
 
-  async function cargarDatos() {
+async function cargarDatos() {
   setLoading(true);
   setErrorMsg("");
 
@@ -102,59 +102,80 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
     return;
   }
 
-    const userAuthIds = users.map((u) => u.auth_id).filter(Boolean);
-    if (userAuthIds.length === 0) {
-      setUsuarios([]);
-      setLoading(false);
-      return;
-    }
-
-    const { data: creditosData, error: errCreditos } = await supabase
-      .from("creditos")
-      .select("*")
-      .in("usuario_id", userAuthIds);
-
-    if (errCreditos) {
-      setErrorMsg("Error cargando créditos: " + errCreditos.message);
-      setLoading(false);
-      return;
-    }
-
-    const { data: pagosData, error: errPagos } = await supabase
-      .from("pagos")
-      .select("*")
-      .in("usuario_id", userAuthIds);
-
-    if (errPagos) {
-      setErrorMsg("Error cargando pagos: " + errPagos.message);
-      setLoading(false);
-      return;
-    }
-
-    const { data: gastosData, error: errGastos } = await supabase
-      .from("gastos")
-      .select("*")
-      .in("usuario_id", userAuthIds);
-
-    if (errGastos) {
-      setErrorMsg("Error cargando gastos: " + errGastos.message);
-      setLoading(false);
-      return;
-    }
-
-    
-
-    const usuariosConTotales = users.map(u => ({
-  ...u,
-  totalRecaudoDia: totalizarHoy(pagosData.filter(p => p.usuario_id === u.auth_id), "monto_pagado", "fecha_pago"),
-  totalVentasDia: totalizarHoy(creditosData.filter(c => c.usuario_id === u.auth_id), "monto", "fecha_inicio"),
-  totalGastosDia: totalizarHoy(gastosData.filter(g => g.usuario_id === u.auth_id), "valor", "fecha"),
-}));
-
-    setUsuarios(usuariosConTotales);
+  const userAuthIds = users.map((u) => u.auth_id).filter(Boolean);
+  if (userAuthIds.length === 0) {
+    setUsuarios([]);
     setLoading(false);
-  
+    return;
   }
+
+  // === CRÉDITOS ===
+  const { data: creditosData, error: errCreditos } = await supabase
+    .from("creditos")
+    .select("*")
+    .in("usuario_id", userAuthIds);
+
+  if (errCreditos) {
+    setErrorMsg("Error cargando créditos: " + errCreditos.message);
+    setLoading(false);
+    return;
+  }
+
+  // === PAGOS DEL DÍA (código adaptado funcional) ===
+  const hoy = dayjs().format("YYYY-MM-DD");
+  const { data: pagosData, error: errPagos } = await supabase
+    .from("pagos")
+    .select("id, usuario_id, fecha_pago, monto_pagado, metodo_pago")
+    .gte("fecha_pago", `${hoy}T00:00:00`)
+    .lte("fecha_pago", `${hoy}T23:59:59`)
+    .in("usuario_id", userAuthIds);
+
+  if (errPagos) {
+    setErrorMsg("Error cargando pagos: " + errPagos.message);
+    setLoading(false);
+    return;
+  }
+
+  // Agrupar totales por cobrador (usuario_id)
+  const totalesPorCobrador = pagosData.reduce((acc, pago) => {
+    const id = pago.usuario_id;
+    if (!acc[id]) acc[id] = 0;
+    acc[id] += Number(pago.monto_pagado || 0);
+    return acc;
+  }, {});
+
+  // === GASTOS ===
+  const { data: gastosData, error: errGastos } = await supabase
+    .from("gastos")
+    .select("*")
+    .in("usuario_id", userAuthIds);
+
+  if (errGastos) {
+    setErrorMsg("Error cargando gastos: " + errGastos.message);
+    setLoading(false);
+    return;
+  }
+
+  // === Calcular totales ===
+  const usuariosConTotales = users.map((u) => ({
+    ...u,
+    totalRecaudoDia: totalesPorCobrador[u.auth_id] || 0,
+    totalVentasDia: totalizarHoy(
+      creditosData.filter((c) => c.usuario_id === u.auth_id),
+      "monto",
+      "fecha_inicio"
+    ),
+    totalGastosDia: totalizarHoy(
+      gastosData.filter((g) => g.usuario_id === u.auth_id),
+      "valor",
+      "fecha"
+    ),
+  }));
+
+  setUsuarios(usuariosConTotales);
+  setLoading(false);
+}
+
 
   const entrarComoRuta = (authId) => {
     // Guarda el ID del cobrador que el admin quiere ver
