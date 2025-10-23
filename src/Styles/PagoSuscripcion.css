@@ -1,0 +1,258 @@
+/* === ESTILO PROFESIONAL 3D FINTECH === */
+
+/* --- ESTRUCTURA BASE --- */
+.ps-container {
+  max-width: 950px;
+  margin: 350px auto 60px; /* 👈 Empieza más abajo del navegador */
+  padding: 24px;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #1b1b1f;
+  background: linear-gradient(145deg, #f8f9fb, #eef1f5);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 1; /* 👈 evita que el navegador o header lo tape */
+  overflow-y: visible; /* 👈 deja que crezca hacia abajo */
+}
+
+
+h2, h3 {
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+}
+
+/* --- HEADER --- */
+.ps-header-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 10px;
+}
+
+/* Título arriba */
+.ps-header-card h2 {
+  font-size: 22px;
+  color: #1b1b1f;
+  margin-bottom: 28px;
+  
+}
+
+/* Segunda fila: admin + total */
+.ps-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ps-admin {
+  font-size: 15px;
+  color: #333;
+}
+
+.ps-total {
+  text-align: right;
+}
+
+.ps-total span {
+  font-size: 15px;
+  color: #666;
+}
+
+.ps-amount {
+  font-size: 23px;
+  font-weight: 700;
+  color: #004aad;
+}
+
+/* --- QR --- */
+/* --- Contenedor del QR --- */
+.ps-qr {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 16px;
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+/* --- Imagen QR --- */
+.ps-qr img {
+  width: 100%;              /* 🔹 se adapta al ancho del contenedor */
+  max-width: 400px;         /* 🔹 no pasa de este tamaño (ideal móvil + tablet) */
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* --- Opcional: efecto de toque (como hover) --- */
+@media (hover: hover) {
+  .ps-qr img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+}
+
+
+
+/* --- RUTAS --- */
+.ps-rutas-card {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  padding: 25px;
+  margin-bottom: 22px;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.ps-rutas-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.ps-section-title {
+  color: #0a3d62;
+  font-size: 19px;
+  margin-bottom: 10px;
+}
+
+.ps-rutas {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c9c9c9 transparent;
+}
+
+.ps-ruta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.ps-ruta-item:hover {
+  background: #f3f7fb;
+}
+
+.ps-ruta-item input {
+  accent-color: #0072ff;
+  width: 18px;
+  height: 18px;
+}
+
+/* --- EVIDENCIA --- */
+.ps-evidencia-card {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  padding: 25px;
+  margin-bottom: 22px;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.ps-evidencia-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.ps-evidencia-btns {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ps-evidencia-btns button {
+  background: linear-gradient(135deg, #0072ff, #00c6ff);
+  border: none;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.ps-evidencia-btns button:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 15px rgba(0,114,255,0.3);
+}
+
+.ps-whatsapp-btn {
+  background: linear-gradient(135deg, #25D366, #1EBE57);
+}
+
+.ps-msg {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.ps-msg.error {
+  background: #fdecea;
+  color: #b32400;
+}
+
+.ps-msg.success {
+  background: #e9f7ef;
+  color: #1e6b3f;
+}
+
+.ps-evidencia-link {
+  margin-top: 10px;
+}
+
+.ps-evidencia-link a {
+  color: #0072ff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.ps-evidencia-link a:hover {
+  text-decoration: underline;
+}
+
+/* --- FOOTER --- */
+.ps-footer {
+  text-align: right;
+  margin-top: 20px;
+}
+
+.ps-back-btn {
+  background: #e0e0e0;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.ps-back-btn:hover {
+  background: #d6d6d6;
+  transform: scale(1.03);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 700px) {
+  .ps-container {
+    padding: 14px;
+  }
+  .ps-qr img {
+    width: 180px;
+  }
+  .ps-section-title {
+    font-size: 17px;
+  }
+}

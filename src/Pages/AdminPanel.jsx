@@ -238,8 +238,8 @@ async function cargarDatos() {
   <button onClick={() => navigate("/admin/mapa")} className="admin-panel-btn">
     <FaMapMarkerAlt /> Ubicar Cobrador
   </button>
-  <button onClick={() => navigate("/admin/pagar-suscripcion")} className="admin-panel-btn">
-    <FaMoneyBill /> Pagar Suscripción
+  <button onClick={() => navigate("/admin/pago-suscripcion")} className="admin-panel-btn">
+   💳 Pagar Suscripción
   </button>
 </div>
 
