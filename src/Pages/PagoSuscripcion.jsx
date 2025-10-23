@@ -192,7 +192,7 @@ export default function PagoSuscripcion() {
       
       <div className="ps-rutas">
         <h3 className="ps-section-title">
-         🗺️ Selecciona rutas a pagar 
+         🗺️ Selecciona Rutas a Pagar 
        </h3>
         {rutas.length === 0 ? (
           <p>No hay rutas registradas.</p>
@@ -222,7 +222,7 @@ export default function PagoSuscripcion() {
 
       <div className="ps-evidencia-btns">
         <button onClick={handleEnviarPago} disabled={uploading}>
-          {uploading ? "Subiendo..." : "Ya pagué (Enviar evidencia)"}
+          {uploading ? "Subiendo..." : "Ya pagué (Enviar Captura)"}
         </button>
         <button onClick={abrirWhatsAppConEnlace} className="ps-whatsapp-btn">
           Enviar notificación por WhatsApp
