@@ -3,45 +3,58 @@ import { supabase } from "../components/supabaseClient";
 import "../Styles/PanelAdmin.css";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { FaSignOutAlt,// logout
-  FaUsers,        // Ver Clientes
-  FaMapMarkerAlt, // Ubicar Cobrador
-  FaTrash,        // Eliminar
-  FaMoneyBill,    // Caja / Balance
-  FaTools,        // Gestión de Registros
-  FaCalendarDay, FaExclamationTriangle  // Informe del día
-} from "react-icons/fa";
+import { FaSignOutAlt, FaUsers, FaMapMarkerAlt, FaTrash, FaMoneyBill, FaTools, FaCalendarDay,} from "react-icons/fa";
+import { motion } from "framer-motion";
 
 
 export default function AdminPanel() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMotivoVisible, setModalMotivoVisible] = useState(false);
+  const [modalConfirmVisible, setModalConfirmVisible] = useState(false);
   const [usuarioAEliminar, setUsuarioAEliminar] = useState(null);
+  const [motivoEliminacion, setMotivoEliminacion] = useState("");
   const navigate = useNavigate();
-  const [cobradorSeleccionado, setCobradorSeleccionado] = useState(null);
-  const handleDragEnd = (result) => {
-    if (!result.destination) return; // si no suelta en un lugar válido
-    const items = Array.from(usuarios);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    setUsuarios(items);
-    const hoy = dayjs().format("YYYY-MM-DD");
-  };
+
 
 const hoy = dayjs().format("YYYY-MM-DD");
 
-const totalizarHoy = (arr, campo, fechaCampo) => {
-  return arr
-    .filter(item => {
-      const fechaItem = item[fechaCampo];
-      if (!fechaItem) return false;
-      // Convertimos a dayjs y comparamos solo fecha sin hora
-      return dayjs(fechaItem).format("YYYY-MM-DD") === dayjs().format("YYYY-MM-DD");
-    })
-    .reduce((acc, curr) => acc + Number(curr[campo] || 0), 0);
+// Función robusta: convierte la fecha del registro a fecha en zona "America/Lima" (YYYY-MM-DD)
+const formatDatePeru = (fecha) => {
+  try {
+    // new Date acepta strings ISO/timestamps; si fecha ya es Date, funciona igual
+    const d = new Date(fecha);
+    // 'en-CA' genera 'YYYY-MM-DD' en la mayoría de navegadores
+    return d.toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+  } catch (e) {
+    return null;
+  }
 };
+
+const totalizarHoy = (arr, campo, fechaCampo) => {
+  try {
+    if (!Array.isArray(arr) || arr.length === 0) return 0;
+
+    const hoyPeru = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
+
+    return arr
+      .filter((item) => {
+        if (!item) return false;
+        const fechaItem = item[fechaCampo];
+        if (!fechaItem) return false;
+        const fechaFmt = formatDatePeru(fechaItem);
+        // debug opcional:
+        // console.log('check fecha', { fechaItem, fechaFmt, hoyPeru, campo: item[campo] });
+        return fechaFmt === hoyPeru;
+      })
+      .reduce((acc, curr) => acc + Number(curr[campo] || 0), 0);
+  } catch (err) {
+    console.error("totalizarHoy error:", err);
+    return 0;
+  }
+};
+
   
 
   useEffect(() => {
@@ -79,7 +92,7 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
   // Obtener los usuarios cobradores de este admin
   const { data: users, error: errUsers } = await supabase
     .from("usuarios")
-    .select("id, nombre, telefono, auth_id")
+    .select("id, nombre, auth_id")
     .eq("rol", "cobrador")
     .eq("admin_id", adminId);
 
@@ -120,7 +133,7 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
 
     const { data: gastosData, error: errGastos } = await supabase
       .from("gastos")
-      .select("usuario_id, valor")
+      .select("*")
       .in("usuario_id", userAuthIds);
 
     if (errGastos) {
@@ -129,16 +142,12 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
       return;
     }
 
-    const totalizar = (arr, campo) =>
-      arr.reduce((acc, curr) => {
-        acc[curr.usuario_id] = (acc[curr.usuario_id] || 0) + Number(curr[campo]);
-        return acc;
-      }, {});
+    
 
     const usuariosConTotales = users.map(u => ({
   ...u,
   totalRecaudoDia: totalizarHoy(pagosData.filter(p => p.usuario_id === u.auth_id), "monto_pagado", "fecha_pago"),
-  totalVentasDia: totalizarHoy(creditosData.filter(c => c.usuario_id === u.auth_id), "monto", "fecha_creacion"),
+  totalVentasDia: totalizarHoy(creditosData.filter(c => c.usuario_id === u.auth_id), "monto", "fecha_inicio"),
   totalGastosDia: totalizarHoy(gastosData.filter(g => g.usuario_id === u.auth_id), "valor", "fecha"),
 }));
 
@@ -153,32 +162,43 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
     navigate("/admin/vistacobrador");
   };
 
+  // Primer paso: abrir modal para motivo
   const eliminarUsuario = (usuarioId) => {
     setUsuarioAEliminar(usuarioId);
-    setModalVisible(true);
+    setMotivoEliminacion("");
+    setModalMotivoVisible(true);
   };
 
-  const confirmarConContraseña = async (password) => {
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email: "admin@tudominio.com", // ⚠️ Reemplaza con el correo del admin real
-      password,
-    });
-
-    if (loginError) {
-      alert("❌ Contraseña incorrecta. No se eliminó el usuario.");
+  // Segundo paso: mostrar confirmación
+  const continuarEliminacion = () => {
+    if (!motivoEliminacion.trim()) {
+      alert("Por favor, escribe un motivo de eliminación.");
       return;
     }
+    setModalMotivoVisible(false);
+    setModalConfirmVisible(true);
+  };
 
-    const { error } = await supabase.from("usuarios").delete().eq("id", usuarioAEliminar);
-    if (error) {
-      alert("Error al eliminar usuario: " + error.message);
-    } else {
-      alert("✅ Usuario eliminado");
-      cargarDatos();
+  // Confirmar y eliminar definitivamente
+  const confirmarEliminacion = async () => {
+    try {
+      const { error } = await supabase
+        .from("usuarios")
+        .delete()
+        .eq("id", usuarioAEliminar);
+
+      if (error) {
+        alert("Error al eliminar usuario: " + error.message);
+      } else {
+        alert("✅ Usuario eliminado correctamente.\nMotivo: " + motivoEliminacion);
+        cargarDatos();
+      }
+    } catch (err) {
+      alert("Error inesperado: " + err.message);
+    } finally {
+      setModalConfirmVisible(false);
+      setUsuarioAEliminar(null);
     }
-
-    setModalVisible(false);
-    setUsuarioAEliminar(null);
   };
 
   return (
@@ -213,11 +233,16 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
         <div key={u.id} className="cobrador-card">
           <div className="cobrador-card-header">
   <span className="cobrador-nombre">{u.nombre}</span>
-  <FaTrash
-    onClick={() => eliminarUsuario(u.id)}
-    style={{ cursor: "pointer", color: "#f44336", fontSize: "18px" }}
-    title="Eliminar cobrador"
-  />
+  <motion.div
+  whileHover={{ rotate: -15, scale: 1.2 }}
+  whileTap={{ rotate: 15, scale: 0.9 }}
+  transition={{ type: "spring", stiffness: 300 }}
+  style={{ display: "inline-block", cursor: "pointer" }}
+  title="Eliminar cobrador"
+  onClick={() => eliminarUsuario(u.id)}
+>
+  <FaTrash color="#f44336" size={18} />
+</motion.div>
 </div>
 
           <div className="cobrador-card-totales">
@@ -238,8 +263,89 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
     </div>
     
   )}
-</div>
+  {/* Modal 1: Motivo */}
+      {modalMotivoVisible && (
+        <div className="modal-elim">
+          <div className="elim-card">
+            <h3>📝 Motivo de eliminación</h3>
+            <p>Por favor escribe el motivo por el cual deseas eliminar esta ruta.</p>
+            <textarea
+              rows="3"
+              value={motivoEliminacion}
+              onChange={(e) => setMotivoEliminacion(e.target.value)}
+              placeholder="Ejemplo: ruta duplicada, cobrador inactivo, etc."
+            />
+            <div className="modal-actions">
+              <button onClick={() => setModalMotivoVisible(false)}>Cancelar</button>
+              <button onClick={continuarEliminacion} disabled={!motivoEliminacion.trim()}>
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-    
+      {/* Modal 2: Confirmación final */}
+      {modalConfirmVisible && (
+        <div className="modal-elim">
+          <div className="elim-card">
+            <h3>⚠️ Confirmar eliminación ⚠️</h3>
+            <p>¿Seguro que deseas eliminar esta ruta?</p>
+            <p><strong>Esta acción NO se puede deshacer.</strong></p>
+            <div className="modal-actions">
+              <button onClick={() => setModalConfirmVisible(false)}>Cancelar</button>
+              <button onClick={confirmarEliminacion} className="danger">
+                Sí, eliminar definitivamente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Estilos rápidos para los modales */}
+      <style>{`
+        .modal-elim {
+          position: fixed; inset: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex; align-items: center; justify-content: center;
+          z-index: 9999;
+        }
+        .elim-card {
+          background: #fff;
+          padding: 20px;
+          border-radius: 10px;
+          width: 400px;
+          max-width: 90%;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .modal-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-top: 15px;
+        }
+        textarea {
+          width: 100%;
+          resize: none;
+          padding: 8px;
+          margin-top: 8px;
+          border-radius: 5px;
+          border: 1px solid #ccc;
+        }
+        .danger {
+          background-color: #d9534f;
+          color: white;
+        }
+          .icon-trash {
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.icon-trash:hover {
+  color: #ff0000;
+  transform: rotate(-15deg) scale(1.2);
+}
+
+      `}</style>
+    </div>
   );
 }
