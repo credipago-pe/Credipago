@@ -5,7 +5,7 @@ import "../Styles/Login.css";
 import { FaUser, FaLock } from "react-icons/fa";
 
 const Login = () => {
-  const [username, setUsername] = useState(""); // Email
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -61,7 +61,7 @@ const Login = () => {
           console.log("✅ Pin actualizado correctamente");
         }
       } else {
-        // 🆕 Si no existe, insertamos uno nuevo
+        // 🆕 Si no existe, insertamos uno nuevo (por defecto sin rol)
         const { error: insertError } = await supabase.from("usuarios").insert([
           {
             auth_id: user.id,
@@ -77,7 +77,32 @@ const Login = () => {
         }
       }
 
-      // 3️⃣ Buscar si es admin
+      // 3️⃣ Buscar si es superadmin
+      let { data: superData, error: superError } = await supabase
+        .from("usuarios")
+        .select("*")
+        .eq("auth_id", user.id)
+        .eq("rol", "superadmin")
+        .maybeSingle();
+
+      if (superError) {
+        console.error("Error consultando superadmin:", superError.message);
+      }
+
+      if (superData) {
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({
+            role: "superadmin",
+            username: superData.email,
+            auth_id: user.id,
+          })
+        );
+        navigate("/superadmin");
+        return;
+      }
+
+      // 4️⃣ Buscar si es admin
       let { data: adminData, error: adminError } = await supabase
         .from("admin")
         .select("*")
@@ -103,7 +128,7 @@ const Login = () => {
         return;
       }
 
-      // 4️⃣ Si no es admin, buscar si es cobrador
+      // 5️⃣ Si no es admin ni superadmin, buscar si es cobrador
       let { data: userData, error: userError } = await supabase
         .from("usuarios")
         .select("*")
@@ -130,6 +155,7 @@ const Login = () => {
         return;
       }
 
+      // 6️⃣ Ningún rol válido
       setError("Usuario sin rol asignado o no registrado.");
     } catch (error) {
       console.error("Error al iniciar sesión:", error.message);

@@ -1,0 +1,203 @@
+.superadmin-container {
+  width: 90%;
+  max-width: 1300px;
+  margin: 30px auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.superadmin-title {
+  font-size: 36px;
+  color: #961616;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.superadmin-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+
+.cobrador-card {
+  background: linear-gradient(145deg, #ffffff, #dfe3e8);
+  border-radius: 18px;
+  width: 360px;
+  padding: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.cobrador-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+.cobrador-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.estado-cobrador {
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.estado-cobrador.verde {
+  color: #22c55e; /* verde brillante */
+}
+
+.estado-cobrador.rojo {
+  color: #ef4444; /* rojo brillante */
+}
+
+.cobrador-card-totales {
+  margin-top: 10px;
+}
+
+.cobrador-card-totales p {
+  margin: 4px 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.cobrador-card-buttons {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.cobrador-card-buttons button {
+  flex: 1 1 47%;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cobrador-card-buttons button:hover {
+  background: linear-gradient(135deg, #2563eb, #3b5fd1);
+  transform: translateY(-2px);
+}
+
+/* Botones específicos */
+.btn-verificar {
+  background: linear-gradient(135deg, #16a34a, #4ade80);
+}
+
+.btn-verificar:hover {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+}
+
+.btn-recordatorio {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.btn-recordatorio:hover {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+}
+
+.btn-recibo {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+}
+
+.btn-recibo:hover {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+}
+
+.btn-evidencia {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+}
+
+.btn-evidencia:hover {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+/* MODAL */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modalE {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.modal-titulo {
+  color: #d9534f;
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.modal-buttonsE {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.modal-buttonsE button {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-buttonsE button:hover {
+  background: linear-gradient(135deg, #2563eb, #3b5fd1);
+}
+
+/* Loader y error */
+.superadmin-loading,
+.superadmin-error {
+  text-align: center;
+  margin-top: 20px;
+  font-weight: 500;
+  color: #555;
+}
+
+.superadmin-error {
+  color: #e63946;
+}
