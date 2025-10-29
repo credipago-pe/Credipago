@@ -1,201 +1,197 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import dayjs from "dayjs";
-import "../Styles/SuperAdmin.css";
+import "../Styles/Login.css";
+import { FaUser, FaLock } from "react-icons/fa";
 
-export default function SuperAdminPanel() {
-  const [admins, setAdmins] = useState([]);
-  const [pagos, setPagos] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [mensaje, setMensaje] = useState(null);
+const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const hoy = dayjs();
-  const anioActual = hoy.year();
-  const mesActual = hoy.month() + 1;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        setCargando(true);
-
-        // 1️⃣ Obtener todos los administradores
-        const { data: adminsData, error: adminsError } = await supabase
-          .from("usuarios")
-          .select("id, nombre, telefono, auth_id")
-          .eq("rol", "admin");
-
-        if (adminsError) throw adminsError;
-
-        // 2️⃣ Obtener todos los pagos del mes actual
-        const { data: pagosData, error: pagosError } = await supabase
-          .from("suscripciones_pagos")
-          .select("*")
-          .eq("anio", anioActual)
-          .eq("mes", mesActual);
-
-        if (pagosError) throw pagosError;
-
-        // ✅ Asegurar que rutas siempre sea un array
-        const pagosLimpios = (pagosData || []).map((p) => ({
-          ...p,
-          rutas:
-            Array.isArray(p.rutas)
-              ? p.rutas
-              : typeof p.rutas === "string"
-              ? JSON.parse(p.rutas || "[]")
-              : [],
-        }));
-
-        setAdmins(adminsData || []);
-        setPagos(pagosLimpios);
-      } catch (err) {
-        console.error("Error cargando datos:", err);
-        setMensaje({ tipo: "error", texto: "Error al cargar datos." });
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    cargarDatos();
-  }, []);
-
-  const determinarEstadoAdmin = (adminAuthId) => {
-    const pago = pagos.find((p) => p.admin_id === adminAuthId);
-    if (!pago) return "pendiente";
-    return pago.estado || "pendiente";
-  };
-
-  const renderEstado = (estado) => {
-    switch (estado) {
-      case "pagado":
-        return <span className="estado estado-pagado">✅ Pagado</span>;
-      case "proceso":
-        return <span className="estado estado-proceso">🕒 En proceso</span>;
-      case "vencido":
-        return <span className="estado estado-vencido">❌ Vencido</span>;
-      default:
-        return <span className="estado estado-pendiente">⌛ Pendiente</span>;
-    }
-  };
-
-  const verEvidencia = (pago) => {
-    if (!pago?.url_evidencia) {
-      alert("No hay evidencia disponible.");
+    if (!username || !password) {
+      setError("Por favor, completa todos los campos.");
       return;
     }
-    window.open(pago.url_evidencia, "_blank");
-  };
 
-  const marcarPagado = async (pagoId) => {
     try {
-      const { error } = await supabase
-        .from("suscripciones_pagos")
-        .update({ estado: "pagado" })
-        .eq("id", pagoId);
-      if (error) throw error;
+      // 1️⃣ Login con Supabase Auth
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email: username,
+        password,
+      });
 
-      setPagos((prev) =>
-        prev.map((p) => (p.id === pagoId ? { ...p, estado: "pagado" } : p))
-      );
+      const user = data?.user;
 
-      setMensaje({ tipo: "success", texto: "Pago marcado como pagado ✅" });
-    } catch (err) {
-      console.error("Error marcando pago:", err);
-      setMensaje({ tipo: "error", texto: "Error al marcar pago." });
+      if (loginError) {
+        setError("Usuario o contraseña incorrectos.");
+        return;
+      }
+
+      if (!user) {
+        setError("Error al iniciar sesión.");
+        return;
+      }
+
+      // 2️⃣ Verificar si el usuario existe en la tabla usuarios
+      const { data: existingUser, error: fetchError } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("auth_id", user.id)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("Error al buscar usuario:", fetchError.message);
+      }
+
+      if (existingUser) {
+        // 🔄 Si ya existe, actualizamos el pin
+        const { error: updateError } = await supabase
+          .from("usuarios")
+          .update({ pin: password })
+          .eq("auth_id", user.id);
+
+        if (updateError) {
+          console.error("Error actualizando pin:", updateError.message);
+        } else {
+          console.log("✅ Pin actualizado correctamente");
+        }
+      } else {
+        // 🆕 Si no existe, insertamos uno nuevo (por defecto sin rol)
+        const { error: insertError } = await supabase.from("usuarios").insert([
+          {
+            auth_id: user.id,
+            email: username,
+            pin: password,
+          },
+        ]);
+
+        if (insertError) {
+          console.error("Error insertando usuario:", insertError.message);
+        } else {
+          console.log("✅ Nuevo usuario insertado con pin");
+        }
+      }
+
+      // 3️⃣ Buscar si es superadmin
+      let { data: superData, error: superError } = await supabase
+        .from("usuarios")
+        .select("*")
+        .eq("auth_id", user.id)
+        .eq("rol", "superadmin")
+        .maybeSingle();
+
+      if (superError) {
+        console.error("Error consultando superadmin:", superError.message);
+      }
+
+      if (superData) {
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({
+            role: "superadmin",
+            username: superData.email,
+            auth_id: user.id,
+          })
+        );
+        navigate("/superadmin");
+        return;
+      }
+
+      // 4️⃣ Buscar si es admin
+      let { data: adminData, error: adminError } = await supabase
+        .from("admin")
+        .select("*")
+        .eq("auth_id", user.id)
+        .maybeSingle();
+
+      if (adminError) {
+        console.error("Error en consulta admin:", adminError.message);
+        setError("Error interno, intenta más tarde.");
+        return;
+      }
+
+      if (adminData) {
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({
+            role: "admin",
+            username: adminData.nombre,
+            auth_id: user.id,
+          })
+        );
+        navigate("/admin");
+        return;
+      }
+
+      // 5️⃣ Si no es admin ni superadmin, buscar si es cobrador
+      let { data: userData, error: userError } = await supabase
+        .from("usuarios")
+        .select("*")
+        .eq("auth_id", user.id)
+        .eq("rol", "cobrador")
+        .maybeSingle();
+
+      if (userError) {
+        console.error("Error en consulta usuarios:", userError.message);
+        setError("Error interno, intenta más tarde.");
+        return;
+      }
+
+      if (userData) {
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({
+            role: "cobrador",
+            username: userData.email,
+            auth_id: user.id,
+          })
+        );
+        navigate("/cobrador");
+        return;
+      }
+
+      // 6️⃣ Ningún rol válido
+      setError("Usuario sin rol asignado o no registrado.");
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error.message);
+      setError("Error al iniciar sesión. Inténtalo de nuevo.");
     }
   };
-
-  const enviarWhatsApp = (telefono, mensaje) => {
-    if (!telefono) {
-      alert("El administrador no tiene número registrado.");
-      return;
-    }
-    const texto = encodeURIComponent(mensaje);
-    const url = `https://wa.me/${telefono}?text=${texto}`;
-    window.open(url, "_blank");
-  };
-
-  if (cargando) {
-    return <div className="superadmin-loading">Cargando información...</div>;
-  }
 
   return (
-    <div className="superadmin-container">
-      <h1 className="superadmin-title">📊 Panel del Super Administrador</h1>
-      {mensaje && (
-        <div className={`superadmin-msg ${mensaje.tipo}`}>
-          {mensaje.texto}
+    <div className="login-container">
+      <img src="/logo.png" alt="Logo Credipago" style={{ width: 220, marginBottom: 8 }} />
+      {error && <p className="error-message">{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <div className="input-container">
+          <FaUser className="icon" />
+          <input
+            type="email"
+            placeholder="Email"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
         </div>
-      )}
-
-      <div className="superadmin-cards-container">
-        {admins.map((admin) => {
-          const pago = pagos.find((p) => p.admin_id === admin.auth_id);
-          const estado = determinarEstadoAdmin(admin.auth_id);
-          const rutas = pago?.rutas || [];
-
-          return (
-            <div className="cobrador-card" key={admin.id}>
-              <div className="cobrador-card-header">
-                <span>{admin.nombre}</span>
-                <span
-                  className={`estado-cobrador ${
-                    estado === "pagado" ? "verde" : "rojo"
-                  }`}
-                >
-                  {estado === "pagado" ? "✔ Pagado" : "❌ Pendiente"}
-                </span>
-              </div>
-
-              <div className="cobrador-card-totales">
-                <p>
-                  <strong>Teléfono:</strong> {admin.telefono || "No registrado"}
-                </p>
-                <p>
-                  <strong>Rutas:</strong>{" "}
-                  {rutas.length > 0
-                    ? rutas.map((r) => r.nombre).join(", ")
-                    : "Sin rutas"}
-                </p>
-              </div>
-
-              <div className="cobrador-card-buttons">
-                {pago && pago.url_evidencia && (
-                  <button
-                    className="btn-evidencia"
-                    onClick={() => verEvidencia(pago)}
-                  >
-                    📎 Ver evidencia
-                  </button>
-                )}
-
-                {pago && estado !== "pagado" && (
-                  <button
-                    className="btn-verificar"
-                    onClick={() => marcarPagado(pago.id)}
-                  >
-                    💰 Marcar como pagado
-                  </button>
-                )}
-
-                <button
-                  className="btn-recordatorio"
-                  onClick={() =>
-                    enviarWhatsApp(
-                      admin.telefono,
-                      estado === "pagado"
-                        ? `✅ Hola ${admin.nombre}, confirmamos tu pago. ¡Gracias por mantenerte al día!`
-                        : `⚠️ Hola ${admin.nombre}, recuerda realizar tu pago de suscripción. Estado actual: ${estado.toUpperCase()}.`
-                    )
-                  }
-                >
-                  💬 WhatsApp
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+        <div className="input-container">
+          <FaLock className="icon" />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button type="submit" className="login-button">
+          Ingresar
+        </button>
+      </form>
     </div>
   );
-}
+};
+
+export default Login;

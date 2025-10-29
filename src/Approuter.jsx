@@ -33,6 +33,7 @@ import Adminclientedetalle from "./Pages/Adminclientedetalle";
 import NotFound from "./Pages/NotFound"; // ← asegúrate de importar
 import PagoSuscripcion from "./Pages/PagoSuscripcion";
 import SuperAdminPanel from "./Pages/SuperAdminPanel";
+import BuscarCliente from "./Pages/BuscarCliente";
 
 
 
@@ -75,7 +76,7 @@ export const router = createBrowserRouter([
   { path: "*", element: <NotFound /> }, // ← esto captura cualquier ruta no definida
   { path: "/admin/pago-suscripcion", element: <PagoSuscripcion /> },
   { path: "/superadmin", element: <SuperAdminPanel /> },
-
+  { path: "/BuscarCliente", element: <BuscarCliente /> },
 
 
 

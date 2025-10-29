@@ -1,0 +1,189 @@
+.buscarcliente-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+  overflow: hidden;
+}
+
+/* HEADER FIJO */
+.buscarcliente-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  padding: 15px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+}
+
+.buscarcliente-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.buscarcliente-bar input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.buscarcliente-bar button {
+  background: linear-gradient(135deg, #007bff, #00b4d8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.25s ease-in-out;
+}
+
+.buscarcliente-bar button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* SCROLLABLE RESULTS */
+.buscarcliente-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  margin-top: 10px;
+  scroll-behavior: smooth;
+}
+
+/* TARJETA CLIENTE */
+.buscarcliente-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.buscarcliente-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* --- INFO DEL CLIENTE --- */
+.buscarcliente-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.buscarcliente-avatar {
+  background: linear-gradient(135deg, #007bff, #00b4d8);
+  color: white;
+  font-size: 32px;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.buscarcliente-details {
+  flex: 1;
+}
+
+.buscarcliente-details h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1e293b;
+}
+
+.buscarcliente-details p {
+  margin: 4px 0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+/* --- ESTRELLAS --- */
+.buscarcliente-stars {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  font-size: 18px;
+}
+
+.buscarcliente-star.active {
+  color: gold;
+  filter: drop-shadow(0 0 2px gold);
+}
+
+.buscarcliente-star.inactive {
+  color: #d1d5db;
+}
+
+/* --- BOTONES --- */
+.buscarcliente-btn,
+.buscarcliente-btn-secondary {
+  width: 100%;
+  border: none;
+  padding: 10px;
+  margin-top: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.buscarcliente-btn {
+  background: #00b4d8;
+  color: white;
+}
+
+.buscarcliente-btn:hover {
+  background: #0096c7;
+}
+
+.buscarcliente-btn-secondary {
+  background: #f1f3f5;
+}
+
+.buscarcliente-btn-secondary:hover {
+  background: #dee2e6;
+}
+
+/* --- CREDITOS --- */
+.buscarcliente-credito {
+  background: #f8f9fa;
+  border-left: 5px solid #007bff;
+  margin-top: 12px;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.buscarcliente-credito-header {
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- PAGOS --- */
+.buscarcliente-pago {
+  background: #e7f5ff;
+  border-radius: 8px;
+  margin-top: 6px;
+  padding: 8px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
