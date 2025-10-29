@@ -719,7 +719,7 @@ Por favor, no olvide realizar su pago hoy. ¡Gracias! 🙌`;
             <Link to="/registrocliente" onClick={toggleMenu}>Crear Cliente</Link>
             <Link to="/renovar" onClick={toggleMenu}>Renovar Crédito</Link>
             <Link to="/clientescancelados" onClick={toggleMenu}>Cancelados</Link>
-            <Link to="/BuscarCliente" onClick={toggleMenu}>Buscar Cliente</Link>
+            <Link to="/BuscarCliente" onClick={toggleMenu}>Historial Cliente</Link>
           </div>
         )}
       </div>
