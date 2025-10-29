@@ -1,6 +1,8 @@
 .buscarcliente-page {
   height: 100vh;
   display: flex;
+  width: 440px;
+  margin-top: 50px;
   flex-direction: column;
   background: #f5f7fa;
   overflow: hidden;
@@ -76,55 +78,99 @@
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  width: 100%;
+  padding: 8px 0;
 }
 
+/* Avatar redondo */
 .buscarcliente-avatar {
   background: linear-gradient(135deg, #007bff, #00b4d8);
   color: white;
-  font-size: 32px;
+  font-size: 28px;
   border-radius: 50%;
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Detalles a la derecha */
 .buscarcliente-details {
   flex: 1;
-}
-
-.buscarcliente-details h3 {
-  margin: 0;
-  font-size: 1.2rem;
-  color: #1e293b;
-}
-
-.buscarcliente-details p {
-  margin: 4px 0;
-  color: #475569;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.95rem;
+  flex-direction: column;
+  color: #333;
+  position: relative;
 }
 
-/* --- ESTRELLAS --- */
+/* Estrellas ahora arriba del nombre */
 .buscarcliente-stars {
+  position: absolute;
+  top: -4px;
+  right: 0;
   display: flex;
-  gap: 3px;
   align-items: center;
-  font-size: 18px;
+  gap: 3px;
+}
+
+.buscarcliente-star {
+  font-size: 1rem;
+  color: #ccc;
+  transition: color 0.3s ease, transform 0.2s ease;
 }
 
 .buscarcliente-star.active {
-  color: gold;
-  filter: drop-shadow(0 0 2px gold);
+  color: #facc15;
+  transform: scale(1.1);
 }
+
+.buscarcliente-score {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  margin-left: 4px;
+}
+
+.buscarcliente-details h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #222;
+  margin: 16px 0 4px 0;
+}
+
+.buscarcliente-details p {
+  margin: 2px 0;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #555;
+}
+
+
+/* Calificación (estrellas) a la derecha */
+.buscarcliente-stars {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.buscarcliente-star {
+  font-size: 1.0rem;
+  color: #ccc;
+  transition: color 0.3s;
+}
+
+.buscarcliente-star.active {
+  color: #facc15; /* Amarillo dorado */
+}
+
 
 .buscarcliente-star.inactive {
   color: #d1d5db;

@@ -121,12 +121,7 @@ const BuscarCliente = () => {
                 <FaUser />
               </div>
               <div className="buscarcliente-details">
-                <h3>{cliente.nombre}</h3>
-                <p><FaIdCard /> DNI: {cliente.dni}</p>
-                <p><FaPhoneAlt /> {cliente.telefono}</p>
-                <p><FaHome /> {cliente.direccion}</p>
-              </div>
-              <div className="buscarcliente-stars">
+                <div className="buscarcliente-stars">
                 {[...Array(5)].map((_, i) => (
                   <FaStar
                     key={i}
@@ -141,6 +136,13 @@ const BuscarCliente = () => {
                        {(calificaciones[cliente.id] || 0).toFixed(1)} / 5
                 </span>
               </div>
+                
+                <h3>{cliente.nombre}</h3>
+                <p><FaIdCard /> DNI: {cliente.dni}</p>
+                <p><FaPhoneAlt /> {cliente.telefono}</p>
+                <p><FaHome /> {cliente.direccion}</p>
+              </div>
+              
             </div>
 
             <button
