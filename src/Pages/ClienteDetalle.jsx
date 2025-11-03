@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"; 
+import { useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import { FaWhatsapp, FaSignOutAlt, FaMoneyBillWave, FaMapMarkedAlt, FaTimes, FaMobileAlt } from "react-icons/fa";
-import {User, Phone, MessageCircle, Send, CreditCard, DollarSign,Clock, History, MapPin, FileText, Calendar
-} from "lucide-react";
+import { FaWhatsapp, FaMobileAlt, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
+import {  User, Phone, Send, CreditCard, DollarSign, Clock, History, MapPin, FileText, Calendar } from "lucide-react";
 import "../Styles/ClienteDetalle.css";
 
 const ClienteDetalle = () => {
@@ -25,7 +25,58 @@ const ClienteDetalle = () => {
   const [montoMulta, setMontoMulta] = useState("");
   const [descripcionMulta, setDescripcionMulta] = useState("");
   const [multas, setMultas] = useState([]);
+  const inputFileRef = useRef(null);
+  const [fotoUrl, setFotourl] = useState("/default-avatar.png");
 
+
+    const handleClick = () => {
+    if (inputFileRef.current) inputFileRef.current.click();
+  };
+
+  // Manejar cambio de archivo
+  const handleFileChange = async (e) => {
+  if (!cliente) return; // ⚠ asegurarse que cliente exista
+
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const fileName = `${cliente.id}/${file.name}`;
+
+    // Subir al storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("clientes")
+      .upload(fileName, file, { upsert: true });
+    if (uploadError) throw uploadError;
+
+    // Obtener URL pública
+    const { data: urlData, error: urlError } = supabase.storage
+      .from("clientes")
+      .getPublicUrl(fileName);
+    if (urlError) throw urlError;
+
+    const publicUrl = urlData.publicUrl;
+
+    // Actualizar tabla
+    const { error: updateError } = await supabase
+      .from("clientes")
+      .update({ fotourl: publicUrl })
+      .eq("id", cliente.id);
+    if (updateError) throw updateError;
+
+    // Actualizar estado
+    setFotourl(publicUrl);
+    setCliente({
+  ...cliente,
+  fotourl: publicUrl
+});
+
+alert("Foto actualizada correctamente ✅");
+
+  } catch (err) {
+    console.error("Error al subir foto:", err.message);
+  }
+};
 
 
   const cargarDatos = async () => {
@@ -236,122 +287,131 @@ const ClienteDetalle = () => {
 
   const creditoActivo = creditos.find(c => c.estado === "Activo");
 
+  
+ return (
+    <div className="cliente-detalle">
 
-  return (
-  <div className="cliente-detalle ampliado">
+     <div className="acciones-contacto">
 
-  {/* 🔹 Franja superior fija con volver y acciones */}
-  <div className="fixed-header-container">
-    
-    {/* Volver */}
-    <div className="barra-volver">
-            <button
-              onClick={() => navigate("/cobrador")}className="btn-ir-panel"title="Volver al Panel Admin">
-              <FaSignOutAlt />
-            </button>
-    </div>
-
-    {/* Acciones de contacto */}
-    <div className="acciones-contacto">
-      <Phone
-        className="icono DC"
-        onClick={() => window.location.href = `tel:${cliente.telefono}`}
-      />
-      <MessageCircle
-        className="icono DC"
-        onClick={() => navigate(`/enviar-mensaje/${cliente.id}`)}
-      />
-      <FaWhatsapp
-        className="icono whatsapp"
-        onClick={() => window.open(`https://wa.me/${cliente.telefono}`, "_blank")}
-      />
-      <FaMapMarkedAlt
-        className="icono-ubicacion"
-        onClick={() =>
-          window.open(`https://www.google.com/maps/search/?api=1&query=${cliente.ubicacion}`, "_blank")
-        }
-      />
-    </div>
-
-  {/* 🔸 Información del cliente (nombre + estrellas) */}
-  <div className="cliente-info">
-    <div className="cliente-header">
-      <div className="info-cliente">
-        <User className="icono-cliente" onClick={() => setInfoVisible(true)} />
-        <h2 className="nombre cliente">{cliente.nombre}</h2>
-      </div>
-    </div>
+       <div className="accion" onClick={() => setInfoVisible(true)}>
+    <FaUserEdit />
+    <span>Editar Cliente</span>
   </div>
 
-      <div className="credito-activo compacto ampliado">
-
-  <div className="encabezado-credito">
-
-    <h3>Crédito Activo</h3>
-
-    <button className="botton-pago" onClick={() => setModalMulta(true)}>
-  💸 Multa
-   </button>
-
-    <button className="botton-pago" onClick={() => abrirModalPago(cliente)}>
-      <FaMoneyBillWave /> Pago
-    </button>
+   <div className="accion" onClick={() => navigate(`/enviar-mensaje/${cliente.id}`)}>
+   <FaEnvelopeOpenText />
+    <span>Mensaje/Recibo</span>
   </div>
 
-  <div className="fila-detalles">
-    <div className="detalle compacto">
-      <CreditCard className="iconoDC" />
-      <p>Saldo: ${creditoActivo.saldo}</p>
-    </div>
-    <div className="detalle compacto">
-      <DollarSign className="iconoDC" />
-      <p>Cuota: ${creditoActivo.valor_cuota}</p>
-    </div>
-    <div className="detalle compacto">
-      <Clock className="iconoDC" />
-      <p>Vence: {new Date(creditoActivo.fecha_vencimiento).toLocaleDateString()}</p>
-    </div>
-    <div className="detalle compacto">
-  <DollarSign className="iconoDC" />
-  <p>Multas: ${multas.reduce((sum, m) => sum + m.monto, 0)}</p>
-</div>
+  <div className="accion" onClick={() => window.location.href = `tel:${cliente.telefono}`}>
+    <FaPhone />
+    <span>Llamar</span>
+  </div>
+
+  <div className="accion" onClick={() => window.open(`https://wa.me/${cliente.telefono}`, "_blank")}>
+    <FaWhatsapp />
+    <span>WhatsApp</span>
+  </div>
+
+  <div className="accion" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${cliente.ubicacion}`, "_blank")}>
+    <FaMapMarkedAlt />
+    <span>Ubicación</span>
+  </div>
+
+   <div className="accion" onClick={() => setModalMulta(true)}>
+    <FaExclamationCircle />
+    <span>Multa</span>
+  </div>
+
+  <div className="accion" onClick={() => abrirModalPago(cliente)}>
+    <FaMoneyBillWave />
+    <span>Pago</span>
   </div>
 </div>
-</div>
 
-    {/* Contenedor scrollable para el historial */}
-    <div className="scrollable-body">
-      {/* Historial de Pagos */}
-      <div className="historial-pagos">
-        <h3><History className="iconoH" /> Historial de Pagos</h3>
-        <div className="tabla-pagos">
-          <table>
-            <thead>
-              <tr>
-                <th>Pago</th>
-                <th>Fecha</th>
-                <th>Monto</th>
-                <th>Método</th>
-                <th>Saldo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagos.map((pago) => (
-                <tr key={pago.id}>
-                  <td>{pago.id}</td>
-                  <td>{new Date(pago.fecha_pago).toLocaleDateString()}</td>
-                  <td>${pago.monto_pagado}</td>
-                  <td>{pago.metodo_pago}</td>
-                  <td>${pago.saldo}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+       {/* Crédito activo con foto */}
+      <div className="credito-activo">
+        <div className="cliente-info">
+          <div className="cliente-header">
+           <div className="info-cliente">
+          <div className="info-cliente">
+          <img
+             src={cliente.fotourl || fotoUrl} // usa 'fotourl' del cliente
+             alt="Foto"
+             
+             className="icono-cliente"
+             
+              onClick={handleClick}
+              
+            />
+            
+          <input
+            type="file"
+            ref={inputFileRef}
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+            accept="image/*"
+          />
+          <h2 className="nombre cliente">{cliente.nombre}</h2>
         </div>
       </div>
     </div>
+ 
 
-  {infoVisible && (
+        <h3>Crédito Activo</h3>
+
+        <div className="fila-detalles">
+          <div className="detalle">
+            <CreditCard className="icono" />
+            <p>Saldo: ${creditoActivo.saldo}</p>
+          </div>
+          <div className="detalle">
+            <DollarSign className="icono" />
+            <p>Cuota: ${creditoActivo.valor_cuota}</p>
+          </div>
+          <div className="detalle">
+            <Clock className="icono" />
+            <p>Vence: {new Date(creditoActivo.fecha_vencimiento).toLocaleDateString()}</p>
+          </div>
+          <div className="detalle">
+            <DollarSign className="icono" />
+            <p>Multas: ${multas.reduce((sum, m) => sum + m.monto, 0)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Historial de pagos */}
+      <div className="scrollable-body">
+        <div className="historial-pagos">
+          <h3><History className="icono" /> Historial de Pagos</h3>
+          <div className="tabla-pagos">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pago</th>
+                  <th>Fecha</th>
+                  <th>Monto</th>
+                  <th>Método</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagos.map((pago) => (
+                  <tr key={pago.id}>
+                    <td>{pago.id}</td>
+                    <td>{new Date(pago.fecha_pago).toLocaleDateString()}</td>
+                    <td>${pago.monto_pagado}</td>
+                    <td>{pago.metodo_pago}</td>
+                    <td>${pago.saldo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {infoVisible && (
   <div className="modal">
     <div className="modal-contenido ampliado">
       <h3>Datos del Cliente</h3>
@@ -609,6 +669,7 @@ const ClienteDetalle = () => {
   </div>
 )}
 
+    </div>
     </div>
   );
 };
