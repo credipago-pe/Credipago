@@ -295,7 +295,7 @@ alert("Foto actualizada correctamente ✅");
 
        <div className="accion" onClick={() => setInfoVisible(true)}>
     <FaUserEdit />
-    <span>Editar Cliente</span>
+    <span>Info/Editar</span>
   </div>
 
    <div className="accion" onClick={() => navigate(`/enviar-mensaje/${cliente.id}`)}>
@@ -337,14 +337,11 @@ alert("Foto actualizada correctamente ✅");
           <div className="info-cliente">
           <img
              src={cliente.fotourl || fotoUrl} // usa 'fotourl' del cliente
-             alt="Foto"
-             
-             className="icono-cliente"
-             
+             alt="Foto"            
+             className="icono-cliente"            
               onClick={handleClick}
-              
-            />
             
+            />
           <input
             type="file"
             ref={inputFileRef}
@@ -357,38 +354,50 @@ alert("Foto actualizada correctamente ✅");
       </div>
     </div>
  
+{creditoActivo && (
+  <div className="seccion-credito-activo">
+    <h3 className="titulo-seccion">Crédito Activo</h3>
 
-        <h3>Crédito Activo</h3>
-
-        <div className="fila-detalles">
-          <div className="detalle">
-            <CreditCard className="icono" />
-            <p>Saldo: ${creditoActivo.saldo}</p>
-          </div>
-          <div className="detalle">
-            <DollarSign className="icono" />
-            <p>Cuota: ${creditoActivo.valor_cuota}</p>
-          </div>
-          <div className="detalle">
-            <Clock className="icono" />
-            <p>Vence: {new Date(creditoActivo.fecha_vencimiento).toLocaleDateString()}</p>
-          </div>
-          <div className="detalle">
-            <DollarSign className="icono" />
-            <p>Multas: ${multas.reduce((sum, m) => sum + m.monto, 0)}</p>
-          </div>
-        </div>
+    <div className="credit-info">
+      <div className="info-item">
+        <CreditCard className="info-icon" />
+        <span>Saldo:</span>
+        <strong>${creditoActivo.saldo?.toFixed(2)}</strong>
       </div>
+
+      <div className="info-item">
+        <DollarSign className="info-icon" />
+        <span>Cuota:</span>
+        <strong>${creditoActivo.valor_cuota?.toFixed(2)}</strong>
+      </div>
+
+      <div className="info-item">
+        <Clock className="info-icon" />
+        <span>Vence:</span>
+        <strong>{new Date(creditoActivo.fecha_vencimiento).toLocaleDateString()}</strong>
+      </div>
+
+      <div className="info-item">
+        <DollarSign className="info-icon" />
+        <span>Multas:</span>
+        <strong>${multas.reduce((sum, m) => sum + m.monto, 0).toFixed(2)}</strong>
+      </div>
+    </div>
+  </div>
+)}
+
+        </div>
+
 
       {/* Historial de pagos */}
       <div className="scrollable-body">
         <div className="historial-pagos">
-          <h3><History className="icono" /> Historial de Pagos</h3>
+          <h3><History className="iconoH" /> Historial de Pagos</h3>
           <div className="tabla-pagos">
             <table>
               <thead>
                 <tr>
-                  <th>Pago</th>
+                  <th>Recibo</th>
                   <th>Fecha</th>
                   <th>Monto</th>
                   <th>Método</th>
@@ -398,7 +407,7 @@ alert("Foto actualizada correctamente ✅");
               <tbody>
                 {pagos.map((pago) => (
                   <tr key={pago.id}>
-                    <td>{pago.id}</td>
+                    <td>#{pago.id}</td>
                     <td>{new Date(pago.fecha_pago).toLocaleDateString()}</td>
                     <td>${pago.monto_pagado}</td>
                     <td>{pago.metodo_pago}</td>
