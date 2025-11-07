@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"; 
+import { useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import { FaWhatsapp, FaSignOutAlt, FaMoneyBillWave, FaMapMarkedAlt, FaTimes, FaMobileAlt } from "react-icons/fa";
-import {User, Phone, MessageCircle, Send, CreditCard, DollarSign,Clock, History, MapPin, FileText, Calendar
-} from "lucide-react";
+import { FaWhatsapp, FaMobileAlt, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
+import {  User, Phone, Send, CreditCard, DollarSign, Clock, History, MapPin, FileText, Calendar } from "lucide-react";
 import "../Styles/ClienteDetalle.css";
 
 const ClienteDetalle = () => {
@@ -21,8 +21,111 @@ const ClienteDetalle = () => {
   const [modalPago, setModalPago] = useState(false);
   const [montoPago, setMontoPago] = useState(0);
   const [mensaje, setMensaje] = useState(null);
-  const [mostrarConfirmacionRecibo, setMostrarConfirmacionRecibo] = useState(false);
-  
+  const [modalMulta, setModalMulta] = useState(false);
+  const [montoMulta, setMontoMulta] = useState("");
+  const [descripcionMulta, setDescripcionMulta] = useState("");
+  const [multas, setMultas] = useState([]);
+  const inputFileRef = useRef(null);
+  const [fotoUrl, setFotourl] = useState("/default-avatar.png");
+
+
+    const handleClick = () => {
+    if (inputFileRef.current) inputFileRef.current.click();
+  };
+
+  // Manejar cambio de archivo
+  const handleFileChange = async (e) => {
+  if (!cliente) return; // ⚠ asegurarse que cliente exista
+
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const fileName = `${cliente.id}/${file.name}`;
+
+    // Subir al storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("clientes")
+      .upload(fileName, file, { upsert: true });
+    if (uploadError) throw uploadError;
+
+    // Obtener URL pública
+    const { data: urlData, error: urlError } = supabase.storage
+      .from("clientes")
+      .getPublicUrl(fileName);
+    if (urlError) throw urlError;
+
+    const publicUrl = urlData.publicUrl;
+
+    // Actualizar tabla
+    const { error: updateError } = await supabase
+      .from("clientes")
+      .update({ fotourl: publicUrl })
+      .eq("id", cliente.id);
+    if (updateError) throw updateError;
+
+    // Actualizar estado
+    setFotourl(publicUrl);
+    setCliente({
+  ...cliente,
+  fotourl: publicUrl
+});
+
+alert("Foto actualizada correctamente ✅");
+
+  } catch (err) {
+    console.error("Error al subir foto:", err.message);
+  }
+};
+
+
+  const cargarDatos = async () => {
+  try {
+    setLoading(true);
+
+    const [clienteData, creditosData] = await Promise.all([
+      supabase.from("clientes").select("*").eq("id", id).single(),
+      supabase.from("creditos").select("*").eq("cliente_id", id),
+    ]);
+
+    if (clienteData.error) throw clienteData.error;
+    if (creditosData.error) throw creditosData.error;
+
+    setCliente(clienteData.data);
+    setCreditos(creditosData.data || []);
+
+    const creditoActivo = creditosData.data.find(c => c.estado === "Activo");
+
+    if (creditoActivo) {
+      const { data: pagosData, error: pagosError } = await supabase
+        .from("pagos")
+        .select("*")
+        .eq("credito_id", creditoActivo.id)
+        .order("fecha_pago", { ascending: false });
+
+      if (pagosError) throw pagosError;
+
+      setPagos(pagosData || []);
+      setSaldo(pagosData.length > 0 ? pagosData[0].saldo : creditoActivo.saldo);
+
+      const { data: multasData, error: multasError } = await supabase
+        .from("multas")
+        .select("*")
+        .eq("credito_id", creditoActivo.id)
+        .order("fecha", { ascending: false });
+
+      if (multasError) throw multasError;
+
+      setMultas(multasData || []);
+    }
+  } catch (error) {
+    console.error("Error al cargar datos:", error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+    
 
   useEffect(() => {
     const obtenerUsuario = async () => {
@@ -56,12 +159,23 @@ const ClienteDetalle = () => {
             .select("*")
             .eq("credito_id", creditoActivo.id)
             .order("fecha_pago", { ascending: false });
+            
 
           if (pagosError) throw pagosError;
 
           setPagos(pagosData || []);
           setSaldo(pagosData.length > 0 ? pagosData[0].saldo : creditoActivo.saldo);
         }
+    const { data: multasData, error: multasError } = await supabase
+          .from("multas")
+          .select("*")
+          .eq("credito_id", creditoActivo.id)
+          .order("fecha", { ascending: false });
+
+  if (multasError) throw multasError;
+
+  setMultas(multasData || []);
+
       } catch (error) {
         console.error("Error al obtener datos:", error.message);
       } finally {
@@ -125,119 +239,188 @@ const ClienteDetalle = () => {
     }
   };
 
+  const registrarMulta = async () => {
+  if (!montoMulta || isNaN(montoMulta)) {
+    alert("Ingresa un monto válido");
+    return;
+  }
+
+  try {
+    // 1. Insertar multa
+    const { error: multaError } = await supabase
+      .from("multas")
+      .insert([
+        {
+          cliente_id: cliente.id,
+          credito_id: creditoActivo.id,
+          monto: montoMulta,
+          descripcion: "Multa por atraso",
+          fecha: new Date(),
+          auth_id: localStorage.auth_id_cobrador_actual,
+        },
+      ]);
+
+    if (multaError) throw multaError;
+
+    // 2. Actualizar saldo del crédito
+    const nuevoSaldo = creditoActivo.saldo + montoMulta;
+
+    const { error: updateError } = await supabase
+      .from("creditos")
+      .update({ saldo: nuevoSaldo })
+      .eq("id", creditoActivo.id);
+
+    if (updateError) throw updateError;
+
+    alert("Multa registrada y saldo actualizado.");
+    setMontoMulta("");
+    setMostrarModalMulta(false);
+    cargarDatos(); // recarga pagos, multas, saldo, etc.
+  } catch (error) {
+    console.error("Error al registrar multa:", error.message);
+  }
+};
+
+
   if (loading) return <p>Cargando datos...</p>;
   if (!cliente) return <p>Cliente no encontrado.</p>;
 
   const creditoActivo = creditos.find(c => c.estado === "Activo");
 
+  
+ return (
+    <div className="cliente-detalle">
 
-  return (
-  <div className="cliente-detalle ampliado">
+     <div className="acciones-contacto">
 
-  {/* 🔹 Franja superior fija con volver y acciones */}
-  <div className="fixed-header-container">
-    
-    {/* Volver */}
-    <div className="barra-volver">
-            <button onClick={() => navigate(-1)} className="btn-ir-panel" title="Volver a la vista anterior">
-  <FaSignOutAlt />
-</button>
-
-    </div>
-
-    {/* Acciones de contacto */}
-    <div className="acciones-contacto">
-      <Phone
-        className="icono DC"
-        onClick={() => window.location.href = `tel:${cliente.telefono}`}
-      />
-      <MessageCircle
-        className="icono DC"
-        onClick={() => navigate(`/enviar-mensaje/${cliente.id}`)}
-      />
-      <FaWhatsapp
-        className="icono whatsapp"
-        onClick={() => window.open(`https://wa.me/${cliente.telefono}`, "_blank")}
-      />
-      <FaMapMarkedAlt
-        className="icono-ubicacion"
-        onClick={() =>
-          window.open(`https://www.google.com/maps/search/?api=1&query=${cliente.ubicacion}`, "_blank")
-        }
-      />
-    </div>
-
-  {/* 🔸 Información del cliente (nombre + estrellas) */}
-  <div className="cliente-info">
-    <div className="cliente-header">
-      <div className="info-cliente">
-        <User className="icono-cliente" onClick={() => setInfoVisible(true)} />
-        <h2 className="nombre cliente">{cliente.nombre}</h2>
-      </div>
-    </div>
+       <div className="accion" onClick={() => setInfoVisible(true)}>
+    <FaUserEdit />
+    <span>Info/Editar</span>
   </div>
 
-      <div className="credito-activo compacto ampliado">
-
-  <div className="encabezado-credito">
-
-    <h3>Crédito Activo</h3>
-
-    <button className="botton-pago" onClick={() => abrirModalPago(cliente)}>
-      <FaMoneyBillWave /> Pago
-    </button>
+   <div className="accion" onClick={() => navigate(`/enviar-mensaje/${cliente.id}`)}>
+   <FaEnvelopeOpenText />
+    <span>Mensaje/Recibo</span>
   </div>
 
-  <div className="fila-detalles">
-    <div className="detalle compacto">
-      <CreditCard className="iconoDC" />
-      <p>Saldo: ${creditoActivo.saldo}</p>
-    </div>
-    <div className="detalle compacto">
-      <DollarSign className="iconoDC" />
-      <p>Cuota: ${creditoActivo.valor_cuota}</p>
-    </div>
-    <div className="detalle compacto">
-      <Clock className="iconoDC" />
-      <p>Vence: {new Date(creditoActivo.fecha_vencimiento).toLocaleDateString()}</p>
-    </div>
+  <div className="accion" onClick={() => window.location.href = `tel:${cliente.telefono}`}>
+    <FaPhone />
+    <span>Llamar</span>
+  </div>
+
+  <div className="accion" onClick={() => window.open(`https://wa.me/${cliente.telefono}`, "_blank")}>
+    <FaWhatsapp />
+    <span>WhatsApp</span>
+  </div>
+
+  <div className="accion" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${cliente.ubicacion}`, "_blank")}>
+    <FaMapMarkedAlt />
+    <span>Ubicación</span>
+  </div>
+
+   <div className="accion" onClick={() => setModalMulta(true)}>
+    <FaExclamationCircle />
+    <span>Multa</span>
+  </div>
+
+  <div className="accion" onClick={() => abrirModalPago(cliente)}>
+    <FaMoneyBillWave />
+    <span>Pago</span>
   </div>
 </div>
-</div>
 
-    {/* Contenedor scrollable para el historial */}
-    <div className="scrollable-body">
-      {/* Historial de Pagos */}
-      <div className="historial-pagos">
-        <h3><History className="iconoH" /> Historial de Pagos</h3>
-        <div className="tabla-pagos">
-          <table>
-            <thead>
-              <tr>
-                <th>Pago</th>
-                <th>Fecha</th>
-                <th>Monto</th>
-                <th>Método</th>
-                <th>Saldo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagos.map((pago) => (
-                <tr key={pago.id}>
-                  <td>{pago.id}</td>
-                  <td>{new Date(pago.fecha_pago).toLocaleDateString()}</td>
-                  <td>${pago.monto_pagado}</td>
-                  <td>{pago.metodo_pago}</td>
-                  <td>${pago.saldo}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+       {/* Crédito activo con foto */}
+      <div className="credito-activo">
+        <div className="cliente-info">
+          <div className="cliente-header">
+           <div className="info-cliente">
+          <div className="info-cliente">
+          <img
+             src={cliente.fotourl || fotoUrl} // usa 'fotourl' del cliente
+             alt="Foto"            
+             className="icono-cliente"            
+              onClick={handleClick}
+            
+            />
+          <input
+            type="file"
+            ref={inputFileRef}
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+            accept="image/*"
+          />
+          <h2 className="nombre cliente">{cliente.nombre}</h2>
         </div>
       </div>
     </div>
+ 
+{creditoActivo && (
+  <div className="seccion-credito-activo">
+    <h3 className="titulo-seccion">Crédito Activo</h3>
 
-  {infoVisible && (
+    <div className="credit-info">
+      <div className="info-item">
+        <CreditCard className="info-icon" />
+        <span>Saldo:</span>
+        <strong>${creditoActivo.saldo?.toFixed(2)}</strong>
+      </div>
+
+      <div className="info-item">
+        <DollarSign className="info-icon" />
+        <span>Cuota:</span>
+        <strong>${creditoActivo.valor_cuota?.toFixed(2)}</strong>
+      </div>
+
+      <div className="info-item">
+        <Clock className="info-icon" />
+        <span>Vence:</span>
+        <strong>{new Date(creditoActivo.fecha_vencimiento).toLocaleDateString()}</strong>
+      </div>
+
+      <div className="info-item">
+        <DollarSign className="info-icon" />
+        <span>Multas:</span>
+        <strong>${multas.reduce((sum, m) => sum + m.monto, 0).toFixed(2)}</strong>
+      </div>
+    </div>
+  </div>
+)}
+
+        </div>
+
+
+      {/* Historial de pagos */}
+      <div className="scrollable-body">
+        <div className="historial-pagos">
+          <h3><History className="iconoH" /> Historial de Pagos</h3>
+          <div className="tabla-pagos">
+            <table>
+              <thead>
+                <tr>
+                  <th>Recibo</th>
+                  <th>Fecha</th>
+                  <th>Monto</th>
+                  <th>Método</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagos.map((pago) => (
+                  <tr key={pago.id}>
+                    <td>#{pago.id}</td>
+                    <td>{new Date(pago.fecha_pago).toLocaleDateString()}</td>
+                    <td>${pago.monto_pagado}</td>
+                    <td>{pago.metodo_pago}</td>
+                    <td>${pago.saldo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {infoVisible && (
   <div className="modal">
     <div className="modal-contenido ampliado">
       <h3>Datos del Cliente</h3>
@@ -296,12 +479,52 @@ const ClienteDetalle = () => {
       />
 
       <label>Ubicación:</label>
-      <input
-        type="text"
-        value={cliente.ubicacion || ""}
-        onChange={(e) => setCliente({ ...cliente, ubicacion: e.target.value })}
-      />
-
+<div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+  <input
+    type="text"
+    value={cliente.ubicacion || ""}
+    onChange={(e) => setCliente({ ...cliente, ubicacion: e.target.value })}
+    style={{
+      width: "60%", // 🔹 Ajusta el ancho que quieras
+      padding: "6px",
+    }}
+  />
+  <button
+    type="button"
+    style={{
+      width: "100px", // 🔹 Ancho fijo pequeño
+      height: "32px",
+      fontSize: "14px",
+      borderRadius: "6px",
+      backgroundColor: "#4CAF50",
+      color: "white",
+      border: "none",
+      cursor: "pointer",
+    }}
+    onClick={() => {
+      if (!navigator.geolocation) {
+        alert("La geolocalización no está soportada en este navegador.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+          setCliente({ ...cliente, ubicacion: coords });
+          window.open(
+            `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`,
+            "_blank"
+          );
+        },
+        (err) => {
+          alert("No se pudo obtener la ubicación.");
+          console.error(err);
+        }
+      );
+    }}
+  >
+   Ubicacion📍
+  </button>
+</div>
       <label>Detalle:</label>
       <textarea
         value={cliente.detalle || ""}
@@ -374,6 +597,88 @@ const ClienteDetalle = () => {
           </div>
         </div>
       )}
+      {modalMulta && (
+  <div className="modal-pago">
+    <div className="modal-pagocontenido">
+      <button className="cerrar-modal" onClick={() => setModalMulta(false)}><FaTimes /></button>
+      <h3>Registrar Multa</h3>
+      <p>Cliente: {cliente?.nombre}</p>
+
+      <label>Monto de la multa:</label>
+      <input
+        type="number"
+        min="1"
+        placeholder="Ej: 10"
+        value={montoMulta}
+        onChange={(e) => setMontoMulta(e.target.value)}
+        className="input-pago"
+      />
+
+      <label>Motivo / descripción:</label>
+      <textarea
+        placeholder="Ej: Incumplimiento, retraso, etc."
+        value={descripcionMulta}
+        onChange={(e) => setDescripcionMulta(e.target.value)}
+        className="input-pago"
+      />
+
+      <button
+  onClick={async () => {
+    if (!montoMulta || isNaN(montoMulta)) {
+      alert("Ingresa un monto válido");
+      return;
+    }
+
+    try {
+      const nuevoMonto = parseFloat(montoMulta);
+
+      // 1. Insertar la multa
+      const { data: usuarioData } = await supabase.auth.getUser();
+
+      const { error: multaError } = await supabase.from("multas").insert([
+        {
+          cliente_id: cliente.id,
+          credito_id: creditoActivo.id,
+          monto: nuevoMonto,
+          descripcion: descripcionMulta,
+          fecha: new Date(),
+          auth_id: usuarioData.user.id,
+        },
+      ]);
+
+      if (multaError) throw multaError;
+
+      // 2. Actualizar saldo del crédito
+      const nuevoSaldo = creditoActivo.saldo + nuevoMonto;
+      const { error: updateError } = await supabase
+        .from("creditos")
+        .update({ saldo: nuevoSaldo })
+        .eq("id", creditoActivo.id);
+
+      if (updateError) throw updateError;
+
+      alert("Multa registrada con éxito");
+
+      // 3. Reset UI y recarga
+      setModalMulta(false);
+      setMontoMulta("");
+      setDescripcionMulta("");
+      await cargarDatos(); // recarga toda la info
+
+    } catch (error) {
+      alert("Error al registrar la multa: " + error.message);
+    }
+  }}
+  className="btn-pago efectivo"
+>
+  Registrar Multa
+</button>
+
+    </div>
+  </div>
+)}
+
+    </div>
     </div>
   );
 };

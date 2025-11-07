@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import { FaWhatsapp, FaMobileAlt, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
+import { FaWhatsapp, FaMobileAlt, FaHistory, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
 import {  User, Phone, Send, CreditCard, DollarSign, Clock, History, MapPin, FileText, Calendar } from "lucide-react";
+import { FaAngleLeft } from "react-icons/fa6";
 import "../Styles/ClienteDetalle.css";
 
 const ClienteDetalle = () => {
@@ -293,7 +294,12 @@ alert("Foto actualizada correctamente ✅");
 
      <div className="acciones-contacto">
 
-       <div className="accion" onClick={() => setInfoVisible(true)}>
+      <div className="accion" onClick={() => navigate(-1)}>
+        <FaAngleLeft />
+        <span>Volver</span>
+      </div>
+
+   <div className="accion" onClick={() => setInfoVisible(true)}>
     <FaUserEdit />
     <span>Info/Editar</span>
   </div>
@@ -327,6 +333,14 @@ alert("Foto actualizada correctamente ✅");
     <FaMoneyBillWave />
     <span>Pago</span>
   </div>
+
+ <div
+  className="accion"
+  onClick={() => navigate(`/BuscarCliente/${encodeURIComponent(cliente.nombre)}`)}
+><FaHistory />
+  <span>Historial</span>
+</div>
+
 </div>
 
        {/* Crédito activo con foto */}
@@ -358,23 +372,41 @@ alert("Foto actualizada correctamente ✅");
   <div className="seccion-credito-activo">
     <h3 className="titulo-seccion">Crédito Activo</h3>
 
-    <div className="credit-info">
+      <div className="credit-info">
       <div className="info-item">
+        <CreditCard className="info-icon" />
+        <span>Monto:</span>
+        <strong>${creditoActivo.monto?.toFixed(2)}</strong>
+      </div>
+
+
+       <div className="info-item">
         <CreditCard className="info-icon" />
         <span>Saldo:</span>
         <strong>${creditoActivo.saldo?.toFixed(2)}</strong>
       </div>
 
       <div className="info-item">
-        <DollarSign className="info-icon" />
-        <span>Cuota:</span>
-        <strong>${creditoActivo.valor_cuota?.toFixed(2)}</strong>
+        <Clock className="info-icon" />
+        <span>Inicio:</span>
+        <strong>
+          {creditoActivo.fecha_inicio
+            ? new Date(creditoActivo.fecha_inicio).toLocaleDateString()
+            : "—"}
+        </strong>
       </div>
 
       <div className="info-item">
         <Clock className="info-icon" />
         <span>Vence:</span>
         <strong>{new Date(creditoActivo.fecha_vencimiento).toLocaleDateString()}</strong>
+      </div>
+     
+
+      <div className="info-item">
+        <DollarSign className="info-icon" />
+        <span>Cuota:</span>
+        <strong>${creditoActivo.valor_cuota?.toFixed(2)}</strong>
       </div>
 
       <div className="info-item">
@@ -387,7 +419,6 @@ alert("Foto actualizada correctamente ✅");
 )}
 
         </div>
-
 
       {/* Historial de pagos */}
       <div className="scrollable-body">
@@ -424,6 +455,7 @@ alert("Foto actualizada correctamente ✅");
   <div className="modal">
     <div className="modal-contenido ampliado">
       <h3>Datos del Cliente</h3>
+      
       <p><User className="iconoM" /> Nombre: {cliente.nombre}</p>
       <p><Phone className="iconoM" /> Teléfono: {cliente.telefono}</p>
       <p><MapPin className="iconoM" /> Dirección: {cliente.direccion}</p>

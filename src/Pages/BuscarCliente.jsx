@@ -1,14 +1,7 @@
 import React, { useState } from "react";
-import {
-  FaSearch,
-  FaUser,
-  FaStar,
-  FaCreditCard,
-  FaMoneyBillWave,
-  FaIdCard,
-  FaPhoneAlt,
-  FaHome,
-} from "react-icons/fa";
+import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import {FaSearch, FaUser, FaStar, FaCreditCard, FaMoneyBillWave, FaIdCard, FaPhoneAlt, FaHome,} from "react-icons/fa";
 import { supabase } from "../components/supabaseClient";
 import "../Styles/BuscarCliente.css";
 
@@ -18,6 +11,31 @@ const BuscarCliente = () => {
   const [creditosAbiertos, setCreditosAbiertos] = useState({});
   const [pagosAbiertos, setPagosAbiertos] = useState({});
   const [calificaciones, setCalificaciones] = useState({});
+  const { nombre } = useParams(); // ← recibe el nombre del cliente desde la URL
+
+
+  useEffect(() => {
+  if (nombre) {
+    const nombreDecodificado = decodeURIComponent(nombre);
+    setBusqueda(nombreDecodificado);
+    buscarClienteAuto(nombreDecodificado);
+  }
+}, [nombre]);
+
+const buscarClienteAuto = async (valor) => {
+  if (!valor.trim()) return;
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*")
+    .ilike("nombre", `%${valor}%`);
+
+  if (!error) {
+    setClientes(data);
+    setCalificaciones({});
+  }
+};
+
 
   const buscarCliente = async () => {
     if (!busqueda.trim()) return;

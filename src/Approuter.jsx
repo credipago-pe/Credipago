@@ -77,6 +77,8 @@ export const router = createBrowserRouter([
   { path: "/admin/pago-suscripcion", element: <PagoSuscripcion /> },
   { path: "/superadmin", element: <SuperAdminPanel /> },
   { path: "/BuscarCliente", element: <BuscarCliente /> },
+  { path: "/BuscarCliente/:nombre", element: <BuscarCliente /> },
+
 
 
 
