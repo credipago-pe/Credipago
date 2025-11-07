@@ -4,7 +4,7 @@
   height: 100vh;
   padding-top: 30px;
   max-height: 1000px;
-  margin-top: -36px;
+  margin-top: -10px;
   max-width: 450px;
 
 }
@@ -407,7 +407,7 @@
   .btn-pago {
     flex: 1 1 45%;
     justify-content: center;
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .icono {
@@ -734,14 +734,14 @@
 /* Ajustes generales para pantallas pequeñas */
 @media (max-width: 768px) {
   .tablaC-container {
-    padding: 5px;
+    padding: 0px;
     max-width: 100%;
   }
 
   .tablaC-cobros th,
   .tablaC-cobros td {
-    font-size: 14px;
-    padding: 7px;
+    font-size: 13px;
+    padding: 4px;
     color: #080808;
   }
 
@@ -754,7 +754,7 @@
   }
 
   .filtro-busqueda {
-    width: 90%;
+    width: 80%;
     margin: 0 auto;
     flex-direction: column;
     gap: 1px;
@@ -939,7 +939,7 @@
   gap: 10px;
   flex-wrap: nowrap;
   margin: 20px 0;
-  width: -50px;      /* que use todo el ancho disponible */
+  width: -10px;      /* que use todo el ancho disponible */
   max-width: 100%;  /* evita limitarlo */
 }
 
