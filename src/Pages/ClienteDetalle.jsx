@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import { FaWhatsapp, FaMobileAlt, FaHistory, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
+import { FaWhatsapp, FaMobileAlt, FaCamera, FaStar, FaHistory, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
 import {  User, Phone, Send, CreditCard, DollarSign, Clock, History, MapPin, FileText, Calendar } from "lucide-react";
 import { FaAngleLeft } from "react-icons/fa6";
 import "../Styles/ClienteDetalle.css";
@@ -27,30 +27,34 @@ const ClienteDetalle = () => {
   const [descripcionMulta, setDescripcionMulta] = useState("");
   const [multas, setMultas] = useState([]);
   const inputFileRef = useRef(null);
-  const [fotoUrl, setFotourl] = useState("/default-avatar.png");
+  const [calificacion, setCalificacion] = useState(null); // promedio 0-5
+  const [creditosConPagos, setCreditosConPagos] = useState([]);
+  const [mostrarModalFoto, setMostrarModalFoto] = useState(false);
+
+  const [fotoUrl, setFotoUrl] = useState("/default-user.png");
 
 
-    const handleClick = () => {
-    if (inputFileRef.current) inputFileRef.current.click();
-  };
 
-  // Manejar cambio de archivo
-  const handleFileChange = async (e) => {
-  if (!cliente) return; // ⚠ asegurarse que cliente exista
 
+   // 🔹 Click sobre el círculo abre el selector
+// 🔹 Abrir selector de archivos
+const handleClick = () => {
+  if (inputFileRef.current) inputFileRef.current.click();
+};
+
+// 🔹 Subir imagen y actualizar en Supabase
+const handleFileChange = async (e) => {
+  if (!cliente) return;
   const file = e.target.files[0];
   if (!file) return;
 
   try {
     const fileName = `${cliente.id}/${file.name}`;
-
-    // Subir al storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("clientes")
       .upload(fileName, file, { upsert: true });
     if (uploadError) throw uploadError;
 
-    // Obtener URL pública
     const { data: urlData, error: urlError } = supabase.storage
       .from("clientes")
       .getPublicUrl(fileName);
@@ -58,29 +62,23 @@ const ClienteDetalle = () => {
 
     const publicUrl = urlData.publicUrl;
 
-    // Actualizar tabla
     const { error: updateError } = await supabase
       .from("clientes")
       .update({ fotourl: publicUrl })
       .eq("id", cliente.id);
     if (updateError) throw updateError;
 
-    // Actualizar estado
-    setFotourl(publicUrl);
-    setCliente({
-  ...cliente,
-  fotourl: publicUrl
-});
-
-alert("Foto actualizada correctamente ✅");
-
+    setFotoUrl(publicUrl);
+    setCliente((prev) => ({ ...prev, fotourl: publicUrl }));
+    alert("📸 Foto actualizada correctamente.");
   } catch (err) {
     console.error("Error al subir foto:", err.message);
+    alert("❌ No se pudo subir la foto.");
   }
 };
 
-
-  const cargarDatos = async () => {
+// 🔹 Cargar datos principales del cliente y sus créditos
+const cargarDatos = async () => {
   try {
     setLoading(true);
 
@@ -95,29 +93,76 @@ alert("Foto actualizada correctamente ✅");
     setCliente(clienteData.data);
     setCreditos(creditosData.data || []);
 
-    const creditoActivo = creditosData.data.find(c => c.estado === "Activo");
+    // Configurar foto
+    if (clienteData.data?.fotourl && clienteData.data.fotourl.trim() !== "") {
+      setFotoUrl(clienteData.data.fotourl);
+    } else {
+      setFotoUrl("/default-user.png");
+    }
 
+    const creditoActivo = creditosData.data.find((c) => c.estado === "Activo");
     if (creditoActivo) {
+      // Cargar pagos
       const { data: pagosData, error: pagosError } = await supabase
         .from("pagos")
         .select("*")
         .eq("credito_id", creditoActivo.id)
         .order("fecha_pago", { ascending: false });
-
       if (pagosError) throw pagosError;
-
       setPagos(pagosData || []);
-      setSaldo(pagosData.length > 0 ? pagosData[0].saldo : creditoActivo.saldo);
+      setSaldo(
+        pagosData.length > 0 ? pagosData[0].saldo : creditoActivo.saldo
+      );
 
+      // Cargar multas
       const { data: multasData, error: multasError } = await supabase
         .from("multas")
         .select("*")
         .eq("credito_id", creditoActivo.id)
         .order("fecha", { ascending: false });
-
       if (multasError) throw multasError;
 
       setMultas(multasData || []);
+    }
+
+    // Calcular estrellas promedio
+    const calcularEstrellas = (pagos) => {
+      if (!pagos || pagos.length === 0) return 0;
+      const fechas = pagos.map((p) => new Date(p.fecha_pago));
+      const fechaMin = new Date(Math.min(...fechas));
+      const fechaMax = new Date(Math.max(...fechas));
+      const dias = Math.round((fechaMax - fechaMin) / (1000 * 60 * 60 * 24));
+
+      if (dias <= 20) return 5;
+      if (dias <= 24) return 4;
+      if (dias <= 30) return 3;
+      if (dias <= 35) return 2;
+      return 1;
+    };
+
+    if (creditosData.data.length > 0) {
+      const creditosConPagosLocal = await Promise.all(
+        creditosData.data.map(async (c) => {
+          const { data: pagos } = await supabase
+            .from("pagos")
+            .select("*")
+            .eq("credito_id", c.id);
+          return { ...c, pagos: pagos || [] };
+        })
+      );
+
+      setCreditosConPagos(creditosConPagosLocal);
+
+      const estrellasPorCredito = creditosConPagosLocal.map((c) =>
+        calcularEstrellas(c.pagos)
+      );
+      const promedio =
+        estrellasPorCredito.reduce((a, b) => a + b, 0) /
+        (estrellasPorCredito.length || 1);
+
+      setCalificacion(Number(promedio.toFixed(1)));
+    } else {
+      setCalificacion(0);
     }
   } catch (error) {
     console.error("Error al cargar datos:", error.message);
@@ -126,128 +171,87 @@ alert("Foto actualizada correctamente ✅");
   }
 };
 
-    
-
-  useEffect(() => {
-    const obtenerUsuario = async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (data?.user) {
-      setUsuario(data.user); // ← aquí debes tener el auth.uid()
-    }
+// 🔹 Efecto inicial
+useEffect(() => {
+  const obtenerUsuario = async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) setUsuario(data.user);
   };
   obtenerUsuario();
+  cargarDatos();
+}, [id]);
 
-    const fetchDatos = async () => {
-      try {
-        setLoading(true);
+// 🔹 Obtener crédito activo
+const obtenerCreditoDelCliente = (clienteId) =>
+  creditos.find((c) => c.cliente_id === clienteId && c.estado === "Activo");
 
-        const [clienteData, creditosData] = await Promise.all([
-          supabase.from("clientes").select("*").eq("id", id).single(),
-          supabase.from("creditos").select("*").eq("cliente_id", id),
-        ]);
-        
-        if (clienteData.error) throw clienteData.error;
-        if (creditosData.error) throw creditosData.error;
+// 🔹 Manejo del modal de pagos
+const abrirModalPago = (cliente) => {
+  const credito = obtenerCreditoDelCliente(cliente.id);
+  setMontoPago(credito?.valor_cuota || 0);
+  setClienteSeleccionado(cliente);
+  setModalPago(true);
+};
 
-        setCliente(clienteData.data);
-        setCreditos(creditosData.data || []);
+const cerrarModalPago = () => {
+  setModalPago(false);
+  setClienteSeleccionado(null);
+};
 
-        const creditoActivo = creditosData.data.find(c => c.estado === "Activo");
+// 🔹 Registrar pago
+const registrarPago = async (tipoPago) => {
+  if (!clienteSeleccionado) return;
 
-        if (creditoActivo) {
-          const { data: pagosData, error: pagosError } = await supabase
-            .from("pagos")
-            .select("*")
-            .eq("credito_id", creditoActivo.id)
-            .order("fecha_pago", { ascending: false });
-            
+  const credito = obtenerCreditoDelCliente(clienteSeleccionado.id);
+  if (!credito) {
+    alert("No se encontró un crédito para este cliente.");
+    return;
+  }
 
-          if (pagosError) throw pagosError;
+  if (montoPago <= 0 || isNaN(montoPago)) {
+    alert("Ingrese un monto válido.");
+    return;
+  }
 
-          setPagos(pagosData || []);
-          setSaldo(pagosData.length > 0 ? pagosData[0].saldo : creditoActivo.saldo);
-        }
-    const { data: multasData, error: multasError } = await supabase
-          .from("multas")
-          .select("*")
-          .eq("credito_id", creditoActivo.id)
-          .order("fecha", { ascending: false });
+  if (montoPago > credito.saldo) {
+    alert(`El monto ingresado excede el saldo pendiente (${credito.saldo}).`);
+    return;
+  }
 
-  if (multasError) throw multasError;
+  const fechaPago = new Date(new Date().getTime() - 5 * 60 * 60 * 1000);
+  const fechaPagoFormatted = fechaPago.toISOString().slice(0, 19).replace("T", " ");
 
-  setMultas(multasData || []);
+  const { error } = await supabase.from("pagos").insert([{
+    credito_id: credito.id,
+    metodo_pago: tipoPago.toLowerCase(),
+    monto_pagado: Number(parseFloat(montoPago).toFixed(2)),
+    fecha_pago: fechaPagoFormatted,
+    usuario_id: usuario?.id,
+  }]);
 
-      } catch (error) {
-        console.error("Error al obtener datos:", error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (error) {
+    alert("Error al registrar pago: " + error.message);
+  } else {
+    alert("💰 Pago registrado con éxito.");
+    cerrarModalPago();
+    cargarDatos();
+  }
+};
 
-    fetchDatos();
-  }, [id]);
-
-  const obtenerCreditoDelCliente = (clienteId) =>
-    creditos.find((c) => c.cliente_id === clienteId && c.estado === "Activo");
-
-  const abrirModalPago = (cliente) => {
-    const credito = obtenerCreditoDelCliente(cliente.id);
-    setMontoPago(credito?.valor_cuota || 0);
-    setClienteSeleccionado(cliente);
-    setModalPago(true);
-  };
-
-  const cerrarModalPago = () => {
-    setModalPago(false);
-    setClienteSeleccionado(null);
-  };
-
-  const registrarPago = async (tipoPago) => {
-    if (!clienteSeleccionado) return;
-
-    const credito = obtenerCreditoDelCliente(clienteSeleccionado.id);
-    if (!credito) {
-      alert("No se encontró un crédito para este cliente.");
-      return;
-    }
-
-    if (montoPago <= 0 || isNaN(montoPago)) {
-      alert("Ingrese un monto válido.");
-      return;
-    }
-
-    if (montoPago > credito.saldo) {
-      alert(`El monto ingresado excede el saldo pendiente (${credito.saldo}).`);
-      return;
-    }
-
-    const fechaPago = new Date(new Date().getTime() - 5 * 60 * 60 * 1000);
-    const fechaPagoFormatted = fechaPago.toISOString().slice(0, 19).replace("T", " ");
-
-    const { error } = await supabase.from("pagos").insert([{
-     credito_id: credito.id,
-      metodo_pago: tipoPago.toLowerCase(),
-      monto_pagado: Number(parseFloat(montoPago).toFixed(2)),
-      fecha_pago: fechaPagoFormatted,
-      usuario_id: usuario?.id,
-    }]);
-
-    if (error) {
-      alert("Error al registrar pago: " + error.message);
-    } else {
-      alert("Pago registrado con éxito.");
-      cerrarModalPago();
-    }
-  };
-
-  const registrarMulta = async () => {
+// 🔹 Registrar multa
+const registrarMulta = async () => {
   if (!montoMulta || isNaN(montoMulta)) {
     alert("Ingresa un monto válido");
     return;
   }
 
+  const creditoActivo = creditos.find((c) => c.estado === "Activo");
+  if (!creditoActivo) {
+    alert("No hay crédito activo para aplicar multa.");
+    return;
+  }
+
   try {
-    // 1. Insertar multa
     const { error: multaError } = await supabase
       .from("multas")
       .insert([
@@ -263,31 +267,28 @@ alert("Foto actualizada correctamente ✅");
 
     if (multaError) throw multaError;
 
-    // 2. Actualizar saldo del crédito
-    const nuevoSaldo = creditoActivo.saldo + montoMulta;
+    const nuevoSaldo = creditoActivo.saldo + Number(montoMulta);
 
     const { error: updateError } = await supabase
       .from("creditos")
       .update({ saldo: nuevoSaldo })
       .eq("id", creditoActivo.id);
-
     if (updateError) throw updateError;
 
-    alert("Multa registrada y saldo actualizado.");
+    alert("⚠️ Multa registrada y saldo actualizado.");
     setMontoMulta("");
     setMostrarModalMulta(false);
-    cargarDatos(); // recarga pagos, multas, saldo, etc.
+    cargarDatos();
   } catch (error) {
     console.error("Error al registrar multa:", error.message);
   }
 };
 
+// 🔹 Renderización condicional
+if (loading) return <p>Cargando datos...</p>;
+if (!cliente) return <p>Cliente no encontrado.</p>;
 
-  if (loading) return <p>Cargando datos...</p>;
-  if (!cliente) return <p>Cliente no encontrado.</p>;
-
-  const creditoActivo = creditos.find(c => c.estado === "Activo");
-
+const creditoActivo = creditos.find((c) => c.estado === "Activo");
   
  return (
     <div className="cliente-detalle">
@@ -348,29 +349,84 @@ alert("Foto actualizada correctamente ✅");
         <div className="cliente-info">
           <div className="cliente-header">
            <div className="info-cliente">
-          <div className="info-cliente">
-          <img
-             src={cliente.fotourl || fotoUrl} // usa 'fotourl' del cliente
-             alt="Foto"            
-             className="icono-cliente"            
-              onClick={handleClick}
-            
-            />
-          <input
-            type="file"
-            ref={inputFileRef}
-            style={{ display: "none" }}
-            onChange={handleFileChange}
-            accept="image/*"
-          />
-          <h2 className="nombre cliente">{cliente.nombre}</h2>
-        </div>
-      </div>
+          <div className="info-cliente header-con-rating">
+         </div>
+  
+  <div className="cliente-header-card">
+  {/* FOTO + NOMBRE */}
+  <div className="cliente-info-block">
+    <div className="foto-wrapper">
+   <img
+    src={
+      cliente?.fotourl && cliente.fotourl.trim() !== ""
+        ? cliente.fotourl
+        : fotoUrl || "/default-user.png"
+    }
+    alt="Foto del cliente"
+    className="foto-cliente"
+    onError={(e) => (e.target.src = "/default-user.png")} // fallback si no carga
+    onClick={() => setMostrarModalFoto(true)}
+  />
+
+      {/* Icono cámara */}
+      <label
+        htmlFor="input-foto"
+        className="btn-camara-foto"
+        title="Cambiar foto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FaCamera className="icono-camara" />
+      </label>
+
+      <input
+        id="input-foto"
+        type="file"
+        accept="image/*"
+        className="input-foto-oculto"
+        onChange={handleFileChange}
+      />
     </div>
- 
+
+    <div className="datos-cliente">
+      <h2 className="nombre-cliente">{cliente.nombre}</h2>
+      {cliente.dni && <p className="dni-cliente">DNI: {cliente.dni}</p>}
+    </div>
+  </div>
+
+  {/* Calificación */}
+  <div className="bloque-calificacion" title={`Calificación: ${calificacion ?? 0} / 5`}>
+    <span className="titulo-calificacion">Calificación:</span>
+    <div className="estrellas-calificacion">
+      {[...Array(5)].map((_, i) => (
+        <FaStar
+          key={i}
+          className={`estrella ${
+            i < Math.round(calificacion || 0) ? "activa" : "inactiva"
+          }`}
+        />
+      ))}
+      <span className="valor-calificacion">
+        {(calificacion ?? 0).toFixed(1)} / 5
+      </span>
+    </div>
+  </div>
+
+ {/* Modal de foto ampliada */}
+      {mostrarModalFoto && (
+        <div className="modal-foto" onClick={() => setMostrarModalFoto(false)}>
+          <img
+            src={fotoUrl || "/default-user.png"}
+            alt="Foto ampliada"
+            className="foto-modal"
+          />
+        </div>
+  )}
+</div>
+
+    
 {creditoActivo && (
   <div className="seccion-credito-activo">
-    <h3 className="titulo-seccion">Crédito Activo</h3>
+    <h3 className="titulo-seccion">Crédito</h3>
 
       <div className="credit-info">
       <div className="info-item">
@@ -709,7 +765,8 @@ alert("Foto actualizada correctamente ✅");
     </div>
   </div>
 )}
-
+</div>
+</div>
     </div>
     </div>
   );

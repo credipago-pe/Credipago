@@ -47,9 +47,6 @@ const CobradorPanel = () => {
   const currentMensaje = mensajeRef.current;
   const currentCliente = clienteParaRecibo;
 
-  console.log("📦 clienteParaRecibo:", currentCliente);
-  console.log("📨 mensaje desde ref:", currentMensaje);
-
   const numero = currentCliente?.telefono?.replace(/\D/g, "");
   const texto = currentMensaje?.texto;
 
@@ -393,8 +390,6 @@ useEffect(() => {
       return a.orden - b.orden; // fallback: mantener el orden actual
     });
 
-    console.log("Resultado filtrado:", filtrados.map(c => c.nombre));
-
   setClientesFiltrados(filtrados);
 }, [busqueda, filtro, ordenClientes, creditos, clientesConPagoHoy]);
 
@@ -644,10 +639,7 @@ useEffect(() => {
 
   // Logs útiles para debugging
   useEffect(() => {
-    console.log("[CobradorPanel] creditos:", creditos.length, creditos);
-    console.log("[CobradorPanel] pagosHoy:", pagosHoy.length, pagosHoy);
-    console.log("[CobradorPanel] clientesConPagoHoy:", clientesConPagoHoy);
-    console.log("totales -> clientesActivos:", clientesActivos, " totalRecaudarHoy:", totalRecaudarHoy, " totalPagadoHoy:", totalPagadoHoy);
+   
   }, [creditos, pagosHoy, clientesConPagoHoy, totalRecaudarHoy, totalPagadoHoy]);
 
 const generarMensaje = (cliente, credito, tipo) => {
