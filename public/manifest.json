@@ -1,10 +1,13 @@
 {
+  "id": "/",
   "name": "CrediPago",
   "short_name": "CrediPago",
+  "description": "App de gestión de cobranzas Credipago",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -16,5 +19,19 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "screenshots": [
+  {
+    "src": "/screenshot1.png",
+    "sizes": "540x720",
+    "type": "image/png"
+  },
+  {
+    "src": "/screenshot2.png",
+    "sizes": "1080x720",
+    "type": "image/png",
+    "form_factor": "wide"
+  }
+]
+
 }
