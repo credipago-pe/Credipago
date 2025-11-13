@@ -73,7 +73,7 @@ const handleFileChange = async (e) => {
     alert("📸 Foto actualizada correctamente.");
   } catch (err) {
     console.error("Error al subir foto:", err.message);
-    alert("❌ No se pudo subir la foto.");
+    alert("❌ No se pudo subir la foto maximo permitido 250K intente tomando captura y vuelva subir la imagen.");
   }
 };
 
