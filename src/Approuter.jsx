@@ -34,6 +34,8 @@ import NotFound from "./Pages/NotFound"; // ← asegúrate de importar
 import PagoSuscripcion from "./Pages/PagoSuscripcion";
 import SuperAdminPanel from "./Pages/SuperAdminPanel";
 import BuscarCliente from "./Pages/BuscarCliente";
+import PermisosUsuario from "./Pages/PermisosUsuario";
+
 
 
 
@@ -78,6 +80,8 @@ export const router = createBrowserRouter([
   { path: "/superadmin", element: <SuperAdminPanel /> },
   { path: "/BuscarCliente", element: <BuscarCliente /> },
   { path: "/BuscarCliente/:nombre", element: <BuscarCliente /> },
+  { path: "/permisosusuario/:id", element: <PermisosUsuario /> },
+
 
 
 

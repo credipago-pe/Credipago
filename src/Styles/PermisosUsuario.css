@@ -1,0 +1,110 @@
+/* Contenedor principal */
+.perm-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  background: linear-gradient(135deg, #0f172a, #020617);
+  padding: 20px;
+}
+
+/* Tarjeta */
+.perm-card {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  color: #e5e7eb;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Título */
+.perm-card h2 {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+/* Usuario */
+.perm-user {
+  text-align: center;
+  font-size: 14px;
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+/* Items */
+.perm-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+/* Botones ON/OFF */
+.perm-toggle {
+  padding: 5px 15px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.perm-toggle.on {
+  background-color: #f44336; /* rojo bloqueado */
+  color: white;
+}
+
+.perm-toggle.off {
+  background-color: #4caf50; /* verde activo */
+  color: white;
+}
+
+.perm-toggle:hover {
+  opacity: 0.85;
+}
+
+/* Botón Guardar */
+.perm-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #22c55e;
+  color: #022c22;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.perm-btn:hover {
+  background: #16a34a;
+}
+
+.perm-btn:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+}
+
+/* Loading */
+.perm-loading {
+  text-align: center;
+  margin-top: 40px;
+  color: #64748b;
+}
+
+/* Responsive móvil */
+@media (max-width: 480px) {
+  .perm-card {
+    padding: 18px;
+  }
+
+  .perm-card h2 {
+    font-size: 18px;
+  }
+}

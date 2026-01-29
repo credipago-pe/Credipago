@@ -278,6 +278,8 @@ async function cargarDatos() {
             <button onClick={() => navigate(`/admin/caja/${u.auth_id}`)}><FaMoneyBill /> Caja / Balance</button>
             <button onClick={() => navigate(`/registros-admin/${u.auth_id}`)}><FaTools /> Borrar Registros</button>
             <button onClick={() => navigate(`/admin/resumen/${u.auth_id}`)}><FaCalendarDay /> Resum. General</button>
+            <button onClick={() => navigate(`/permisosusuario/${u.auth_id}`)}>🔐 Permisos</button>
+
           </div>
         </div>
       ))}
