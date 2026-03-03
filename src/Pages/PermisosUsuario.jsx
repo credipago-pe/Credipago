@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import "../Styles/PermisosUsuario.css";
 
 export default function PermisosUsuario() {
@@ -109,6 +111,89 @@ export default function PermisosUsuario() {
 
   if (loading) return <p className="perm-loading">Cargando permisos...</p>;
 
+const exportarExcel = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("clientes")
+      .select(`
+        id,
+        nombre,
+        dni,
+        telefono,
+        direccion,
+        fecha_registro,
+        creditos (
+          id,
+          monto,
+          saldo,
+          forma_pago,
+          valor_cuota,
+          dias_atraso,
+          estado
+        )
+      `)
+      .eq("usuario_id", id);
+
+    if (error) throw error;
+
+    const dataFinal = [];
+
+    data.forEach((cliente) => {
+      if (cliente.creditos.length > 0) {
+        cliente.creditos.forEach((credito) => {
+          dataFinal.push({
+            Nombre: cliente.nombre,
+            DNI: cliente.dni,
+            Teléfono: cliente.telefono,
+            Dirección: cliente.direccion,
+            Fecha_Registro: cliente.fecha_registro,
+            Crédito_ID: credito.id,
+            Monto_Crédito: credito.monto,
+            Saldo: credito.saldo,
+            Forma_Pago: credito.forma_pago,
+            Valor_Cuota: credito.valor_cuota,
+            Días_Atraso: credito.dias_atraso,
+            Estado_Crédito: credito.estado,
+          });
+        });
+      } else {
+        dataFinal.push({
+          Nombre: cliente.nombre,
+          DNI: cliente.dni,
+          Teléfono: cliente.telefono,
+          Dirección: cliente.direccion,
+          Fecha_Registro: cliente.fecha_registro,
+          Crédito_ID: "",
+          Monto_Crédito: "",
+          Saldo: "",
+          Forma_Pago: "",
+          Valor_Cuota: "",
+          Días_Atraso: "",
+          Estado_Crédito: "Sin crédito",
+        });
+      }
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataFinal);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const fileData = new Blob([excelBuffer], {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(fileData, `Clientes_${id}.xlsx`);
+  } catch (error) {
+    console.error("Error exportando:", error);
+    alert("Error al exportar datos");
+  }
+};
   return (
     <div className="perm-container">
       <div className="perm-card">
@@ -134,6 +219,21 @@ export default function PermisosUsuario() {
             </button>
           </div>
         ))}
+
+        <hr style={{ margin: "20px 0", opacity: 0.3 }} />
+
+<button
+  className="perm-btn"
+  style={{
+    width: "100%",
+    background: "#10b981",
+    color: "white",
+    marginTop: "10px",
+  }}
+  onClick={exportarExcel}
+>
+  📊 Exportar clientes a Excel
+</button>
       </div>
     </div>
   );
