@@ -1,14 +1,11 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ],
   "headers": [
     {
       "source": "/",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
+          "value": "no-store"
         }
       ]
     },
@@ -17,9 +14,12 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
+          "value": "no-store"
         }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
