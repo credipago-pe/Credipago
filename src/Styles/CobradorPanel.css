@@ -1015,3 +1015,17 @@
   box-shadow: inset 2px 2px 4px rgba(0,0,0,0.4),
               inset -2px -2px 4px rgba(255,255,255,0.2);
 }
+
+.aviso-suscripcion{
+
+background:#fff3cd;
+border:1px solid #ffeeba;
+color:#856404;
+
+padding:12px;
+margin-bottom:15px;
+
+border-radius:8px;
+font-size:14px;
+
+}

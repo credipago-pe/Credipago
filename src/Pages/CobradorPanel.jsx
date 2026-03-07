@@ -32,6 +32,29 @@ const CobradorPanel = () => {
   const [pagando, setPagando] = useState(false);
   const [pagosHoy, setPagosHoy] = useState([]); // guarda objetos de pago con monto_pagado
   const clientesPagadosHoy = clientesConPagoHoy.length;
+  const [avisoSuscripcion,setAvisoSuscripcion] = useState(false)
+
+
+  async function verificarSuscripcion(){
+
+if(!authId) return
+
+const { data, error } = await supabase
+.from("usuarios")
+.select("acceso_activo")
+.eq("auth_id", authId)
+.single()
+
+if(error){
+console.error("Error verificando suscripción:", error)
+return
+}
+
+if(data && data.acceso_activo === false){
+setAvisoSuscripcion(true)
+}
+
+}
 
   
   const mensajeRef = useRef(null);
@@ -99,10 +122,12 @@ const CobradorPanel = () => {
     }
   );
 
+
   return () => {
     authListener.subscription.unsubscribe();
   };
 }, [navigate]);
+
 
 useEffect(() => {
     const fetchUsuario = async () => {
@@ -117,7 +142,15 @@ useEffect(() => {
     fetchUsuario();
   }, []);
 
+  useEffect(()=>{
 
+if(authId){
+verificarSuscripcion()
+}
+
+},[authId])
+
+  
     useEffect(() => {
     const fetchClientes = async () => {
       try {
@@ -686,6 +719,18 @@ Por favor, no olvide realizar su pago hoy. ¡Gracias! 🙌`;
 </div>
 
         <h2>Panel de Cobrador</h2>
+
+        {avisoSuscripcion && (
+
+<div className="aviso-suscripcion">
+
+⚠ Aviso de suscripción  
+La suscripción de esta ruta está pendiente de renovación.  
+Para evitar interrupciones en el servicio solicita al administrador actualizar el pago.
+
+</div>
+
+)}
         <button onClick={() => navigate("/")}className="btn-ir-panel"title="Volver al Panel Admi">
       <FaSignOutAlt />
       </button>

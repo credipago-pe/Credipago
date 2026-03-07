@@ -1,197 +1,390 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../components/supabaseClient";
-import "../Styles/Login.css";
-import { FaUser, FaLock } from "react-icons/fa";
+import React,{useEffect,useState} from "react"
+import { supabase } from "../components/supabaseClient"
+import "../Styles/SuperAdminPanel.css"
 
-const Login = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+export default function SuperAdminPanel(){
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const [admins,setAdmins] = useState([])
+const [dashboard,setDashboard] = useState(null)
 
-    if (!username || !password) {
-      setError("Por favor, completa todos los campos.");
-      return;
-    }
+const [modalRutas,setModalRutas] = useState(false)
+const [modalPagos,setModalPagos] = useState(false)
 
-    try {
-      // 1️⃣ Login con Supabase Auth
-      const { data, error: loginError } = await supabase.auth.signInWithPassword({
-        email: username,
-        password,
-      });
+const [rutasAdmin,setRutasAdmin] = useState([])
+const [historialPagos,setHistorialPagos] = useState([])
 
-      const user = data?.user;
+const [modalPagoOk,setModalPagoOk] = useState(false)
+const [mensajePago,setMensajePago] = useState("")
 
-      if (loginError) {
-        setError("Usuario o contraseña incorrectos.");
-        return;
-      }
+const cargarAdmins = async()=>{
+const {data} = await supabase
+.from("vista_admin_suscripciones")
+.select("*")
 
-      if (!user) {
-        setError("Error al iniciar sesión.");
-        return;
-      }
+if(data) setAdmins(data)
+}
 
-      // 2️⃣ Verificar si el usuario existe en la tabla usuarios
-      const { data: existingUser, error: fetchError } = await supabase
-        .from("usuarios")
-        .select("id")
-        .eq("auth_id", user.id)
-        .maybeSingle();
+const cargarDashboard = async()=>{
+const {data} = await supabase
+.from("vista_dashboard_superadmin")
+.select("*")
+.single()
 
-      if (fetchError) {
-        console.error("Error al buscar usuario:", fetchError.message);
-      }
+if(data) setDashboard(data)
+}
 
-      if (existingUser) {
-        // 🔄 Si ya existe, actualizamos el pin
-        const { error: updateError } = await supabase
-          .from("usuarios")
-          .update({ pin: password })
-          .eq("auth_id", user.id);
+const cargarRutasAdmin = async(adminId)=>{
+const {data} = await supabase
+.from("vista_rutas_admin")
+.select("*")
+.eq("admin_id",adminId)
 
-        if (updateError) {
-          console.error("Error actualizando pin:", updateError.message);
-        } else {
-          console.log("✅ Pin actualizado correctamente");
-        }
-      } else {
-        // 🆕 Si no existe, insertamos uno nuevo (por defecto sin rol)
-        const { error: insertError } = await supabase.from("usuarios").insert([
-          {
-            auth_id: user.id,
-            email: username,
-            pin: password,
-          },
-        ]);
+if(data){
+setRutasAdmin(data)
+setModalRutas(true)
+}
+}
 
-        if (insertError) {
-          console.error("Error insertando usuario:", insertError.message);
-        } else {
-          console.log("✅ Nuevo usuario insertado con pin");
-        }
-      }
+const cargarPagosAdmin = async(adminId)=>{
+const {data} = await supabase
+.from("vista_historial_pagos_admin")
+.select("*")
+.eq("admin_id",adminId)
 
-      // 3️⃣ Buscar si es superadmin
-      let { data: superData, error: superError } = await supabase
-        .from("usuarios")
-        .select("*")
-        .eq("auth_id", user.id)
-        .eq("rol", "superadmin")
-        .maybeSingle();
+if(data){
+setHistorialPagos(data)
+setModalPagos(true)
+}
+}
 
-      if (superError) {
-        console.error("Error consultando superadmin:", superError.message);
-      }
+const toggleBloqueoRutas = async(adminId,estado)=>{
+const nuevoEstado=!estado
 
-      if (superData) {
-        localStorage.setItem(
-          "usuario",
-          JSON.stringify({
-            role: "superadmin",
-            username: superData.email,
-            auth_id: user.id,
-          })
-        );
-        navigate("/superadmin");
-        return;
-      }
+await supabase
+.from("usuarios")
+.update({acceso_activo:nuevoEstado})
+.eq("admin_id",adminId)
+.eq("rol","cobrador")
 
-      // 4️⃣ Buscar si es admin
-      let { data: adminData, error: adminError } = await supabase
-        .from("admin")
-        .select("*")
-        .eq("auth_id", user.id)
-        .maybeSingle();
+cargarAdmins()
+}
 
-      if (adminError) {
-        console.error("Error en consulta admin:", adminError.message);
-        setError("Error interno, intenta más tarde.");
-        return;
-      }
+const enviarRecordatorio = async (adminId) => {
 
-      if (adminData) {
-        localStorage.setItem(
-          "usuario",
-          JSON.stringify({
-            role: "admin",
-            username: adminData.nombre,
-            auth_id: user.id,
-          })
-        );
-        navigate("/admin");
-        return;
-      }
+const { error } = await supabase
+.from("notificaciones")
+.insert({
+usuario_id: adminId,
+tipo_usuario: "admin",
+titulo: "Pago de suscripción",
+mensaje: "Recuerda pagar tu suscripción antes del día 5 para evitar suspensión de rutas."
+})
 
-      // 5️⃣ Si no es admin ni superadmin, buscar si es cobrador
-      let { data: userData, error: userError } = await supabase
-        .from("usuarios")
-        .select("*")
-        .eq("auth_id", user.id)
-        .eq("rol", "cobrador")
-        .maybeSingle();
+if(!error){
+alert("Recordatorio enviado")
+}
 
-      if (userError) {
-        console.error("Error en consulta usuarios:", userError.message);
-        setError("Error interno, intenta más tarde.");
-        return;
-      }
+}
 
-      if (userData) {
-        localStorage.setItem(
-          "usuario",
-          JSON.stringify({
-            role: "cobrador",
-            username: userData.email,
-            auth_id: user.id,
-          })
-        );
-        navigate("/cobrador");
-        return;
-      }
+const validarPago = async (id) => {
 
-      // 6️⃣ Ningún rol válido
-      setError("Usuario sin rol asignado o no registrado.");
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error.message);
-      setError("Error al iniciar sesión. Inténtalo de nuevo.");
-    }
-  };
+const { data, error } = await supabase
+.from("suscripciones_pagos")
+.update({ estado: "pagado" })
+.eq("id", id)
+.select()
 
-  return (
-    <div className="login-container">
-      <img src="/logo.png" alt="Logo Credipago" style={{ width: 220, marginBottom: 8 }} />
-      {error && <p className="error-message">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div className="input-container">
-          <FaUser className="icon" />
-          <input
-            type="email"
-            placeholder="Email"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div className="input-container">
-          <FaLock className="icon" />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <button type="submit" className="login-button">
-          Ingresar
-        </button>
-      </form>
-    </div>
-  );
+console.log("UPDATE RESULT:", data)
+
+if(error){
+console.log(error)
+setMensajePago("Error al registrar el pago")
+}
+else if(data.length === 0){
+setMensajePago("⚠️ No se encontró el pago para actualizar")
+}
+else{
+setMensajePago("✅ Pago registrado correctamente")
+}
+
+setModalPagoOk(true)
+
 };
 
-export default Login;
+useEffect(()=>{
+cargarAdmins()
+cargarDashboard()
+},[])
+
+return(
+
+<div className="superadmin-page">
+
+<div className="sap-container">
+
+<h2>Panel SuperAdmin</h2>
+
+{/* DASHBOARD */}
+
+{dashboard &&(
+
+<div className="dashboard-grid">
+
+<div className="dashboard-card card-green">
+💰 Ingresos mes
+<h2>S/ {dashboard.ingresos_mes}</h2>
+</div>
+
+<div className="dashboard-card card-orange">
+📥 Pagos pendientes
+<h2>{dashboard.pagos_proceso}</h2>
+</div>
+
+<div className="dashboard-card card-blue">
+👤 Admins
+<h2>{dashboard.total_admins}</h2>
+</div>
+
+<div className="dashboard-card card-purple">
+🛣 Rutas
+<h2>{dashboard.total_rutas}</h2>
+</div>
+
+</div>
+
+)}
+
+{/* TABLA ADMINS */}
+
+<table className="admin-table">
+
+<thead>
+
+<tr>
+<th>Admin</th>
+<th>Rutas</th>
+<th>Estado pago</th>
+<th>Total</th>
+<th>Rutas</th>
+<th>Acciones</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{admins.map(a=>(
+
+<tr key={a.admin_id}>
+
+<td>{a.admin_nombre}</td>
+<td>{a.total_rutas}</td>
+
+
+<td>
+<span className={`estado ${a.estado_pago || "pendiente"}`}>
+{a.estado_pago || "pendiente"}
+</span>
+</td>
+
+<td>S/ {a.total_pagado || 0}</td>
+
+<td>
+<span className={a.acceso_activo ? "activo":"bloqueado"}>
+{a.acceso_activo ? "🟢 Activas":"🔴 Bloqueadas"}
+</span>
+</td>
+
+<td>
+
+
+<button
+className="btn btn-rutas"
+onClick={()=>cargarRutasAdmin(a.admin_id)}
+>
+Rutas
+</button>
+
+<button
+className="btn btn-pagos"
+onClick={()=>cargarPagosAdmin(a.admin_id)}
+>
+Pagos
+</button>
+
+<button
+className="btn btn-bloquear"
+onClick={()=>toggleBloqueoRutas(a.admin_id,a.acceso_activo)}
+>
+{a.acceso_activo ? "Bloquear":"Activar"}
+</button>
+
+<button
+className="btn btn-recordatorio"
+onClick={()=>enviarRecordatorio(a.admin_id)}
+>
+Recordar pago
+</button>
+
+<button onClick={() => validarPago(a.admin_nombre)}>
+Validar pago
+</button>
+
+
+</td>
+
+</tr>
+
+))}
+
+</tbody>
+
+</table>
+
+{/* MODAL RUTAS */}
+
+{modalRutas &&(
+
+<div className="modal-overlay">
+
+<div className="modal-content">
+
+<h3>Rutas del Admin</h3>
+
+<table className="admin-table">
+
+<thead>
+<tr>
+<th>Ruta</th>
+</tr>
+</thead>
+
+<tbody>
+
+{rutasAdmin.map(r=>(
+<tr key={r.ruta_id}>
+<td>{r.ruta_nombre}</td>
+</tr>
+))}
+
+</tbody>
+
+</table>
+
+<button className="btn" onClick={()=>setModalRutas(false)}>
+Cerrar
+</button>
+
+
+</div>
+
+</div>
+
+)}
+
+{/* MODAL PAGOS */}
+
+{modalPagos &&(
+
+<div className="modal-overlay">
+
+<div className="modal-content">
+
+<h3>Historial Pagos</h3>
+
+<div className="table-wrapper">
+<table className="admin-table">
+
+<thead>
+
+<tr>
+<th>Mes</th>
+<th>Año</th>
+<th>Total</th>
+<th>Estado</th>
+<th>Evidencia</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{historialPagos.map(p=>(
+
+<tr key={p.id}>
+
+<td>{p.mes}</td>
+<td>{p.anio}</td>
+<td>S/ {p.total}</td>
+<td>{p.estado}</td>
+<td>{p.id}</td>
+
+<td>
+{p.url_evidencia &&(
+<a href={p.url_evidencia} target="_blank" rel="noreferrer">
+Ver comprobante
+</a>
+)}
+</td>
+
+<td>
+
+{p.estado !== "pagado" && (
+<button
+className="btn btn-validar"
+onClick={()=>validarPago(p.id)}
+>
+Validar pago
+</button>
+)}
+
+</td>
+
+</tr>
+
+))}
+
+</tbody>
+
+</table>
+</div>
+
+{modalPagoOk && (
+
+<div className="modal-overlay">
+
+<div className="modal-content">
+
+<h3>{mensajePago}</h3>
+
+<button
+className="btn"
+onClick={()=>setModalPagoOk(false)}
+>
+Cerrar
+</button>
+
+</div>
+
+</div>
+
+)}
+
+
+
+<button className="btn" onClick={()=>setModalPagos(false)}>
+Cerrar
+</button>
+
+</div>
+
+</div>
+
+)}
+
+</div>
+</div>
+
+)
+
+}

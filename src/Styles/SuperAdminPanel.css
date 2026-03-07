@@ -1,0 +1,179 @@
+.sap-container{
+width:100%;
+max-width:600px;
+margin:0px;
+padding-top:20px;
+padding-bottom:40px;
+box-sizing:border-box;
+left: 50px;
+position:absolute;
+top:0;
+}
+
+.sap-container h2{
+margin-top:10;
+}
+
+
+.superadmin-page{
+display:block;
+width:100%;
+min-height:100vh;
+}
+
+/* DASHBOARD */
+
+.dashboard-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+margin-bottom:25px;
+}
+
+.dashboard-card{
+padding:18px;
+border-radius:10px;
+color:white;
+font-weight:bold;
+box-shadow:0 4px 12px rgba(0,0,0,0.2);
+}
+
+.card-green{background:#16a34a;}
+.card-blue{background:#2563eb;}
+.card-purple{background:#7c3aed;}
+.card-orange{background:#f59e0b;}
+
+
+/* CONTENEDOR TABLA */
+
+.table-wrapper{
+width:70%;
+overflow-x:auto;
+overflow-y:auto;
+max-height:60vh;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.1);
+background:white;
+}
+
+
+/* TABLA */
+
+.admin-table{
+width:80%;
+min-width:900px;
+border-collapse:collapse;
+}
+
+.admin-table th{
+background:#111827;
+color:white;
+padding:12px;
+position:sticky;
+top:0;
+z-index:5;
+}
+
+.admin-table td{
+padding:10px;
+border-bottom:1px solid #eee;
+text-align:center;
+}
+
+.admin-table tr:hover{
+background:#f3f4f6;
+}
+
+
+/* BOTONES */
+
+.btn{
+padding:6px 12px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+margin:2px;
+font-size:13px;
+}
+
+.btn-rutas{background:#2563eb;color:white;}
+.btn-pagos{background:#16a34a;color:white;}
+.btn-bloquear{background:#dc2626;color:white;}
+
+
+/* ESTADOS */
+
+.estado.pagado{color:#16a34a;font-weight:bold;}
+.estado.proceso{color:#f59e0b;font-weight:bold;}
+.estado.pendiente{color:#dc2626;font-weight:bold;}
+
+
+/* MODAL */
+
+.modal-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:1000;
+}
+
+.modal-content{
+background:white;
+padding:25px;
+border-radius:10px;
+max-height:80vh;
+overflow:auto;
+width:95%;
+max-width:800px;
+}
+
+
+/* SCROLL BONITO */
+
+.table-wrapper::-webkit-scrollbar{
+height:8px;
+width:8px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb{
+background:#cbd5e1;
+border-radius:10px;
+}
+
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.sap-container{
+padding:15px;
+}
+
+.dashboard-card{
+padding:15px;
+}
+
+.admin-table{
+font-size:12px;
+}
+
+.btn{
+padding:4px 8px;
+font-size:12px;
+}
+
+}
+
+.alerta-notificacion{
+background:#fef3c7;
+border:1px solid #f59e0b;
+padding:10px;
+margin-bottom:10px;
+border-radius:6px;
+}

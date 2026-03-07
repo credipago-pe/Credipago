@@ -16,6 +16,7 @@ export default function AdminPanel() {
   const [usuarioAEliminar, setUsuarioAEliminar] = useState(null);
   const [motivoEliminacion, setMotivoEliminacion] = useState("");
   const navigate = useNavigate();
+  const [notificaciones,setNotificaciones] = useState([])
 
 
 const hoy = dayjs().format("YYYY-MM-DD");
@@ -55,7 +56,40 @@ const totalizarHoy = (arr, campo, fechaCampo) => {
   }
 };
 
-  
+const cargarNotificaciones = async()=>{
+
+const { data: { user } } = await supabase.auth.getUser()
+
+if(!user) return
+
+const { data } = await supabase
+.from("notificaciones")
+.select("*")
+.eq("usuario_id", user.id)
+.eq("leido", false)
+.order("created_at",{ascending:false})
+
+if(data){
+setNotificaciones(data)
+}
+
+};
+
+const marcarLeido = async(id)=>{
+
+await supabase
+.from("notificaciones")
+.update({leido:true})
+.eq("id",id)
+
+cargarNotificaciones()
+
+}
+
+useEffect(()=>{
+cargarNotificaciones()
+},[])
+
 
   useEffect(() => {
   // Limpia el auth_id del cobrador si regresas al panel de admin
@@ -225,6 +259,20 @@ async function cargarDatos() {
   return (
     <div className="admin-panel-container">
   <h2 className="admin-panel-title">📊 Panel de Administrador</h2>
+  
+  {notificaciones.map(n=>(
+<div className="alerta-notificacion" key={n.id}>
+
+<strong>🔔 {n.titulo}</strong>
+
+<p>{n.mensaje}</p>
+
+<button onClick={()=>marcarLeido(n.id)}>
+Cerrar
+</button>
+
+</div>
+))}
   <div className="admin-panel-top-buttons">
   <button onClick={() => navigate("/")} className="btn-ir-panel" title="Volver al Panel Admin">
     <FaSignOutAlt />
@@ -241,6 +289,7 @@ async function cargarDatos() {
   <button onClick={() => navigate("/admin/pago-suscripcion")} className="admin-panel-btn">
    💳 Pagar Suscripción
   </button>
+
 </div>
 
   {errorMsg && <p className="admin-panel-error">{errorMsg}</p>}
