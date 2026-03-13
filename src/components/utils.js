@@ -9,7 +9,7 @@ export function calcularTotalRecaudarHoy(creditos) {
     .reduce((sum, c) => {
       console.log("➡️ Revisando crédito:", c);
 
-      if (c.forma_pago === "diario") {
+      if (c.forma_pago?.startsWith("diario")) {
   console.log("   ✅ Es diario, suma:", Number(c.valor_cuota || 0));
   return sum + Number(c.valor_cuota || 0);
 }
