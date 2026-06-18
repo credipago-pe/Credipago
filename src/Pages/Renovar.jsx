@@ -235,6 +235,9 @@ const RenovarCredito = () => {
       case "diario_24":
         d.setDate(d.getDate() + 24);
         break;
+        case "diario_25":
+        d.setDate(d.getDate() + 25);
+        break;
       case "diario_20":
         d.setDate(d.getDate() + 20);
         break;
@@ -326,6 +329,7 @@ const RenovarCredito = () => {
             disabled={!permisosInputs.forma_pago} // 🔹 Bloqueo según permiso
           >
             <option value="diario_24">Diario (24 días)</option>
+            <option value="diario_25">Diario (25 días)</option>
             <option value="diario_20">Diario (20 días)</option>
             <option value="diario_11">Diario (11 días)</option>
             <option value="semanal">Semanal (4 semanas)</option>

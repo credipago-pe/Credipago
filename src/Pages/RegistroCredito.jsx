@@ -147,6 +147,7 @@ const RegistroCredito = () => {
           onChange={(e) => setFormaPago(e.target.value)}
         >
           <option value="diario_24">Diario (24 días)</option>
+          <option value="diario_25">Diario (25 días)</option>
           <option value="diario_20">Diario (20 días)</option>
           <option value="diario_11">Diario (11 días)</option>
           <option value="semanal">Semanal (4 semanas)</option>
