@@ -52,25 +52,26 @@
 .icono-busqueda {
   position: absolute;
   top: 50%;
-  left: 270px;
+  left: 240px;
   transform: translateY(-50%);
   color: #666;
   pointer-events: none;
   font-size: 16px;
+  z-index: 2;
 }
 
 .busqueda input {
   width: 100%;
-  padding: 10px 12px 10px 40px; /* 👈 padding-left importante */
+  padding: 10px 12px 10px 42px;
   border-radius: 5px;
   border: 1px solid #ccc;
   outline: none;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 
 .filtro-busqueda button {
-  padding: 10px 15px;
+  padding: 20px 25px;
   background-color: #fff;
   color: #f8f5f5;
   border-radius: 5px;
@@ -81,6 +82,41 @@
 
 .filtro-busqueda button:hover {
   background-color: #c2c1c1;
+}
+
+/* NUEVOS FILTROS DEL PANEL COBRADOR */
+
+.cobrador-filtros-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+
+.cobrador-filtro-select {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cobrador-filtro-select-control {
+  display: block;
+  min-width: 130px;
+  height: 34px;
+  padding: 4px 28px 4px 8px;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #222;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+}
+
+.cobrador-filtro-select-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 3px rgba(0, 123, 255, 0.3);
 }
 
 /* Tabla pagos - encabezado sticky */
@@ -319,6 +355,10 @@
   background: linear-gradient(to bottom, #f50404, #fa0303);
   transform: translateY(-1px);
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25);
+}
+
+.credito-nuevo {
+  background-color: #b3ecb3 !important;
 }
 
 /* Modal de pago */
@@ -763,6 +803,8 @@
   .filtro-busqueda input {
     width: 100%;
   }
+
+
 
   .content {
     margin-left: 0;

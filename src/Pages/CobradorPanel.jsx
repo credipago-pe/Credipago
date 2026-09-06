@@ -33,6 +33,7 @@ const CobradorPanel = () => {
   const [pagosHoy, setPagosHoy] = useState([]); // guarda objetos de pago con monto_pagado
   const clientesPagadosHoy = clientesConPagoHoy.length;
   const [avisoSuscripcion,setAvisoSuscripcion] = useState(false)
+  const [filtroEstado, setFiltroEstado] = useState("no_pagados");
 
 
   async function verificarSuscripcion(){
@@ -396,35 +397,64 @@ useEffect(() => {
 
 useEffect(() => {
   const filtrados = ordenClientes
-    .filter(cliente => {
+
+    // FILTRO DE ESTADO DE PAGO
+    .filter((cliente) => {
       const credito = obtenerCreditoDelCliente(cliente.id);
-      return credito && credito.saldo > 0;
+
+      if (!credito || credito.saldo <= 0) return false;
+
+      const pagoHoy = clientesConPagoHoy.includes(credito.id);
+
+      if (filtroEstado === "no_pagados") {
+        return !pagoHoy;
+      }
+
+      if (filtroEstado === "pagados") {
+        return pagoHoy;
+      }
+
+      return true; // Todos
     })
-    .filter(cliente => {
+
+    // BUSCADOR
+    .filter((cliente) => {
       const nombre = cliente.nombre?.toLowerCase() || "";
       return nombre.includes(busqueda.toLowerCase());
     })
-        .sort((a, b) => {
-      if (filtro === "nombre") return a.nombre.localeCompare(b.nombre);
+
+    // ORDEN
+    .sort((a, b) => {
+      if (filtro === "nombre") {
+        return a.nombre.localeCompare(b.nombre);
+      }
+
       if (filtro === "fecha_pago") {
         const creditoA = obtenerCreditoDelCliente(a.id);
         const creditoB = obtenerCreditoDelCliente(b.id);
+
         if (creditoA?.fecha_pago && creditoB?.fecha_pago) {
-          return new Date(creditoA.fecha_pago) - new Date(creditoB.fecha_pago);
+          return (
+            new Date(creditoA.fecha_pago) -
+            new Date(creditoB.fecha_pago)
+          );
         }
+
+        return 0;
       }
-      if (filtro === "color") {
-        const creditoA = obtenerCreditoDelCliente(a.id);
-        const creditoB = obtenerCreditoDelCliente(b.id);
-        const aPagado = clientesConPagoHoy.includes(creditoA?.id);
-        const bPagado = clientesConPagoHoy.includes(creditoB?.id);
-        return aPagado === bPagado ? 0 : aPagado ? -1 : 1;
-      }
-      return a.orden - b.orden; // fallback: mantener el orden actual
+
+      return a.orden - b.orden;
     });
 
   setClientesFiltrados(filtrados);
-}, [busqueda, filtro, ordenClientes, creditos, clientesConPagoHoy]);
+}, [
+  busqueda,
+  filtro,
+  filtroEstado,
+  ordenClientes,
+  creditos,
+  clientesConPagoHoy,
+]);
 
 const handleOrdenChange = (clienteId, nuevoOrden) => {
   const nuevo = parseInt(nuevoOrden);
@@ -815,21 +845,42 @@ Para evitar interrupciones en el servicio solicita al administrador actualizar e
             />
           </div>
   
-          <div className="filtro">
-           <button
-  className="filtro-btn"
-  onClick={() =>setFiltro(filtro === "color" ? "nombre": filtro === "nombre"? "id": "color")}>
+          
 
-  <FaFilter />{" "}
-  {filtro === "color"
-    ? "Ordenar por Nombre"
-    : filtro === "nombre"
-    ? "Ordenar por ruta"
-    : "Ordenar por pagados"}
-</button>
+  <div className="cobrador-filtros-panel">
+
+  {/* FILTRO DE ESTADO */}
+  <div className="cobrador-filtro-select">
+    <FaFilter />
+
+    <select
+      className="cobrador-filtro-select-control"
+      value={filtroEstado}
+      onChange={(e) => setFiltroEstado(e.target.value)}
+    >
+      <option value="no_pagados">No pagados</option>
+      <option value="pagados">Pagados</option>
+      <option value="todos">Todos</option>
+    </select>
+  </div>
+
+  {/* FILTRO DE ORDEN */}
+  <div className="cobrador-filtro-select">
+
+    <select
+      className="cobrador-filtro-select-control"
+      value={filtro}
+      onChange={(e) => setFiltro(e.target.value)}
+    >
+      <option value="id">Posición</option>
+      <option value="nombre">Nombre</option>
+      <option value="fecha_pago">Fecha de pago</option>
+    </select>
+
+  </div>
 
 
-          </div>
+</div>
         </div>
   
         <div className="tablaC-container">
@@ -845,12 +896,29 @@ Para evitar interrupciones en el servicio solicita al administrador actualizar e
               </tr>
             </thead>
             <tbody>
-  {clientesFiltrados.map((cliente) => {
-    const credito = obtenerCreditoDelCliente(cliente.id);
-    if (!credito) return null;
+ {clientesFiltrados.map((cliente) => {
+  const credito = obtenerCreditoDelCliente(cliente.id);
+  if (!credito) return null;
 
-    return (
-      <tr key={cliente.id} className={clientesConPagoHoy.includes(credito.id) ? "fila-pagada" : ""}>
+  const hoy = new Date();
+  const fechaCredito = new Date(credito.fecha_inicio);
+
+  const creditoCreadoHoy =
+    fechaCredito.getFullYear() === hoy.getFullYear() &&
+    fechaCredito.getMonth() === hoy.getMonth() &&
+    fechaCredito.getDate() === hoy.getDate();
+
+  return (
+    <tr
+      key={cliente.id}
+      className={
+        clientesConPagoHoy.includes(credito.id)
+          ? "fila-pagada"
+          : creditoCreadoHoy
+          ? "credito-nuevo"
+          : ""
+      }
+    >
         <td>
           <input
             type="number"

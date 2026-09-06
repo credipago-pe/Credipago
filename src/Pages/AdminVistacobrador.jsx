@@ -397,11 +397,23 @@ export default function AdminVistacobrador() {
             <input type="text" placeholder="Buscar cliente..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
           </div>
 
-          <div className="filtro">
-            <button className="filtro-btn" onClick={() => setFiltro(filtro === "nombre" ? "fecha_pago" : "nombre")}>
-              <FaFilter /> {filtro === "nombre" ? "Ordenar por ID" : "Ordenar por Nombre"}
-            </button>
-          </div>
+          <div className="admin-filtros-panel">
+
+  <div className="admin-filtro-select">
+    <FaFilter />
+
+    <select
+      className="admin-filtro-select-control"
+      value={filtro}
+      onChange={(e) => setFiltro(e.target.value)}
+    >
+      <option value="id">Ordenar por ID</option>
+      <option value="nombre">Ordenar por Nombre</option>
+      <option value="fecha_pago">Ordenar por Fecha de pago</option>
+    </select>
+  </div>
+
+</div>
         </div>
         
                
