@@ -1,13 +1,18 @@
-// 👇 REGISTRO DEL SERVICE WORKER (fuera del componente)
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/service-worker.js")
-      .then(() => console.log("✅ Service Worker registrado correctamente"))
-      .catch((err) => console.error("❌ Error al registrar Service Worker:", err));
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register(
+        "/service-worker.js"
+      );
+
+      await registration.update();
+
+      console.log("✅ Service Worker actualizado correctamente");
+    } catch (err) {
+      console.error("❌ Error al registrar Service Worker:", err);
+    }
   });
 }
-
 import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./Approuter";

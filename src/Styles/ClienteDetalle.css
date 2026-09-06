@@ -371,7 +371,7 @@
   background-color: #dc2626;
 }
 
-/.cliente-header-card {
+.cliente-header-card {
   display: flex;
   justify-content: space-between;
   align-items: center;

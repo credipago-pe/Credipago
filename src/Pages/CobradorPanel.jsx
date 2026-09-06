@@ -904,11 +904,11 @@ Para evitar interrupciones en el servicio solicita al administrador actualizar e
             <span style={{ fontSize: "12px" }}>{credito.dias_atraso} días</span>
             <span
               className={`circulo ${
-                credito.dias_atraso <= 5
+                credito.dias_atraso <= 1
                   ? "verde"
-                  : credito.dias_atraso <= 15
+                  : credito.dias_atraso <= 2
                   ? "naranja"
-                  : credito.dias_atraso < 16
+                  : credito.dias_atraso < 10
                   ? "rojo"
                   : "rojo vencido"
               }`}

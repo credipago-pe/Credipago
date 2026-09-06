@@ -900,9 +900,9 @@
 }
 
 .input-orden {
-  width: 30px !important;
+  width: 39px !important;
   height: 18px;
-  font-size: 12px !important; /* más pequeño */
+  font-size: 10px !important; /* más pequeño */
   text-align: center;
   border: 1px solid #aaa;
   border-radius: 4px;
