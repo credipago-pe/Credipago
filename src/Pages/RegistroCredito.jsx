@@ -9,7 +9,9 @@ const RegistroCredito = () => {
   const [interes, setInteres] = useState(20); // 💰 interés por defecto 20%
   const [formaPago, setFormaPago] = useState("diario_24");
   const [mensaje, setMensaje] = useState("");
+  const [registrando, setRegistrando] = useState(false);
   const navigate = useNavigate();
+  
 
   // 🔹 Función para obtener fecha local sin zona horaria
   const getFechaLocalSinZona = () => {
@@ -44,9 +46,15 @@ const RegistroCredito = () => {
 
   // 🔹 Registrar el crédito en Supabase
   const registrarCredito = async (e) => {
-    e.preventDefault();
-    setMensaje("");
+  e.preventDefault();
 
+  // Evitar múltiples clics mientras se procesa el crédito
+  if (registrando) return;
+
+  setRegistrando(true);
+  setMensaje("");
+
+  try {
     if (!ultimoCliente) {
       alert("No hay clientes registrados.");
       return;
@@ -60,7 +68,13 @@ const RegistroCredito = () => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
     const usuarioId = session?.user?.id;
+
+    if (!usuarioId) {
+      alert("No se pudo identificar al usuario.");
+      return;
+    }
 
     // Buscar caja activa del cobrador
     const { data: cajaActiva, error: errorCaja } = await supabase
@@ -80,31 +94,47 @@ const RegistroCredito = () => {
 
     const fechaInicio = getFechaLocalSinZona();
 
-    // Insertar el crédito (las funciones SQL calcularán saldo, cuotas, valor_cuota, y fecha_vencimiento)
-    const { data, error } = await supabase.from("creditos").insert([
-      {
-        cliente_id: ultimoCliente.id,
-        monto: parseFloat(monto),
-        interes: parseFloat(interes),
-        forma_pago: formaPago,
-        fecha_inicio: fechaInicio,
-        usuario_id: usuarioId,
-        caja_id: cajaActiva.id,
-        estado: "Activo",
-      },
-    ]);
+    // Insertar el crédito
+    const { data, error } = await supabase
+      .from("creditos")
+      .insert([
+        {
+          cliente_id: ultimoCliente.id,
+          monto: parseFloat(monto),
+          interes: parseFloat(interes),
+          forma_pago: formaPago,
+          fecha_inicio: fechaInicio,
+          usuario_id: usuarioId,
+          caja_id: cajaActiva.id,
+          estado: "Activo",
+        },
+      ])
+      .select();
 
     if (error) {
       console.error("Error al registrar crédito:", error);
       alert("Error al registrar crédito: " + error.message);
-    } else {
-      alert("Crédito registrado correctamente ✅");
-      setMonto("");
-      setInteres(20);
-      setFormaPago("diario_24");
-      navigate("/cobrador");
+      return;
     }
-  };
+
+    console.log("Crédito creado:", data);
+
+    alert("Crédito registrado correctamente ✅");
+
+    setMonto("");
+    setInteres(20);
+    setFormaPago("diario_24");
+
+    navigate("/cobrador");
+
+  } catch (error) {
+    console.error("Error inesperado:", error);
+    alert("Ocurrió un error al registrar el crédito.");
+  } finally {
+    // Siempre liberar el bloqueo
+    setRegistrando(false);
+  }
+};
 
   return (
     <div className="contenedor-registro">
@@ -155,7 +185,9 @@ const RegistroCredito = () => {
           <option value="mensual">Mensual (1 mes)</option>
         </select>
 
-        <button type="submit">Registrar Crédito</button>
+        <button type="submit" disabled={registrando}>
+  {registrando ? "Registrando crédito..." : "Registrar Crédito"}
+</button>
       </form>
 
       {mensaje && <p className="info">{mensaje}</p>}
