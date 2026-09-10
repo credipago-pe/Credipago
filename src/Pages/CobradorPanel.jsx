@@ -242,6 +242,13 @@ const contarSemanas = (inicio, fin) => {
   return contador;
 };
 
+const obtenerTotalCuotas = (credito) => {
+  if (credito.forma_pago === "semanal") return 4;
+
+  const coincidencia = credito.forma_pago?.match(/^diario_(\d+)$/);
+  return coincidencia ? Number(coincidencia[1]) : 24;
+};
+
 const creditosConAtraso = creditos.map((credito) => {
   if (!credito.fecha_inicio || !credito.valor_cuota) {
     return { ...credito, dias_atraso: 0, estado_semaforo: "verde" };
@@ -258,21 +265,23 @@ const creditosConAtraso = creditos.map((credito) => {
 
   let cuotasEsperadas = 0;
 
-  if (credito.tipo_credito === "semanal") {
+  if (credito.forma_pago === "semanal") {
     cuotasEsperadas = contarSemanas(fechaInicio, ayer);
   } else {
-    cuotasEsperadas = contarDiasHabiles(fechaInicio, ayer);
+    const primeraCuota = new Date(fechaInicio);
+    primeraCuota.setDate(primeraCuota.getDate() + 1);
+    cuotasEsperadas = contarDiasHabiles(primeraCuota, ayer);
   }
 
   // Cuotas pagadas derivadas del saldo
-  const totalCuotas = credito.tipo_credito === "semanal" ? 4 : 24;
+  const totalCuotas = obtenerTotalCuotas(credito);
   const saldoPagado = (credito.saldo_total || (credito.valor_cuota * totalCuotas)) - credito.saldo;
   const cuotasPagadas = Math.floor((saldoPagado / credito.valor_cuota) + 0.0001);
 
   const atraso = Math.max(0, cuotasEsperadas - cuotasPagadas);
 
   const estado_semaforo =
-    credito.tipo_credito === "semanal"
+    credito.forma_pago === "semanal"
       ? atraso >= 4
         ? "rojo"
         : atraso > 1
