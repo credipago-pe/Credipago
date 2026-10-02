@@ -1,12 +1,31 @@
 /* Contenedor principal */
+body:has(.panelC-container) {
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
+
+#root:has(.panelC-container) {
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  box-sizing: border-box;
+}
+
 .panelC-container {
   display: flex;
+  justify-content: center;
   height: 100vh;
-  padding-top: 30px;
-  max-height: 1000px;
-  margin-top: -10px;
-  max-width: 450px;
-
+  min-height: 100vh;
+  width: 100%;
+  padding: 7px 8px 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1c527f 0%, #2f6a9d 100%);
 }
 
 /* Contenedor de la tabla con scroll vertical */
@@ -29,44 +48,52 @@
 
 /* Filtro de búsqueda sticky */
 .filtro-busqueda {
-  position: sticky;
-  margin-top: -10px;
-  margin-left: 50px;
-  width: 600px;
-  top: 10px;
-  background-color: rgba(255, 255, 255, 0.034);
+  position: relative;
+  width: calc(100% - 12px);
+  margin: 0 auto 10px;
   z-index: 15;
-  padding: 10px 20px;
-  border-bottom: 1px solid #ddd;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background-color: transparent;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
 }
 
 .busqueda {
   position: relative;
+  flex: 1 1 180px;
   width: 100%;
-  max-width: 300px;
+  height: 42px;
+  min-width: 0;
 }
 
 .icono-busqueda {
   position: absolute;
-  top: 50%;
-  left: 240px;
+  top: calc(50% + 4px);
+  right: 14px;
   transform: translateY(-50%);
   color: #666;
   pointer-events: none;
-  font-size: 16px;
+  display: block;
+  width: 16px;
+  height: 16px;
   z-index: 2;
 }
 
 .busqueda input {
   width: 100%;
-  padding: 10px 12px 10px 42px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+  height: 34px;
+  display: block;
+  padding: 6px 44px 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
   outline: none;
-  font-size: 18px;
+  font-size: 15px;
+  box-sizing: border-box;
 }
 
 
@@ -77,7 +104,7 @@
   border-radius: 5px;
   border: 1px solid #ccc;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .filtro-busqueda button:hover {
@@ -89,29 +116,31 @@
 .cobrador-filtros-panel {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-left: 10px;
+  gap: 6px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .cobrador-filtro-select {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .cobrador-filtro-select-control {
   display: block;
-  min-width: 130px;
-  height: 34px;
-  padding: 4px 28px 4px 8px;
+  min-width: 90px;
+  width: 104px;
+  height: 30px;
+  padding: 4px 8px;
   border: 1px solid #aaa;
   border-radius: 6px;
   background-color: #fff;
   color: #222;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   outline: none;
+  box-sizing: border-box;
 }
 
 .cobrador-filtro-select-control:focus {
@@ -205,34 +234,61 @@
 /* Contenido principal */
 .content {
   flex-grow: 1;
-  padding: 1px;
-  margin-left: 600px;
-  background: #f5f6f7;
+  min-height: 0;
+  width: calc(100% + 20px);
+  max-width: 460px;
+  padding: 0 0 12px;
+  background: transparent;
   display: flex;
   flex-direction: column;
+  border-radius: 0 0 16px 16px;
+  overflow: visible;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+}
+
+.content::before {
+  content: "";
+  position: absolute;
+  inset: 0 -25px;
+  z-index: -1;
+  border-radius: 0 0 16px 16px;
+  background: rgba(245, 246, 247, 0.97);
+  pointer-events: none;
 }
 
 .tablaC-container {
-  width: 100%;
-  max-width: 400px;
+  width: calc(100% - 10px);
+  max-width: 445px;
+  min-height: 0;
+  flex: 1 1 auto;
   margin: 0 auto;
-  padding: 60px 20px;
+  padding: 0;
   background: rgb(253, 253, 253);
   border-radius: 10px;
   box-shadow: 0px 4px 6px rgba(221, 11, 11, 0.1);
-  overflow-x: auto;
+  overflow: auto;
+  max-height: calc(52vh + 15px);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* esto asegura que esté arriba */
+  justify-content: flex-start;
 }
 
 /* Tabla cobros */
 .tablaC-cobros {
   width: 100%;
+  min-width: 400px;
   border-collapse: collapse;
   background: white;
   border-radius: 10px;
   overflow: hidden;
+}
+
+.tablaC-cobros thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .tablaC-cobros th {
@@ -240,7 +296,7 @@
   color: #222;
   padding: 8px 12px;
   text-align: left;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   text-shadow: 1px 1px 1px #ffffff83;
   box-shadow: inset 0 1px 0 #ffffff, 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -252,8 +308,57 @@
 
 .tablaC-cobros td {
   padding: 5px;
-  font-size: 14px;
+  font-size: 13px;
   border-bottom: 1px solid #818185;
+}
+
+.tablaC-cobros th:nth-child(1),
+.tablaC-cobros td:nth-child(1) {
+  width: 15px;
+  max-width: 15px;
+}
+
+.tablaC-cobros th:nth-child(2),
+.tablaC-cobros td:nth-child(2) {
+  width: 30px;
+  max-width: 30px;
+  overflow-wrap: anywhere;
+}
+
+.tablaC-cobros th:nth-child(3),
+.tablaC-cobros td:nth-child(3) {
+  width: 24px;
+  max-width: 24px;
+}
+
+.tablaC-cobros th:nth-child(4),
+.tablaC-cobros td:nth-child(4) {
+  width: 15px;
+  max-width: 15px;
+}
+
+.tablaC-cobros th:nth-child(5),
+.tablaC-cobros td:nth-child(5) {
+  width: 13px;
+  max-width: 13px;
+}
+
+.tablaC-cobros th:nth-child(6),
+.tablaC-cobros td:nth-child(6) {
+  width: 25px;
+  max-width: 25px;
+}
+
+.tablaC-cobros .btn-pagar {
+  width: 65px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.tablaC-cobros .btn-detalle {
+  width: 65px;
+  box-sizing: border-box;
+  font-size: 11px;
 }
 
 .tablaC-cobros tbody tr:hover {
@@ -437,7 +542,7 @@
   color: #f7f8f7 !important;
 }
 
-/* Responsive para móviles */
+/* Responsive para móvil y desktop */
 @media (max-width: 480px) {
   .botones-pago {
     flex-direction: row;
@@ -453,7 +558,29 @@
   .icono {
     font-size: 16px;
     color: #f7f8f7;
-    
+  }
+}
+
+@media (min-width: 768px) {
+  .content {
+    max-width: 880px;
+  }
+
+  .content::before {
+    background: rgba(245, 246, 247, 0.96);
+  }
+
+  .tablaC-container {
+    max-width: 865px;
+    max-height: 62vh;
+  }
+
+  .filtro-busqueda {
+    width: calc(100% - 30px);
+  }
+
+  .cobrador-filtros-panel {
+    margin-left: 0;
   }
 }
 .toast-exito {
@@ -776,11 +903,12 @@
   .tablaC-container {
     padding: 0px;
     max-width: 100%;
+    max-height: calc(55vh + 15px);
   }
 
   .tablaC-cobros th,
   .tablaC-cobros td {
-    font-size: 13px;
+    font-size: 12px;
     padding: 4px;
     color: #080808;
   }
@@ -795,9 +923,14 @@
 
   .filtro-busqueda {
     width: 80%;
-    margin: 0 auto;
+    margin: 0 auto 8px;
     flex-direction: column;
-    gap: 1px;
+    gap: 20px;
+  }
+
+  .busqueda {
+    flex: 0 0 42px;
+    width: 94%;
   }
 
   .filtro-busqueda input {
@@ -1035,7 +1168,9 @@
   border: none;
   border-radius: 10px;
 
-  padding: 6px 12px;
+  width: 40px;
+  box-sizing: border-box;
+  padding: 6px 3px;
   font-size: 13px;
   font-weight: 600;
 

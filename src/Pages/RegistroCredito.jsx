@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../components/supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../Styles/FormularioCredito.css";
 
 const RegistroCredito = () => {
-  const [ultimoCliente, setUltimoCliente] = useState(null);
+  const [cliente, setCliente] = useState(null);
   const [monto, setMonto] = useState("");
   const [interes, setInteres] = useState(20); // 💰 interés por defecto 20%
   const [formaPago, setFormaPago] = useState("diario_24");
   const [mensaje, setMensaje] = useState("");
   const [registrando, setRegistrando] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const clienteId = location.state?.clienteId;
+  const returnTo = location.state?.returnTo;
   
 
   // 🔹 Función para obtener fecha local sin zona horaria
@@ -21,28 +24,30 @@ const RegistroCredito = () => {
     return localTime.toISOString().slice(0, 19).replace("T", " ");
   };
 
-  // 🔹 Cargar el último cliente registrado automáticamente
+  // Cargar el cliente concreto que originó este registro de crédito.
   useEffect(() => {
-    const fetchUltimoCliente = async () => {
+    const fetchCliente = async () => {
+      if (!clienteId) {
+        setMensaje("No se recibió el ID del cliente. Regresa al registro de cliente.");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("clientes")
-        .select("*")
-        .order("id", { ascending: false })
-        .limit(1);
+        .select("id, nombre")
+        .eq("id", clienteId)
+        .single();
 
       if (error) {
-        console.error("Error al obtener el último cliente:", error);
-        setMensaje("Error al cargar el último cliente.");
-      } else if (data.length === 0) {
-        setMensaje("No hay clientes registrados aún.");
-        setUltimoCliente(null);
+        console.error("Error al obtener el cliente:", error);
+        setMensaje("No se pudo cargar el cliente seleccionado.");
       } else {
-        setUltimoCliente(data[0]);
+        setCliente(data);
       }
     };
 
-    fetchUltimoCliente();
-  }, []);
+    fetchCliente();
+  }, [clienteId]);
 
   // 🔹 Registrar el crédito en Supabase
   const registrarCredito = async (e) => {
@@ -55,8 +60,8 @@ const RegistroCredito = () => {
   setMensaje("");
 
   try {
-    if (!ultimoCliente) {
-      alert("No hay clientes registrados.");
+    if (!cliente) {
+      alert("No se recibió un cliente válido para este crédito.");
       return;
     }
 
@@ -99,7 +104,7 @@ const RegistroCredito = () => {
       .from("creditos")
       .insert([
         {
-          cliente_id: ultimoCliente.id,
+          cliente_id: cliente.id,
           monto: parseFloat(monto),
           interes: parseFloat(interes),
           forma_pago: formaPago,
@@ -125,7 +130,7 @@ const RegistroCredito = () => {
     setInteres(20);
     setFormaPago("diario_24");
 
-    navigate("/cobrador");
+    navigate(returnTo || `/clientedetalle/${cliente.id}`);
 
   } catch (error) {
     console.error("Error inesperado:", error);
@@ -144,12 +149,12 @@ const RegistroCredito = () => {
 
       <h2>Registrar Crédito</h2>
 
-      {ultimoCliente ? (
+      {cliente ? (
         <p>
-          <strong>Cliente:</strong> {ultimoCliente.nombre} (ID: {ultimoCliente.id})
+          <strong>Cliente:</strong> {cliente.nombre} (ID: {cliente.id})
         </p>
       ) : (
-        <p>Cargando último cliente...</p>
+        <p>{mensaje || "Cargando cliente..."}</p>
       )}
 
       <form onSubmit={registrarCredito}>
@@ -185,7 +190,7 @@ const RegistroCredito = () => {
           <option value="mensual">Mensual (1 mes)</option>
         </select>
 
-        <button type="submit" disabled={registrando}>
+        <button type="submit" disabled={registrando || !cliente}>
   {registrando ? "Registrando crédito..." : "Registrar Crédito"}
 </button>
       </form>

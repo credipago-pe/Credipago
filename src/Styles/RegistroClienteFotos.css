@@ -1,0 +1,36 @@
+.formulario-cliente-container--photos {
+  height: auto;
+  min-height: 100vh;
+  max-height: none;
+  align-items: flex-start;
+  padding-top: 20px;
+  padding-bottom: 24px;
+}
+
+.formulario-cliente-container--photos .formulario-cliente-card {
+  width: min(100%, 680px);
+  max-width: 680px;
+  margin: 12px auto;
+  padding: clamp(16px, 4vw, 28px);
+}
+
+.registro-fotos-stage {
+  margin-top: 8px;
+}
+
+.registro-fotos-client-name {
+  margin: 0 0 10px;
+  color: #4b5b62;
+  text-align: center;
+  font-weight: 650;
+}
+
+@media (max-width: 520px) {
+  .formulario-cliente-container--photos {
+    padding: 10px 8px 20px;
+  }
+
+  .formulario-cliente-container--photos .formulario-cliente-card {
+    margin: 8px auto;
+  }
+}

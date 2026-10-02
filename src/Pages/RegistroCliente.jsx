@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../components/supabaseClient";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaPhone, FaMapMarkerAlt, FaIdCard, FaInfoCircle, FaCopy } from "react-icons/fa";
+import { FaUser, FaPhone, FaMapMarkerAlt, FaIdCard, FaInfoCircle } from "react-icons/fa";
+import ClienteFotos from "../components/ClienteFotos";
 import "../Styles/FormularioCliente.css";
+import "../Styles/RegistroClienteFotos.css";
 
 const RegistroCliente = () => {
   const navigate = useNavigate();
@@ -13,7 +15,9 @@ const RegistroCliente = () => {
   const [ubicacion, setUbicacion] = useState("");
   const [detalle, setDetalle] = useState("");
   const [error, setError] = useState("");
-  const [mensaje, setMensaje] = useState(null); // ID del cliente
+  const [clienteCreado, setClienteCreado] = useState(null);
+  const [etapa, setEtapa] = useState(1);
+  const [registrando, setRegistrando] = useState(false);
   const [permisoActivo, setPermisoActivo] = useState(true); // Por defecto activo
   const [cargandoPermiso, setCargandoPermiso] = useState(true);
 
@@ -92,42 +96,47 @@ const RegistroCliente = () => {
       return;
     }
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const auth_id = sessionData?.session?.user?.id;
+    setRegistrando(true);
+    setError("");
 
-    const { data, error } = await supabase.from("clientes").insert([
-      {
-        nombre,
-        telefono,
-        direccion,
-        dni,
-        ubicacion,
-        detalle,
-        usuario_id: auth_id,
-      },
-    ]).select("id, nombre");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const auth_id = sessionData?.session?.user?.id;
+      if (!auth_id) throw new Error("Sesión no válida. Inicia sesión nuevamente.");
 
-    if (error) {
-      setError("Error al registrar el cliente: " + error.message);
-      return;
-    }
+      const { data, error: insertError } = await supabase.from("clientes").insert([
+        {
+          nombre,
+          telefono,
+          direccion,
+          dni,
+          ubicacion,
+          detalle,
+          usuario_id: auth_id,
+        },
+      ]).select("id, nombre").single();
 
-    if (data && data.length > 0) {
-      setMensaje({ id: data[0].id, nombre: data[0].nombre });
-    }
-
-    const confirmRegistroCredito = window.confirm("¿Desea registrar un crédito para este cliente?");
-    if (confirmRegistroCredito) {
-      navigate("/registrocredito", { state: { clienteId: data[0].id } });
-    } else {
-      navigate("/clientes");
+      if (insertError) throw insertError;
+      setClienteCreado(data);
+      setEtapa(2);
+    } catch (submitError) {
+      setError("Error al registrar el cliente: " + submitError.message);
+    } finally {
+      setRegistrando(false);
     }
   };
 
-  const copiarAlPortapapeles = () => {
-    if (mensaje) {
-      navigator.clipboard.writeText(mensaje.id);
-      alert("ID copiado al portapapeles");
+  const finalizarRegistro = () => {
+    const confirmRegistroCredito = window.confirm("¿Desea registrar un crédito para este cliente?");
+    if (confirmRegistroCredito) {
+      navigate("/registrocredito", {
+        state: {
+          clienteId: clienteCreado.id,
+          returnTo: `/clientedetalle/${clienteCreado.id}`,
+        },
+      });
+    } else {
+      navigate(`/clientedetalle/${clienteCreado.id}`);
     }
   };
 
@@ -135,7 +144,7 @@ const RegistroCliente = () => {
 
   if (!permisoActivo) {
     return (
-      <div className="formulario-cliente-container">
+      <div className={`formulario-cliente-container${etapa === 2 ? " formulario-cliente-container--photos" : ""}`}>
         <div className="formulario-cliente-card">
           <button className="back-button" onClick={() => navigate(-1)}>Volver</button>
           <h2>🚫 Acceso bloqueado</h2>
@@ -146,12 +155,12 @@ const RegistroCliente = () => {
   }
 
   return (
-    <div className="formulario-cliente-container">
+    <div className={`formulario-cliente-container${etapa === 2 ? " formulario-cliente-container--photos" : ""}`}>
       <div className="formulario-cliente-card">
         <button className="back-button" onClick={() => navigate(-1)}>Volver</button>
-        <h2>Registro de Cliente</h2>
+        <h2>{etapa === 1 ? "Registro de Cliente" : "Fotografías del cliente"}</h2>
         {error && <p className="error-message">{error}</p>}
-        <form onSubmit={handleSubmit}>
+        {etapa === 1 ? <form onSubmit={handleSubmit}>
           <label><FaUser /> Nombre</label>
           <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ingrese el nombre" />
 
@@ -173,16 +182,21 @@ const RegistroCliente = () => {
             <button type="button" onClick={obtenerUbicacion} className="gps-button"><FaMapMarkerAlt /> Obtener GPS</button>
           </div>
 
-          <button type="submit">Registrar Cliente</button>
+          <button type="submit" disabled={registrando}>
+            {registrando ? "Registrando cliente..." : "Continuar"}
+          </button>
         </form>
+          : (
+            <div className="registro-fotos-stage">
+              <p className="registro-fotos-client-name">{clienteCreado?.nombre}</p>
+              <ClienteFotos
+                clientId={clienteCreado.id}
+                registrationMode
+                onComplete={finalizarRegistro}
+              />
+            </div>
+          )}
       </div>
-
-      {mensaje && (
-        <div className="mensaje-flotante">
-          <p><strong>Cliente Creado:</strong> {mensaje.nombre} (ID: {mensaje.id})</p>
-          <button onClick={copiarAlPortapapeles}><FaCopy className="icon" /> Copiar ID</button>
-        </div>
-      )}
     </div>
   );
 };

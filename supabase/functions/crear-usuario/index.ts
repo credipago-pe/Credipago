@@ -1,15 +1,30 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Configurar CORS
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://credipago.vercel.app",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
-  "Access-Control-Max-Age": "86400"
+const allowedOrigins = [
+  "https://credipago.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+const getCorsHeaders = (req: Request) => {
+  const origin = req.headers.get("Origin");
+  const allowedOrigin = origin && allowedOrigins.includes(origin)
+    ? origin
+    : "https://credipago.vercel.app";
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
 };
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }

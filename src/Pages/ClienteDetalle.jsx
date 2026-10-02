@@ -1,11 +1,41 @@
 import { useState, useEffect } from "react"; 
-import { useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
-import { FaWhatsapp, FaMobileAlt, FaCamera, FaStar, FaHistory, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
+import ClienteFotos from "../components/ClienteFotos";
+import { FaWhatsapp, FaMobileAlt, FaStar, FaHistory, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
 import {  User, Phone, Send, CreditCard, DollarSign, Clock, History, MapPin, FileText, Calendar } from "lucide-react";
 import { FaAngleLeft } from "react-icons/fa6";
 import "../Styles/ClienteDetalle.css";
+
+const resolveClientPrimaryPhoto = async (clientId, fallbackUrl = "/default-user.png") => {
+  try {
+    const { data: photoData, error: photoError } = await supabase
+      .from("cliente_fotos")
+      .select("tipo")
+      .eq("cliente_id", clientId)
+      .eq("tipo", "foto_cliente")
+      .maybeSingle();
+
+    if (photoError) throw photoError;
+    if (!photoData) return fallbackUrl || "/default-user.png";
+
+    const { data, error } = await supabase.functions.invoke("cliente-fotos-r2", {
+      body: {
+        action: "sign-read",
+        clientId,
+        tipo: "foto_cliente",
+      },
+    });
+
+    if (error || !data?.success) {
+      return fallbackUrl || "/default-user.png";
+    }
+
+    return data.url || fallbackUrl || "/default-user.png";
+  } catch {
+    return fallbackUrl || "/default-user.png";
+  }
+};
 
 const ClienteDetalle = () => {
   const { id } = useParams();
@@ -26,7 +56,6 @@ const ClienteDetalle = () => {
   const [montoMulta, setMontoMulta] = useState("");
   const [descripcionMulta, setDescripcionMulta] = useState("");
   const [multas, setMultas] = useState([]);
-  const inputFileRef = useRef(null);
   const [calificacion, setCalificacion] = useState(null); // promedio 0-5
   const [creditosConPagos, setCreditosConPagos] = useState([]);
   const [mostrarModalFoto, setMostrarModalFoto] = useState(false);
@@ -35,47 +64,6 @@ const ClienteDetalle = () => {
 
 
 
-
-   // 🔹 Click sobre el círculo abre el selector
-// 🔹 Abrir selector de archivos
-const handleClick = () => {
-  if (inputFileRef.current) inputFileRef.current.click();
-};
-
-// 🔹 Subir imagen y actualizar en Supabase
-const handleFileChange = async (e) => {
-  if (!cliente) return;
-  const file = e.target.files[0];
-  if (!file) return;
-
-  try {
-    const fileName = `${cliente.id}/${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("clientes")
-      .upload(fileName, file, { upsert: true });
-    if (uploadError) throw uploadError;
-
-    const { data: urlData, error: urlError } = supabase.storage
-      .from("clientes")
-      .getPublicUrl(fileName);
-    if (urlError) throw urlError;
-
-    const publicUrl = urlData.publicUrl;
-
-    const { error: updateError } = await supabase
-      .from("clientes")
-      .update({ fotourl: publicUrl })
-      .eq("id", cliente.id);
-    if (updateError) throw updateError;
-
-    setFotoUrl(publicUrl);
-    setCliente((prev) => ({ ...prev, fotourl: publicUrl }));
-    alert("📸 Foto actualizada correctamente.");
-  } catch (err) {
-    console.error("Error al subir foto:", err.message);
-    alert("❌ No se pudo subir la foto maximo permitido 250K intente tomando captura y vuelva subir la imagen.");
-  }
-};
 
 // 🔹 Cargar datos principales del cliente y sus créditos
 const cargarDatos = async () => {
@@ -93,12 +81,17 @@ const cargarDatos = async () => {
     setCliente(clienteData.data);
     setCreditos(creditosData.data || []);
 
-    // Configurar foto
-    if (clienteData.data?.fotourl && clienteData.data.fotourl.trim() !== "") {
-      setFotoUrl(clienteData.data.fotourl);
-    } else {
-      setFotoUrl("/default-user.png");
-    }
+    const primaryPhoto = await resolveClientPrimaryPhoto(
+      clienteData.data.id,
+      clienteData.data?.fotourl && clienteData.data.fotourl.trim() !== ""
+        ? clienteData.data.fotourl
+        : "/default-user.png",
+    );
+    setFotoUrl(primaryPhoto);
+    setCliente((prev) => ({
+      ...prev,
+      fotourl: primaryPhoto,
+    }));
 
     const creditoActivo = creditosData.data.find((c) => c.estado === "Activo");
     if (creditoActivo) {
@@ -368,23 +361,6 @@ const creditoActivo = creditos.find((c) => c.estado === "Activo");
     onClick={() => setMostrarModalFoto(true)}
   />
 
-      {/* Icono cámara */}
-      <label
-        htmlFor="input-foto"
-        className="btn-camara-foto"
-        title="Cambiar foto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <FaCamera className="icono-camara" />
-      </label>
-
-      <input
-        id="input-foto"
-        type="file"
-        accept="image/*"
-        className="input-foto-oculto"
-        onChange={handleFileChange}
-      />
     </div>
 
     <div className="datos-cliente">
@@ -423,7 +399,6 @@ const creditoActivo = creditos.find((c) => c.estado === "Activo");
   )}
 </div>
 
-    
 {creditoActivo && (
   <div className="seccion-credito-activo">
     <h3 className="titulo-seccion">Crédito</h3>
@@ -520,6 +495,14 @@ const creditoActivo = creditos.find((c) => c.estado === "Activo");
       <p><FileText className="iconoM" /> Detalle: {cliente.detalle || 'No especificado'}</p>
       <p><Calendar className="iconoM" /> Fecha de Registro: {cliente.fecha_registro?.slice(0, 10)}</p>
 
+      {cliente?.id && (
+        <ClienteFotos
+          clientId={cliente.id}
+          legacyPhotoUrl={cliente.fotourl}
+          readOnly
+        />
+      )}
+
       <div className="acciones">
         <button className="guardar" onClick={() => {
           setInfoVisible(false);
@@ -535,7 +518,7 @@ const creditoActivo = creditos.find((c) => c.estado === "Activo");
 {/* Modal de edición */}
 {editVisible && (
   <div className="modal">
-    <div className="modal-contenido">
+    <div className="modal-contenido cliente-edit-modal">
       <h3>✏️ Editar Cliente</h3>
 
       <label>Nombre:</label>
@@ -622,6 +605,10 @@ const creditoActivo = creditos.find((c) => c.estado === "Activo");
       <p className="fecha-registro">
         📅 Fecha de registro: {cliente.fecha_registro?.slice(0, 10)}
       </p>
+
+      {cliente?.id && (
+        <ClienteFotos clientId={cliente.id} legacyPhotoUrl={cliente.fotourl} />
+      )}
 
       <div className="acciones">
         <button

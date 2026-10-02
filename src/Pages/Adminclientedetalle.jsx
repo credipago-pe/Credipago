@@ -2,9 +2,40 @@ import { useState, useEffect } from "react";
 import { useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
+import ClienteFotos from "../components/ClienteFotos";
 import { FaWhatsapp, FaMobileAlt, FaEnvelopeOpenText, FaUserEdit, FaPhone, FaMoneyBillWave,  FaMapMarkedAlt,  FaExclamationCircle, FaTimes,  } from "react-icons/fa";      // para cerrar modales FaMobileAlt     // para botón de Yape/Efectivo
 import {  User, Phone, Send, CreditCard, DollarSign, Clock, History, MapPin, FileText, Calendar } from "lucide-react";
 import "../Styles/ClienteDetalle.css";
+
+const resolveClientPrimaryPhoto = async (clientId, fallbackUrl = "/default-avatar.png") => {
+  try {
+    const { data: photoData, error: photoError } = await supabase
+      .from("cliente_fotos")
+      .select("tipo")
+      .eq("cliente_id", clientId)
+      .eq("tipo", "foto_cliente")
+      .maybeSingle();
+
+    if (photoError) throw photoError;
+    if (!photoData) return fallbackUrl || "/default-avatar.png";
+
+    const { data, error } = await supabase.functions.invoke("cliente-fotos-r2", {
+      body: {
+        action: "sign-read",
+        clientId,
+        tipo: "foto_cliente",
+      },
+    });
+
+    if (error || !data?.success) {
+      return fallbackUrl || "/default-avatar.png";
+    }
+
+    return data.url || fallbackUrl || "/default-avatar.png";
+  } catch {
+    return fallbackUrl || "/default-avatar.png";
+  }
+};
 
 const ClienteDetalle = () => {
   const { id } = useParams();
@@ -93,6 +124,18 @@ alert("Foto actualizada correctamente ✅");
 
     setCliente(clienteData.data);
     setCreditos(creditosData.data || []);
+
+    const primaryPhoto = await resolveClientPrimaryPhoto(
+      clienteData.data.id,
+      clienteData.data?.fotourl && clienteData.data.fotourl.trim() !== ""
+        ? clienteData.data.fotourl
+        : "/default-avatar.png",
+    );
+    setFotourl(primaryPhoto);
+    setCliente((prev) => ({
+      ...prev,
+      fotourl: primaryPhoto,
+    }));
 
     const creditoActivo = creditosData.data.find(c => c.estado === "Activo");
 
@@ -353,7 +396,7 @@ alert("Foto actualizada correctamente ✅");
         </div>
       </div>
     </div>
- 
+
 {creditoActivo && (
   <div className="seccion-credito-activo">
     <h3 className="titulo-seccion">Crédito Activo</h3>
@@ -432,6 +475,14 @@ alert("Foto actualizada correctamente ✅");
       <p><FileText className="iconoM" /> Detalle: {cliente.detalle || 'No especificado'}</p>
       <p><Calendar className="iconoM" /> Fecha de Registro: {cliente.fecha_registro?.slice(0, 10)}</p>
 
+      {cliente?.id && (
+        <ClienteFotos
+          clientId={cliente.id}
+          legacyPhotoUrl={cliente.fotourl}
+          readOnly
+        />
+      )}
+
       <div className="acciones">
         <button className="guardar" onClick={() => {
           setInfoVisible(false);
@@ -447,7 +498,7 @@ alert("Foto actualizada correctamente ✅");
 {/* Modal de edición */}
 {editVisible && (
   <div className="modal">
-    <div className="modal-contenido">
+    <div className="modal-contenido cliente-edit-modal">
       <h3>✏️ Editar Cliente</h3>
 
       <label>Nombre:</label>
@@ -534,6 +585,10 @@ alert("Foto actualizada correctamente ✅");
       <p className="fecha-registro">
         📅 Fecha de registro: {cliente.fecha_registro?.slice(0, 10)}
       </p>
+
+      {cliente?.id && (
+        <ClienteFotos clientId={cliente.id} legacyPhotoUrl={cliente.fotourl} />
+      )}
 
       <div className="acciones">
         <button
