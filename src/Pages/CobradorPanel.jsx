@@ -8,6 +8,26 @@ import dayjs from "dayjs";
 import { FaBars, FaMobileAlt, FaUser, FaBuilding, FaEye, FaSearch, FaBullhorn, FaFilter, FaMoneyBill, FaMoneyBillWave, FaInfoCircle, FaTimes, FaCaretDown, FaSignOutAlt } from "react-icons/fa";
 import { calcularTotalRecaudarHoy } from "../components/utils";
 
+const TAMANO_PAGINA = 500;
+
+const obtenerRegistrosPaginados = async (crearConsulta) => {
+  const registros = [];
+
+  for (let inicio = 0; ; inicio += TAMANO_PAGINA) {
+    const fin = inicio + TAMANO_PAGINA - 1;
+    const { data, error } = await crearConsulta(inicio, fin);
+
+    if (error) throw error;
+
+    const registrosPagina = data ?? [];
+    registros.push(...registrosPagina);
+
+    if (registrosPagina.length < TAMANO_PAGINA) break;
+  }
+
+  return registros;
+};
+
 const CobradorPanel = () => {
   const [usuarioId, setUsuarioId] = useState(null);
   const [clientes, setClientes] = useState([]);
@@ -33,7 +53,7 @@ const CobradorPanel = () => {
   const [pagosHoy, setPagosHoy] = useState([]); // guarda objetos de pago con monto_pagado
   const clientesPagadosHoy = clientesConPagoHoy.length;
   const [avisoSuscripcion,setAvisoSuscripcion] = useState(false)
-  const [filtroEstado, setFiltroEstado] = useState("no_pagados");
+  const [filtroEstado, setFiltroEstado] = useState("todos");
 
 
   async function verificarSuscripcion(){
@@ -155,19 +175,21 @@ verificarSuscripcion()
     useEffect(() => {
     const fetchClientes = async () => {
       try {
-        const { data: clientesData, error: clientesError } = await supabase
-          .from("clientes")
-          .select("*")
-          .eq("usuario_id", usuarioId);
+        const clientesData = await obtenerRegistrosPaginados((inicio, fin) =>
+          supabase
+            .from("clientes")
+            .select("*")
+            .eq("usuario_id", usuarioId)
+            .range(inicio, fin)
+        );
 
-        if (clientesError) throw clientesError;
-
-        const { data: ordenData, error: ordenError } = await supabase
-          .from("cobrador_cliente_orden")
-          .select("cliente_id, orden")
-          .eq("usuario_id", usuarioId);
-
-        if (ordenError) throw ordenError;
+        const ordenData = await obtenerRegistrosPaginados((inicio, fin) =>
+          supabase
+            .from("cobrador_cliente_orden")
+            .select("cliente_id, orden")
+            .eq("usuario_id", usuarioId)
+            .range(inicio, fin)
+        );
 
         const ordenMap = new Map(
           ordenData.map((item) => [item.cliente_id, item.orden])
@@ -196,14 +218,28 @@ verificarSuscripcion()
 useEffect(() => {
   const fetchCreditos = async () => {
     try {
+      if (!usuarioId) return;
+
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
 
-      const { data: creditos, error: errorCreditos } = await supabase
-        .from("creditos")
-        .select("*");
+      const creditos = await obtenerRegistrosPaginados((inicio, fin) =>
+        supabase
+          .from("creditos")
+          .select("*")
+          .eq("usuario_id", usuarioId)
+          .range(inicio, fin)
+      );
 
-      if (errorCreditos) throw errorCreditos;
+      console.log("🔴 TOTAL CREDITOS RECIBIDOS:", creditos.length);
+      console.log(
+        "🟢 CREDITOS ACTIVOS:",
+        creditos.filter((c) => c.estado === "Activo").length
+      );
+      console.log(
+        "💰 CREDITOS CON SALDO:",
+        creditos.filter((c) => Number(c.saldo) > 0).length
+      );
 
       const { data: pagos, error: errorPagos } = await supabase
         .from("pagos")
@@ -310,8 +346,8 @@ setCreditos(creditosConAtraso);
     }
   };
 
-  fetchCreditos();
-}, []);
+  if (usuarioId) fetchCreditos();
+}, [usuarioId]);
 
 
 
