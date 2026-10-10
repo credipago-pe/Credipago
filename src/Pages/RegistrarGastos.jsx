@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../components/supabaseClient";
 import dayjs from "dayjs";
@@ -66,9 +66,20 @@ export default function RegistrarGastos() {
     verificarPermiso();
   }, []);
 
-  const obtenerGastos = async () => {
-    const session = await supabase.auth.getSession();
-    const usuarioId = session.data.session.user.id;
+  const obtenerGastos = useCallback(async () => {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.error("Error al obtener la sesión:", sessionError.message);
+      setGastos([]);
+      return;
+    }
+
+    const usuarioId = sessionData.session?.user?.id;
+    if (!usuarioId) {
+      console.error("No se encontró una sesión activa para consultar los gastos.");
+      setGastos([]);
+      return;
+    }
 
     const { data, error } = await supabase
       .from("gastos")
@@ -78,9 +89,19 @@ export default function RegistrarGastos() {
       .lte("fecha", fechaFin)
       .order("fecha", { ascending: false });
 
-    if (!error) setGastos(data);
-    else console.error("Error al obtener gastos:", error.message);
-  };
+    if (error) {
+      console.error("Error al obtener gastos:", error.message);
+      setGastos([]);
+      return;
+    }
+
+    setGastos(data || []);
+  }, [fechaInicio, fechaFin]);
+
+  useEffect(() => {
+    if (cargandoPermiso || !permisoActivo) return;
+    obtenerGastos();
+  }, [cargandoPermiso, permisoActivo, obtenerGastos]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -164,10 +185,24 @@ export default function RegistrarGastos() {
       </form>
 
       <div className="filtro-fecha-gastos">
-        <label>Desde:</label>
-        <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
-        <label>Hasta:</label>
-        <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+        <div className="campo-filtro-fecha-gastos">
+          <label htmlFor="fecha-inicio-gastos">Desde:</label>
+          <input
+            id="fecha-inicio-gastos"
+            type="date"
+            value={fechaInicio}
+            onChange={(e) => setFechaInicio(e.target.value)}
+          />
+        </div>
+        <div className="campo-filtro-fecha-gastos">
+          <label htmlFor="fecha-fin-gastos">Hasta:</label>
+          <input
+            id="fecha-fin-gastos"
+            type="date"
+            value={fechaFin}
+            onChange={(e) => setFechaFin(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="tabla-scroll-gastos">

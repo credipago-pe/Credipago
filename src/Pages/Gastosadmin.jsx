@@ -97,10 +97,24 @@ export default function Gastosadmin() {
       </form>
 
       <div className="filtro-fecha-gastos">
-        <label>Desde:</label>
-        <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
-        <label>Hasta:</label>
-        <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+        <div className="campo-filtro-fecha-gastos">
+          <label htmlFor="fecha-inicio-gastos-admin">Desde:</label>
+          <input
+            id="fecha-inicio-gastos-admin"
+            type="date"
+            value={fechaInicio}
+            onChange={(e) => setFechaInicio(e.target.value)}
+          />
+        </div>
+        <div className="campo-filtro-fecha-gastos">
+          <label htmlFor="fecha-fin-gastos-admin">Hasta:</label>
+          <input
+            id="fecha-fin-gastos-admin"
+            type="date"
+            value={fechaFin}
+            onChange={(e) => setFechaFin(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="tabla-scroll-gastos">

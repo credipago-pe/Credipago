@@ -1,11 +1,17 @@
 .gastos-contenedor {
-  max-width: 400px;
+  width: calc(100% - 32px);
+  max-width: 440px;
   margin: auto;
   margin-top: 10px;
   padding: 5px 20px;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.gastos-contenedor * {
+  box-sizing: border-box;
 }
 
 .titulo-gastos {
@@ -39,6 +45,11 @@
   gap: 10px;
 }
 
+.fila-valor-fecha input {
+  min-width: 0;
+  flex: 1;
+}
+
 .boton-registrar {
   background-color: #064470;
   color: white;
@@ -55,18 +66,36 @@
 
 /* Filtro de fechas */
 .filtro-fecha-gastos {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   margin-bottom: 20px;
 }
 
+.campo-filtro-fecha-gastos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.campo-filtro-fecha-gastos label {
+  font-size: 14px;
+}
+
 .filtro-fecha-gastos input[type="date"] {
+  width: 100%;
+  min-width: 0;
   padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 14px;
+}
+
+@media (max-width: 360px) {
+  .filtro-fecha-gastos {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Tabla */
