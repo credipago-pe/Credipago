@@ -15,6 +15,11 @@ export default function AdminPanel() {
   const [modalConfirmVisible, setModalConfirmVisible] = useState(false);
   const [usuarioAEliminar, setUsuarioAEliminar] = useState(null);
   const [motivoEliminacion, setMotivoEliminacion] = useState("");
+  const [cobradorParaPin, setCobradorParaPin] = useState(null);
+  const [nuevoPin, setNuevoPin] = useState("");
+  const [cambiarPinLoading, setCambiarPinLoading] = useState(false);
+  const [cambiarPinError, setCambiarPinError] = useState("");
+  const [cambiarPinMensaje, setCambiarPinMensaje] = useState("");
   const navigate = useNavigate();
   const [notificaciones,setNotificaciones] = useState([])
 
@@ -217,6 +222,53 @@ async function cargarDatos() {
     navigate("/admin/vistacobrador");
   };
 
+  const abrirCambioPin = (cobrador) => {
+    setCobradorParaPin(cobrador);
+    setNuevoPin("");
+    setCambiarPinError("");
+    setCambiarPinMensaje("");
+  };
+
+  const cambiarPinCobrador = async (event) => {
+    event.preventDefault();
+    if (!/^[a-zA-Z0-9]{4}$/.test(nuevoPin)) {
+      setCambiarPinError("El PIN debe tener exactamente 4 letras o números.");
+      return;
+    }
+
+    setCambiarPinLoading(true);
+    setCambiarPinError("");
+    setCambiarPinMensaje("");
+
+    try {
+      const { error } = await supabase.functions.invoke("cambiar-pin-cobrador", {
+        body: { cobradorId: cobradorParaPin.id, nuevoPin },
+      });
+
+      if (error) {
+        let mensaje = error.message;
+        if (error.context instanceof Response) {
+          try {
+            const detalles = await error.context.json();
+            mensaje = detalles.error || mensaje;
+          } catch (parseError) {
+            console.error("No se pudo leer el detalle del error:", parseError);
+          }
+        }
+        setCambiarPinError(`No se pudo cambiar el PIN: ${mensaje}`);
+        return;
+      }
+
+      setCambiarPinMensaje("PIN actualizado correctamente.");
+      setNuevoPin("");
+    } catch (err) {
+      console.error("Error al cambiar el PIN del cobrador:", err);
+      setCambiarPinError(`Error de conexión al cambiar el PIN: ${err.message}`);
+    } finally {
+      setCambiarPinLoading(false);
+    }
+  };
+
   // Primer paso: abrir modal para motivo
   const eliminarUsuario = (usuarioId) => {
     setUsuarioAEliminar(usuarioId);
@@ -323,6 +375,7 @@ Cerrar
 
           <div className="cobrador-card-buttons">
             <button onClick={() => entrarComoRuta(u.auth_id)}><FaUsers /> Ver Clientes</button>
+            <button onClick={() => abrirCambioPin(u)}>🔑 Cambiar PIN</button>
             
             <button onClick={() => navigate(`/admin/caja/${u.auth_id}`)}><FaMoneyBill /> Caja / Balance</button>
             <button onClick={() => navigate(`/registros-admin/${u.auth_id}`)}><FaTools /> Borrar Registros</button>
@@ -334,6 +387,39 @@ Cerrar
       ))}
     </div>
     
+  )}
+  {cobradorParaPin && (
+    <div className="modal-elim">
+      <form className="elim-card" onSubmit={cambiarPinCobrador}>
+        <h3>Cambiar PIN de {cobradorParaPin.nombre}</h3>
+        <p>Ingresa un PIN nuevo de 4 letras o números.</p>
+        {cambiarPinError && <p className="admin-panel-error">{cambiarPinError}</p>}
+        {cambiarPinMensaje && <p className="admin-panel-success">{cambiarPinMensaje}</p>}
+        <input
+          className="pin-change-input"
+          type="password"
+          value={nuevoPin}
+          onChange={(event) => setNuevoPin(event.target.value)}
+          placeholder="Nuevo PIN"
+          autoComplete="new-password"
+          maxLength={4}
+          required
+          disabled={cambiarPinLoading || Boolean(cambiarPinMensaje)}
+        />
+        <div className="modal-actions">
+          <button
+            type="button"
+            onClick={() => setCobradorParaPin(null)}
+            disabled={cambiarPinLoading}
+          >
+            Cerrar
+          </button>
+          <button type="submit" disabled={cambiarPinLoading || Boolean(cambiarPinMensaje)}>
+            {cambiarPinLoading ? "Guardando..." : "Guardar PIN"}
+          </button>
+        </div>
+      </form>
+    </div>
   )}
   {/* Modal 1: Motivo */}
       {modalMotivoVisible && (
