@@ -5,6 +5,7 @@ const allowedOrigins = [
   "https://credipago.vercel.app",
   "http://localhost:5173",
   "http://localhost:3000",
+  "http://192.168.1.10:5173",
 ];
 
 const getCorsHeaders = (req: Request) => {
@@ -16,7 +17,7 @@ const getCorsHeaders = (req: Request) => {
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
     "Content-Type": "application/json",
@@ -88,9 +89,9 @@ serve(async (req) => {
       (typeof cobradorId !== "number" && typeof cobradorId !== "string") ||
       String(cobradorId).trim() === "" ||
       typeof nuevoPin !== "string" ||
-      !/^[a-zA-Z0-9]{4}$/.test(nuevoPin)
+      !/^[a-zA-Z0-9]{6}$/.test(nuevoPin)
     ) {
-      return jsonResponse({ error: "Indica un cobrador válido y un PIN de exactamente 4 letras o números." }, 400, corsHeaders);
+      return jsonResponse({ error: "Indica un cobrador válido y un PIN de exactamente 6 letras o números." }, 400, corsHeaders);
     }
 
     const { data: cobrador, error: cobradorError } = await supabaseAdmin

@@ -231,8 +231,8 @@ async function cargarDatos() {
 
   const cambiarPinCobrador = async (event) => {
     event.preventDefault();
-    if (!/^[a-zA-Z0-9]{4}$/.test(nuevoPin)) {
-      setCambiarPinError("El PIN debe tener exactamente 4 letras o números.");
+    if (!/^[a-zA-Z0-9]{6}$/.test(nuevoPin)) {
+      setCambiarPinError("El PIN debe tener exactamente 6 letras o números.");
       return;
     }
 
@@ -392,7 +392,7 @@ Cerrar
     <div className="modal-elim">
       <form className="elim-card" onSubmit={cambiarPinCobrador}>
         <h3>Cambiar PIN de {cobradorParaPin.nombre}</h3>
-        <p>Ingresa un PIN nuevo de 4 letras o números.</p>
+        <p>Ingresa un PIN nuevo de 6 letras o números.</p>
         {cambiarPinError && <p className="admin-panel-error">{cambiarPinError}</p>}
         {cambiarPinMensaje && <p className="admin-panel-success">{cambiarPinMensaje}</p>}
         <input
@@ -402,7 +402,7 @@ Cerrar
           onChange={(event) => setNuevoPin(event.target.value)}
           placeholder="Nuevo PIN"
           autoComplete="new-password"
-          maxLength={4}
+          maxLength={6}
           required
           disabled={cambiarPinLoading || Boolean(cambiarPinMensaje)}
         />
